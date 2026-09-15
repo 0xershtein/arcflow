@@ -22,7 +22,8 @@
 	$effect(() => () => clearTimeout(timer));
 </script>
 
-<BaseEdge {id} {path} {markerEnd} {style} onpointerenter={enter} onpointerleave={leave} />
+<!-- A narrower interaction path: the default 20px blankets the handles the edge starts and ends at. -->
+<BaseEdge {id} {path} {markerEnd} {style} interactionWidth={12} onpointerenter={enter} onpointerleave={leave} />
 {#if editor.onInsert && !editor.readonly && (hovered || selected)}
 	<EdgeLabel x={labelX} y={labelY} transparent>
 		<button

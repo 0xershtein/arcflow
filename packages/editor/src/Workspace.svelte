@@ -1264,6 +1264,7 @@
 				fitViewOptions={{ padding: 0.1, minZoom: 0.15 }}
 				minZoom={0.15}
 				maxZoom={1.6}
+				connectionRadius={34}
 				nodesDraggable={!readonly}
 				nodesConnectable={!readonly}
 				deleteKey={readonly ? null : ['Backspace', 'Delete']}

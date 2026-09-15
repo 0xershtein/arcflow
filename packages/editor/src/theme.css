@@ -529,19 +529,34 @@
 	color: var(--fb-text-soft);
 }
 
+/*
+ * The element itself is the hit area (26px) while the visible dot is its padding box (10px):
+ * a transparent border grabs the pointer well before it reaches the dot, so connections are
+ * easy to start. Above the card's text so it stays the topmost target.
+ */
 .fb-root .svelte-flow__handle.fb-handle {
-	width: 10px;
-	height: 10px;
-	border: 1.5px solid var(--fb-text-muted);
-	background: var(--fb-surface);
-	transition: background 0.15s, border-color 0.15s;
+	width: 30px;
+	/* Shorter than the 28px port rows, so stacked ports never fight over the pointer. */
+	height: 26px;
+	z-index: 5;
+	border-style: solid;
+	border-color: transparent;
+	border-width: 6px 8px;
+	border-radius: 50%;
+	background-color: var(--fb-surface);
+	background-clip: padding-box;
+	box-shadow: inset 0 0 0 1.5px var(--fb-text-muted);
+	cursor: crosshair;
+	transition: border-width 0.12s, background-color 0.15s, box-shadow 0.15s;
 }
 
+/* Hovering grows the dot instead of the box, so the target never moves. */
 .fb-root .svelte-flow__handle.fb-handle:hover,
 .fb-root .svelte-flow__handle.fb-handle.connectingfrom,
 .fb-root .svelte-flow__handle.fb-handle.valid {
-	border-color: var(--fb-accent);
-	background: var(--fb-accent);
+	border-width: 4px 6px;
+	background-color: var(--fb-accent);
+	box-shadow: inset 0 0 0 1.5px var(--fb-accent);
 }
 
 .fb-spinner {
