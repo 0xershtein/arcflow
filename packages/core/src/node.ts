@@ -89,8 +89,19 @@ export type StepResult<O extends string = string> =
 			message?: string;
 	  }
 	| {
-			/** Loop steps only: run the `item` branch once per item, then continue through `done` with the results. */
-			loop: { items: readonly unknown[] };
+			/**
+			 * Loop steps only: run the `item` branch once per item, then continue through `done` with the results
+			 * (in item order). `concurrency` iterations run at the same time (default 1).
+			 */
+			loop: { items: readonly unknown[]; concurrency?: number };
+			message?: string;
+	  }
+	| {
+			/**
+			 * Run another flow, loaded through the engine's `flows` source, with `input` as its trigger payload.
+			 * The step finishes with the sub-flow's result, waits while it waits, and fails if it fails.
+			 */
+			call: { flow: string; input?: unknown };
 			message?: string;
 	  };
 

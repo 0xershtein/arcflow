@@ -51,7 +51,10 @@ docs/roadmap.md            milestones M1–M6
 - Every connection ends up **delivered** or **dead** (branch not taken). A step runs when a connection delivers (`join: 'any'`, default) or when all incoming connections are settled and at least one delivered (`join: 'all'`). A step whose incoming connections are all dead is skipped, and its outgoing connections die too.
 - **Loops**: a step with `loop: true` returns `{ loop: { items } }`. Steps reachable from its `item` output are the body; each item runs in its own scope with step keys like `each[2]/send`. `done` continues with the list of iteration results (the output of the body's last step, or an object when there are several).
 - **Waiting**: `{ wait }` pauses a step. Resume with `engine.resume(flow, state, { nodeId: key, data | port })`, using the step key from `waitingSteps(state)` — including keys inside loops.
+- **Loop concurrency**: `{ loop: { items, concurrency } }`. An iteration holds a slot from start until done, waiting included, so `concurrency: 1` is strictly sequential. Results stay in item order.
+- **Sub-flows**: a step returning `{ call: { flow, input } }` runs a flow loaded from `createEngine(registry, { flows })`. Its state lives in `steps[key].child`; waiting steps inside are addressed as `call>approve` (nestable, limited by `maxDepth`). The step's output is the output of the sub-flow's final steps; a failed sub-flow fails the step (or routes to its `error` port).
 - **Credentials**: `f.credential(type)` fields hold ids; `services.credentials.resolve()` provides `ctx.secrets[field]` at run time. Secrets never enter flow JSON, events or `RunState`.
+- **Outputs** must be JSON-serializable; `maxOutputBytes` fails steps that return more.
 - `RunState` is plain JSON (`scopes`, `steps`, `vars`) and can be stored between `start` and `resume`.
 
 ## Contract rules

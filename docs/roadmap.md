@@ -17,6 +17,8 @@ The engine today runs branches once, on first arrival, and passes a single `outp
 
 Done when: joins, loops and sub-flows are covered by engine tests, including pause/resume inside a loop.
 
+**Status: done.** Joins with dead-branch elimination, loops with concurrency slots and per-iteration resume (`each[2]/step`), sub-flows through a `flows` source with resume through the calling step (`call>step`) and a depth limit, credentials resolved into `ctx.secrets`, `$item` / `$index` / `$now` and whitelisted filters, JSON-serializable outputs with an optional `maxOutputBytes` limit.
+
 ## M2 — Standard steps (`@arcflow/nodes`)
 
 A pack that makes the product useful without writing code:

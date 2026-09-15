@@ -321,6 +321,8 @@
 	}
 
 	function handleEvent(event: RunEvent) {
+		// Steps inside sub-flows (keys like "call>approve") belong to another flow's canvas.
+		if ('key' in event && event.key.includes('>')) return;
 		switch (event.type) {
 			case 'step:start':
 				setStatus(event.nodeId, 'running');

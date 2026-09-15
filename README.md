@@ -144,7 +144,8 @@ if (state.status === 'waiting') {
 Built in:
 
 - **Branching and joins** — untaken branches are skipped; a step can run on the first incoming branch or wait for all of them (`join: 'all'`).
-- **Loops** — a loop step runs its body once per item, each iteration isolated (`each[2]/send`), and can pause and resume inside an iteration.
+- **Loops** — a loop step runs its body once per item, each iteration isolated (`each[2]/send`), optionally several at a time, and can pause and resume inside an iteration.
+- **Sub-flows** — a step can run another flow and continue with its result; waits inside it resume through the calling step (`call>approve`).
 - **Credentials** — `f.credential('smtp')` stores only an id; secrets are resolved at run time and never written to flow JSON or run state.
 - **Expressions** — `{{ steps.fetch.output.items | map: "price" | sum | round: 2 }}`, `{{ $item.email ?? "unknown" }}`; lookups and whitelisted filters only, no `eval`.
 - Retries, timeouts, `error` output ports, cancellation, and `simulate` mode for side-effect-free test runs.
