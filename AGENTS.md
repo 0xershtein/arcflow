@@ -40,7 +40,13 @@ packages/editor/src        the editor (Svelte 5 inside, framework-free outside)
   Workspace.svelte         canvas, toolbar, run log, JSON panel, callbacks
   StepNode / StepPalette / StepInspector / FieldInput / JsonPanel
   theme.css, editor.css    all colors via --fb-* variables
-packages/payments          example pack + payroll flow
+packages/nodes/src         standard steps (kinds trigger.*, http.*, code.javascript, data.set, logic.*, flow.call)
+  code.ts                  runSandboxed: QuickJS sandbox, loaded lazily with a dynamic import
+  http.ts                  fetch-based request (credentials via ctx.secrets) and webhook response (services.http)
+  logic.ts                 evaluateCondition, if / switch / merge / loop / wait
+  schedule.ts              cron trigger and nextRuns (croner)
+  examples.ts              standardRegistry, createTodoDigestFlow
+packages/payments          domain pack (treasury.runway, approval.multisig, action.transfer, action.notify) + payroll flow
 apps/playground            SvelteKit demo with a settings bar
 apps/vanilla               plain HTML using the built bundle
 docs/roadmap.md            milestones M1–M6

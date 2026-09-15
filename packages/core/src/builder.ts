@@ -109,9 +109,10 @@ export class FlowBuilder<D extends AnyNodeDefinition = AnyNodeDefinition> {
 			if (!this.#nodes.some((node) => node.id === id)) throw new Error(`No step with id "${id}".`);
 		}
 		const ports = this.#portsOf(fromId);
-		const chosen = port ?? (ports.length === 1 ? ports[0] : undefined);
+		const regular = ports.filter((id) => id !== 'error');
+		const chosen = port ?? (regular.length === 1 ? regular[0] : undefined);
 		if (!chosen) {
-			throw new Error(`Step "${fromId}" has ${ports.length} outputs (${ports.join(', ')}); pass a port.`);
+			throw new Error(`Step "${fromId}" has ${regular.length} outputs (${regular.join(', ')}); pass a port.`);
 		}
 		if (!ports.includes(chosen)) throw new Error(`Step "${fromId}" has no output "${chosen}" (outputs: ${ports.join(', ')}).`);
 		const id = edgeId(fromId, chosen, toId);

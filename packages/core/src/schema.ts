@@ -116,8 +116,9 @@ export type ShapeInput<S extends Shape> = Prettify<
 
 type Meta = { label?: string; description?: string; when?: Condition };
 type Presence<T> = { optional?: boolean; default?: T };
-type Output<O, T> = O extends { default: {} } ? T : O extends { optional: true } ? T | undefined : T;
-type Input<O, T> = O extends { default: {} } ? T | undefined : O extends { optional: true } ? T | undefined : T;
+// Fields shown only `when` another field matches may be absent, so they are optional like `optional: true`.
+type Output<O, T> = O extends { default: {} } ? T : O extends { optional: true } | { when: {} } ? T | undefined : T;
+type Input<O, T> = O extends { default: {} } ? T | undefined : O extends { optional: true } | { when: {} } ? T | undefined : T;
 
 export type StringOptions = Meta &
 	Presence<string> & { placeholder?: string; pattern?: string; minLength?: number; maxLength?: number; mono?: boolean };

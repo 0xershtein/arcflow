@@ -12,7 +12,7 @@ export const FORMAT_GUIDE = `# Flow format
 A flow is JSON: { "version": 1, "name": "…", "nodes": [ … ], "edges": [ … ] }
 
 - Node: { "id": "check-runway", "kind": "<step kind>", "config": { … } }. Ids use letters, digits, "-" or "_". "position" is optional — editors lay nodes out automatically.
-- Edge: { "from": "<node id>", "port": "<output of the source step>", "to": "<node id>" }. "port" may be omitted when the source step has one output.
+- Edge: { "from": "<node id>", "port": "<output of the source step>", "to": "<node id>" }. "port" may be omitted when the source step has one output (not counting "error").
 - A flow starts at a trigger step. Triggers have no incoming edges; every other step needs at least one. Flows must not contain cycles.
 - Steps with several outputs (for example "true" / "false") need "port" on each outgoing edge. Branches that are not taken are skipped.
 - A step reached by several edges runs on the first arrival. Set "join": "all" on the node to wait until every branch has finished; its input is then an array.

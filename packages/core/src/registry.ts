@@ -93,9 +93,9 @@ export function createRegistry<const T extends readonly (Pack | AnyNodeDefinitio
 					return { ...node, config: { ...node.config, ...parsed.value } };
 				}),
 				edges: normalized.flow.edges.map((edge) => {
-					const outputs = byKind.get(kindOf.get(edge.from) ?? '')?.outputs;
-					if (edge.port !== 'out' || outputs?.length !== 1 || outputs[0].id === 'out') return edge;
-					const port = outputs[0].id;
+					const regular = byKind.get(kindOf.get(edge.from) ?? '')?.outputs.filter((output) => output.id !== 'error');
+					if (edge.port !== 'out' || regular?.length !== 1 || regular[0].id === 'out') return edge;
+					const port = regular[0].id;
 					return { ...edge, port, id: edgeId(edge.from, port, edge.to) };
 				})
 			};

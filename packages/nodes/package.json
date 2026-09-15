@@ -1,7 +1,7 @@
 {
-	"name": "@arcflow/payments",
+	"name": "@arcflow/nodes",
 	"version": "0.1.0",
-	"description": "Example arcflow steps for treasury payouts: schedules, runway checks, multisig approvals and stablecoin transfers.",
+	"description": "Standard arcflow steps: manual, webhook and schedule triggers, HTTP requests, sandboxed JavaScript, data, branching, loops, waits and sub-flows.",
 	"license": "MIT",
 	"type": "module",
 	"sideEffects": false,
@@ -30,11 +30,21 @@
 	},
 	"dependencies": {
 		"@arcflow/core": "workspace:*",
-		"@arcflow/nodes": "workspace:*"
+		"@jitl/quickjs-wasmfile-release-sync": "^0.32.0",
+		"croner": "^10.0.1",
+		"quickjs-emscripten-core": "^0.32.0"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/0xershtein/arcflow.git",
-		"directory": "packages/payments"
-	}
+		"directory": "packages/nodes"
+	},
+	"keywords": [
+		"workflow",
+		"automation",
+		"http",
+		"webhook",
+		"cron",
+		"sandbox"
+	]
 }

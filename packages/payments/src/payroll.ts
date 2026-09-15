@@ -1,7 +1,9 @@
 import { createRegistry, type Flow } from '@arcflow/core';
+import { standardSteps } from '@arcflow/nodes';
 import { paymentsPack } from './pack.js';
 
-export const paymentsRegistry = createRegistry([paymentsPack]);
+/** Standard steps plus the payments pack. */
+export const paymentsRegistry = createRegistry([standardSteps, paymentsPack]);
 
 /**
  * Pays the team on the 1st — but only when runway is above six months and two founders approve.
@@ -10,16 +12,16 @@ export const paymentsRegistry = createRegistry([paymentsPack]);
 export function createPayrollFlow(registry = paymentsRegistry): Flow {
 	const flow = registry.flow('Monthly payroll').description('Pay the team on the 1st when runway is healthy and founders approve.');
 
-	const schedule = flow.add('trigger.schedule', { every: 'month', day: 1, time: '09:00' }, { id: 'schedule' });
+	const schedule = flow.add('trigger.schedule', { cron: '0 9 1 * *', timezone: 'UTC' }, { id: 'schedule', label: 'First of the month' });
 	const runway = flow.add('treasury.runway', { token: 'USDC' }, { id: 'runway' });
 	const healthy = flow.add(
-		'logic.condition',
-		{ value: '{{ steps.runway.output.runwayMonths }}', operator: '>', than: 6 },
+		'logic.if',
+		{ conditions: [{ left: '{{ steps.runway.output.runwayMonths }}', operator: 'gt', right: 6 }] },
 		{ id: 'healthy', label: 'Runway healthy?' }
 	);
 	const approve = flow.add(
 		'approval.multisig',
-		{ signers: ['alice.eth', 'bob.eth', 'carol.eth'], threshold: 2, note: 'September payroll' },
+		{ signers: ['alice.eth', 'bob.eth', 'carol.eth'], threshold: 2, note: 'Monthly payroll' },
 		{ id: 'approve', label: 'Founders approve' }
 	);
 	const pay = flow.add(

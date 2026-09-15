@@ -296,8 +296,10 @@ export function createEngine<D extends AnyNodeDefinition>(registry: Registry<D>,
 		}
 	});
 
+	/** The port used when a step does not name one: its only output, not counting `error`. */
 	function defaultPorts(definition: AnyNodeDefinition, key: string) {
-		if (definition.outputs.length <= 1) return definition.outputs.map((port) => port.id);
+		const regular = definition.outputs.filter((port) => port.id !== 'error');
+		if (regular.length <= 1) return regular.map((port) => port.id);
 		throw new StepError(
 			`Step "${key}" (${definition.kind}) has several outputs and must return a port: ${definition.outputs.map((p) => p.id).join(', ')}.`
 		);

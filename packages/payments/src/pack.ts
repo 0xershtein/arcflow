@@ -1,5 +1,10 @@
 import { defineNode, definePack, f, type Services } from '@arcflow/core';
 
+/**
+ * Treasury steps: runway checks, multisig approvals, stablecoin transfers and team notifications.
+ * Combine with `@arcflow/nodes` for triggers, branching and HTTP.
+ */
+
 export interface Recipient {
 	to: string;
 	amount: number;
@@ -46,50 +51,6 @@ const money = (value: number) => value.toLocaleString('en-US', { minimumFraction
 const total = (recipients: readonly Recipient[]) => recipients.reduce((sum, r) => sum + r.amount, 0);
 const asObject = (value: unknown) => (value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {});
 
-export const schedule = defineNode({
-	kind: 'trigger.schedule',
-	title: 'Schedule',
-	description: 'Starts the flow on a repeating schedule. Your scheduler calls engine.start() at these times.',
-	category: 'triggers',
-	icon: 'clock',
-	trigger: true,
-	config: {
-		every: f.enum(['day', 'week', 'month'], { default: 'month', label: 'Repeat', labels: { day: 'Every day', week: 'Every week', month: 'Every month' } }),
-		day: f.number({ integer: true, min: 1, max: 28, default: 1, label: 'Day of month', when: { field: 'every', equals: ['month'] } }),
-		weekday: f.enum(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], { default: 'mon', when: { field: 'every', equals: ['week'] } }),
-		time: f.string({ default: '09:00', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$', placeholder: 'HH:MM', mono: true }),
-		timezone: f.string({ default: 'UTC', label: 'Time zone' })
-	},
-	summary: (c) =>
-		c.every === 'month' ? `Monthly on day ${c.day} · ${c.time}` : c.every === 'week' ? `Weekly on ${c.weekday} · ${c.time}` : `Daily · ${c.time}`,
-	run: (ctx) => ({ output: { firedAt: new Date().toISOString(), ...asObject(ctx.input) } })
-});
-
-export const webhook = defineNode({
-	kind: 'trigger.webhook',
-	title: 'Webhook',
-	description: 'Starts the flow when another app sends a request. The request body is the trigger payload.',
-	category: 'triggers',
-	icon: 'webhook',
-	trigger: true,
-	config: {
-		path: f.string({ pattern: '^[a-z0-9-]+$', placeholder: 'invoice-paid', mono: true, description: 'Called as POST /hooks/<path>.' })
-	},
-	summary: (c) => `POST /hooks/${c.path}`,
-	run: (ctx) => ({ output: ctx.input })
-});
-
-export const manual = defineNode({
-	kind: 'trigger.manual',
-	title: 'Manual',
-	description: 'Starts the flow when a person presses Run.',
-	category: 'triggers',
-	icon: 'hand',
-	trigger: true,
-	summary: () => 'Started by a person',
-	run: (ctx) => ({ output: ctx.input })
-});
-
 function runwayResult(vars: Record<string, unknown>, balance: number, burn: number, token: string) {
 	const runwayMonths = burn > 0 ? Math.round((balance / burn) * 10) / 10 : null;
 	vars.balance = balance;
@@ -103,7 +64,7 @@ function runwayResult(vars: Record<string, unknown>, balance: number, burn: numb
 export const runway = defineNode({
 	kind: 'treasury.runway',
 	title: 'Check runway',
-	description: 'Reads the vault balance and estimates how many months of spending it covers.',
+	description: 'Reads the vault balance and estimates how many months of spending it covers. Outputs { token, balance, monthlyBurn, runwayMonths }.',
 	category: 'treasury',
 	icon: 'sparkle',
 	config: {
@@ -117,58 +78,6 @@ export const runway = defineNode({
 		return runwayResult(ctx.vars, balance, burn, ctx.config.token);
 	},
 	simulate: (ctx) => runwayResult(ctx.vars, Number(ctx.vars.balance ?? 0), Number(ctx.vars.monthlyBurn ?? 0), ctx.config.token)
-});
-
-const OPERATORS = ['>', '>=', '<', '<=', '=', '!='] as const;
-
-export const condition = defineNode({
-	kind: 'logic.condition',
-	title: 'If',
-	description: 'Compares a number and continues through Yes or No. Passes its input along.',
-	category: 'logic',
-	icon: 'split',
-	outputs: [
-		{ id: 'true', label: 'Yes' },
-		{ id: 'false', label: 'No' }
-	],
-	config: {
-		value: f.number({ description: 'Usually an expression, e.g. {{ steps.runway.output.runwayMonths }}.' }),
-		operator: f.enum(OPERATORS, { default: '>', label: 'Is' }),
-		than: f.number()
-	},
-	summary: (c) => `${String(c.value).replace(/^\{\{\s*(?:steps\.)?|\s*\}\}$/g, '')} ${c.operator} ${c.than}`,
-	run: (ctx) => {
-		const { value, operator, than } = ctx.config;
-		const pass =
-			operator === '>' ? value > than
-			: operator === '>=' ? value >= than
-			: operator === '<' ? value < than
-			: operator === '<=' ? value <= than
-			: operator === '=' ? value === than
-			: value !== than;
-		return { port: pass ? 'true' : 'false', output: ctx.input, message: `${value} ${operator} ${than} → ${pass ? 'yes' : 'no'}` };
-	}
-});
-
-const UNIT_MS = { minutes: 60_000, hours: 3_600_000, days: 86_400_000 } as const;
-
-export const delay = defineNode({
-	kind: 'logic.delay',
-	title: 'Wait',
-	description: 'Pauses the run. Your scheduler resumes it when the time is up.',
-	category: 'logic',
-	icon: 'hourglass',
-	config: {
-		amount: f.number({ min: 1, default: 1 }),
-		unit: f.enum(['minutes', 'hours', 'days'], { default: 'days' })
-	},
-	summary: (c) => `${c.amount} ${c.unit}`,
-	run: (ctx) => {
-		if (ctx.resumed) return { output: ctx.input };
-		const until = new Date(Date.now() + ctx.config.amount * UNIT_MS[ctx.config.unit]).toISOString();
-		return { wait: { reason: 'delay', data: { until } }, message: `Waiting until ${until}` };
-	},
-	simulate: (ctx) => ({ output: ctx.input, message: `Skipped a ${ctx.config.amount} ${ctx.config.unit} wait` })
 });
 
 export const approval = defineNode({
@@ -196,7 +105,7 @@ export const approval = defineNode({
 			const data = asObject(ctx.resumed.data);
 			return { port: data.approved ? 'approved' : 'rejected', output: data, message: data.approved ? 'Approved' : 'Rejected' };
 		}
-		const { requestId } = await payments(ctx.services).requestApproval({ runId: ctx.runId, nodeId: ctx.nodeId, signers, threshold, expiresHours, note });
+		const { requestId } = await payments(ctx.services).requestApproval({ runId: ctx.runId, nodeId: ctx.key, signers, threshold, expiresHours, note });
 		return { wait: { reason: 'approval', data: { requestId } }, message: `Waiting for ${threshold} of ${signers.length} signers` };
 	},
 	simulate: (ctx) => ({
@@ -234,7 +143,7 @@ export const transfer = defineNode({
 		const sum = total(recipients);
 		const balance = await services.getBalance(token);
 		if (sum > balance) throw new Error(`Needs ${money(sum)} ${token} but the vault holds ${money(balance)}.`);
-		const { txHash } = await services.transfer({ runId: ctx.runId, nodeId: ctx.nodeId, token, recipients, memo });
+		const { txHash } = await services.transfer({ runId: ctx.runId, nodeId: ctx.key, token, recipients, memo });
 		return { output: { txHash, token, total: sum, recipients: recipients.length }, message: `Sent ${money(sum)} ${token}` };
 	},
 	simulate: (ctx) => {
@@ -274,12 +183,10 @@ export const paymentsPack = definePack({
 	label: 'Payments',
 	description: 'Treasury payouts guarded by multisig approval.',
 	categories: [
-		{ id: 'triggers', label: 'Triggers' },
 		{ id: 'treasury', label: 'Treasury' },
-		{ id: 'logic', label: 'Logic' },
 		{ id: 'approvals', label: 'Approvals' },
 		{ id: 'actions', label: 'Actions' }
 	],
-	nodes: [schedule, webhook, manual, runway, condition, delay, approval, transfer, notify],
+	nodes: [runway, approval, transfer, notify],
 	sampleVars: { balance: 684_250, monthlyBurn: 61_000 }
 });

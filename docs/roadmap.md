@@ -27,6 +27,8 @@ Manual, Webhook, Schedule (cron), HTTP Request, Code (JavaScript in a QuickJS sa
 
 Done when: an example flow fetches JSON from a public API, filters it in a Code step, branches, and posts the result — in tests and in the editor.
 
+**Status: steps done.** `@arcflow/nodes` ships all thirteen steps. Code runs in a fresh QuickJS sandbox per step with time and memory limits; HTTP requests skip non-GET calls in test runs; short waits happen in place and long ones pause the run. The digest example (`createTodoDigestFlow`) runs end to end in tests with a mocked network. The payments pack now builds on these steps.
+
 ## M3 — Server runtime (`@arcflow/server`)
 
 Runs flows for real, on Node, Bun, or edge runtimes.

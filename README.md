@@ -13,7 +13,26 @@ Drop a visual workflow builder into your own product — an automation panel, an
 | --- | --- |
 | [`@arcflow/core`](./packages/core) | Headless engine, zero dependencies: step definitions, flow builder, parser/validator, runner with retries and pause/resume, JSON Schema + LLM catalog. |
 | [`@arcflow/editor`](./packages/editor) | The canvas editor. One ES module with styles included. |
-| [`@arcflow/payments`](./packages/payments) | Example step pack (schedule → check → approval → transfer) to copy from. |
+| [`@arcflow/nodes`](./packages/nodes) | Standard steps: manual, webhook and cron triggers, HTTP request and response, sandboxed JavaScript, set fields, if, switch, merge, loop, wait, run flow. |
+| [`@arcflow/payments`](./packages/payments) | Example domain pack (runway check → multisig approval → transfer) built on the standard steps. |
+
+## Standard steps
+
+```ts
+import { createRegistry } from '@arcflow/core';
+import { standardSteps } from '@arcflow/nodes';
+
+const registry = createRegistry([standardSteps, myPack]);
+```
+
+| Kind | |
+| --- | --- |
+| `trigger.manual`, `trigger.webhook`, `trigger.schedule` | Start by hand, from an HTTP call, or on a cron schedule |
+| `http.request`, `http.respond` | Call APIs (with credentials, timeouts, error output); answer the webhook caller |
+| `code.javascript` | JavaScript in a QuickJS sandbox — no network or file access, time and memory limits |
+| `data.set` | Build objects from values and expressions |
+| `logic.if`, `logic.switch`, `logic.merge` | Branch on conditions or values; wait for branches and combine them |
+| `logic.loop`, `logic.wait`, `flow.call` | Repeat per item, pause, run another flow |
 
 ## Quick start
 

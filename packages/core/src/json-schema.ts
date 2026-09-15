@@ -131,7 +131,7 @@ export function flowSchema(nodes: readonly AnyNodeDefinition[], options: SchemaO
 					type: 'object',
 					properties: {
 						from: { type: 'string', description: 'Source step id.' },
-						port: { type: 'string', description: 'Output port of the source step. Optional when it has a single output.' },
+						port: { type: 'string', description: 'Output port of the source step. Optional when it has a single output besides "error".' },
 						to: { type: 'string', description: 'Target step id.' }
 					},
 					required: ['from', 'to'],
