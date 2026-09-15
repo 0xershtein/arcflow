@@ -37,8 +37,12 @@ packages/editor/src        the editor (Svelte 5 inside, framework-free outside)
   vanilla.svelte.ts        createEditor: mount + getter props + style injection
   options.ts               EditorOptions, ThemeOptions, UiOptions, Labels, resolvers
   FlowEditor.svelte        props → context (labels, ui, readonly) + theme → Workspace
-  Workspace.svelte         canvas, toolbar, run log, JSON panel, callbacks
-  StepNode / StepPalette / StepInspector / FieldInput / JsonPanel
+  Workspace.svelte         canvas, toolbar, history (JSON snapshots), clipboard, shortcuts, insert picker, test runs
+  StepNode / StepPalette / StepInspector / FieldInput / ExpressionInput / JsonTree / JsonPanel
+  convert.ts               flow JSON ⇄ Svelte Flow nodes/edges (steps "step", notes "note", edges "flow")
+  NoteNode.svelte          sticky notes (flow.annotations, ignored by the engine)
+  InsertEdge.svelte        connection with the "+" insert button
+  StepPicker.svelte        searchable step popover used by "+" and drop-to-add
   theme.css, editor.css    all colors via --fb-* variables
 packages/nodes/src         standard steps (kinds trigger.*, http.*, code.javascript, data.set, logic.*, flow.call)
   code.ts                  runSandboxed: QuickJS sandbox, loaded lazily with a dynamic import

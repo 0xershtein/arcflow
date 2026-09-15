@@ -7,7 +7,8 @@
 		MiniMap,
 		SvelteFlow,
 		useSvelteFlow,
-		type IsValidConnection
+		type IsValidConnection,
+		type OnConnectEnd
 	} from '@xyflow/svelte';
 	import {
 		createEngine,
@@ -21,12 +22,25 @@
 		type Services
 	} from '@arcflow/core';
 	import Icon from './Icon.svelte';
+	import InsertEdge from './InsertEdge.svelte';
 	import JsonPanel from './JsonPanel.svelte';
+	import NoteNode from './NoteNode.svelte';
 	import StepInspector from './StepInspector.svelte';
 	import StepNode from './StepNode.svelte';
 	import StepPalette from './StepPalette.svelte';
+	import StepPicker from './StepPicker.svelte';
 	import { DRAG_TYPE, getEditor, type StepRunStatus } from './context.svelte.js';
-	import { fromCanvas, toCanvas, type CanvasEdge, type CanvasNode, type StepData } from './convert.js';
+	import {
+		NOTE_SIZE,
+		canvasEdge,
+		fromCanvas,
+		isStep,
+		toCanvas,
+		type CanvasEdge,
+		type CanvasItem,
+		type CanvasNode,
+		type StepData
+	} from './convert.js';
 	import { format } from './options.js';
 
 	interface Props {
@@ -59,8 +73,13 @@
 		onRun
 	}: Props = $props();
 
-	const nodeTypes = { step: StepNode };
+	type Point = { x: number; y: number };
+
+	const nodeTypes = { step: StepNode, note: NoteNode };
+	const edgeTypes = { flow: InsertEdge };
 	const BACKGROUND = { dots: BackgroundVariant.Dots, lines: BackgroundVariant.Lines, cross: BackgroundVariant.Cross } as const;
+	const HISTORY_LIMIT = 100;
+	const GAP = 60;
 
 	const editor = getEditor();
 	const registry = editor.registry;
@@ -70,13 +89,24 @@
 	const { screenToFlowPosition, fitView, updateNodeData, deleteElements, setCenter } = useSvelteFlow();
 
 	let meta = $state<Pick<Flow, 'name' | 'description' | 'vars'>>({ name: '' });
-	let nodes = $state.raw<CanvasNode[]>([]);
+	let nodes = $state.raw<CanvasItem[]>([]);
 	let edges = $state.raw<CanvasEdge[]>([]);
 	let selectedId = $state<string | null>(null);
+	let selectedCount = $state(0);
 	let panel = $state<'step' | 'json'>('step');
+	let rootEl = $state<HTMLDivElement>();
 	let canvasEl = $state<HTMLDivElement>();
 	let fileInput = $state<HTMLInputElement>();
 	let notice = $state<string | null>(null);
+
+	type PickerState = {
+		x: number;
+		y: number;
+		at: Point;
+		edgeId?: string;
+		from?: { nodeId: string; handleId: string | null; type: 'source' | 'target' };
+	};
+	let picker = $state<PickerState | null>(null);
 
 	type LogEntry = { nodeId: string; status: 'success' | 'waiting' | 'error'; message?: string; at: number };
 	let running = $state(false);
@@ -88,7 +118,8 @@
 	const current = $derived(fromCanvas(meta, nodes, edges));
 	const issues = $derived(registry.validate(current));
 	const errorCount = $derived(issues.filter((issue) => issue.level === 'error').length);
-	const selected = $derived(nodes.find((node) => node.id === selectedId) ?? null);
+	const steps = $derived(nodes.filter(isStep));
+	const selected = $derived(steps.find((node) => node.id === selectedId) ?? null);
 
 	/** Steps that run before the selected one, nearest first. */
 	const upstream = $derived.by(() => {
@@ -124,6 +155,7 @@
 		nodes = canvas.nodes;
 		edges = canvas.edges;
 		selectedId = null;
+		picker = null;
 		editor.lastRun = null;
 		return { loaded: true, issues: parsed.issues };
 	}
@@ -155,7 +187,7 @@
 		return JSON.parse(JSON.stringify(issues));
 	}
 
-	/** Replaces the canvas with a flow (object or JSON string). */
+	/** Replaces the canvas with a flow (object or JSON string). Undo brings the previous flow back. */
 	export async function load(input: unknown) {
 		closeLog();
 		const result = apply(input);
@@ -192,6 +224,67 @@
 		});
 	});
 
+	// ---------- History ----------
+
+	/** Snapshots of the flow JSON. `committed` is the state the next undo returns from. */
+	let past: string[] = [];
+	let future: string[] = [];
+	let committed = '';
+	let canUndo = $state(false);
+	let canRedo = $state(false);
+	let historyTimer: ReturnType<typeof setTimeout> | undefined;
+
+	const syncHistory = () => {
+		canUndo = past.length > 0;
+		canRedo = future.length > 0;
+	};
+
+	/** Records pending changes as one undo step. Called after a pause, and before undo/redo. */
+	function commit() {
+		clearTimeout(historyTimer);
+		const json = JSON.stringify(current);
+		if (json === committed) return;
+		past.push(committed);
+		if (past.length > HISTORY_LIMIT) past.shift();
+		future = [];
+		committed = json;
+		syncHistory();
+	}
+
+	function restore(json: string) {
+		const flow = JSON.parse(json) as Flow;
+		const picked = new Set(nodes.filter((node) => node.selected).map((node) => node.id));
+		const canvas = toCanvas(flow, registry);
+		committed = json;
+		picker = null;
+		meta = { name: flow.name, description: flow.description, vars: flow.vars };
+		nodes = canvas.nodes.map((node) => (picked.has(node.id) ? { ...node, selected: true } : node));
+		edges = canvas.edges;
+		if (selectedId && !steps.some((node) => node.id === selectedId)) selectedId = null;
+	}
+
+	/** Reverts the last change. */
+	export function undo() {
+		if (readonly) return;
+		commit();
+		const previous = past.pop();
+		if (previous === undefined) return;
+		future.push(committed);
+		restore(previous);
+		syncHistory();
+	}
+
+	/** Re-applies the last undone change. */
+	export function redo() {
+		if (readonly) return;
+		commit();
+		const next = future.pop();
+		if (next === undefined) return;
+		past.push(committed);
+		restore(next);
+		syncHistory();
+	}
+
 	let lastJson = '';
 	let saveTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
@@ -200,7 +293,12 @@
 			if (json === lastJson) return;
 			const initial = lastJson === '';
 			lastJson = json;
-			if (initial) return;
+			if (initial) {
+				committed = json;
+				return;
+			}
+			clearTimeout(historyTimer);
+			if (json !== committed) historyTimer = setTimeout(commit, 400);
 			clearTimeout(saveTimer);
 			saveTimer = setTimeout(() => {
 				onChange?.(JSON.parse(json));
@@ -213,7 +311,10 @@
 			}, 200);
 		});
 	});
-	$effect(() => () => clearTimeout(saveTimer));
+	$effect(() => () => {
+		clearTimeout(saveTimer);
+		clearTimeout(historyTimer);
+	});
 
 	// Reload when the host passes a different flow, ignoring echoes of our own changes.
 	let lastIncoming = untrack(() => incoming);
@@ -239,43 +340,80 @@
 		}, 3500);
 	}
 
-	const makeId = (kind: string) => {
-		const base = (kind.split('.').pop() || 'step').replace(/[^A-Za-z0-9_-]+/g, '-');
-		let id = base;
-		for (let n = 2; nodes.some((node) => node.id === id); n++) id = `${base}-${n}`;
+	// ---------- Adding steps ----------
+
+	const uniqueId = (base: string, taken: Set<string>) => {
+		const stem = base.replace(/-\d+$/, '') || 'step';
+		let id = stem;
+		for (let n = 2; taken.has(id); n++) id = `${stem}-${n}`;
+		taken.add(id);
 		return id;
 	};
 
+	const makeId = (kind: string) =>
+		uniqueId((kind.split('.').pop() || 'step').replace(/[^A-Za-z0-9_-]+/g, '-'), new Set(nodes.map((node) => node.id)));
+
+	const unselect = <T extends { selected?: boolean }>(item: T): T => (item.selected ? { ...item, selected: false } : item);
+
 	function insertNode(node: CanvasNode) {
-		nodes = [...nodes.map((n) => (n.selected ? { ...n, selected: false } : n)), { ...node, selected: true }];
+		nodes = [...nodes.map(unselect), { ...node, selected: true }];
+		edges = edges.map(unselect);
 		selectedId = node.id;
 		panel = 'step';
 	}
 
-	/** Nudges a new step down until it no longer covers an existing one. */
-	function findFreeSpot(start: { x: number; y: number }) {
+	/** Nudges a new item down (or up) until it no longer covers an existing one. */
+	function findFreeSpot(start: Point, size = { width: nodeWidth, height: 110 }, step = 40) {
 		const spot = { ...start };
-		const height = 110;
 		const overlaps = () =>
 			nodes.some((n) => {
-				const w = n.measured?.width ?? nodeWidth;
-				const h = n.measured?.height ?? height;
-				return spot.x < n.position.x + w + 16 && spot.x + nodeWidth + 16 > n.position.x && spot.y < n.position.y + h + 16 && spot.y + height + 16 > n.position.y;
+				const w = n.width ?? n.measured?.width ?? nodeWidth;
+				const h = n.height ?? n.measured?.height ?? 110;
+				return (
+					spot.x < n.position.x + w + 16 &&
+					spot.x + size.width + 16 > n.position.x &&
+					spot.y < n.position.y + h + 16 &&
+					spot.y + size.height + 16 > n.position.y
+				);
 			});
-		for (let i = 0; i < 40 && overlaps(); i++) spot.y += 40;
+		for (let i = 0; i < 60 && overlaps(); i++) spot.y += step;
 		return spot;
 	}
 
-	function addNode(kind: string, at?: { x: number; y: number }) {
+	function viewportCenter(): Point {
+		const rect = canvasEl?.getBoundingClientRect();
+		return screenToFlowPosition({ x: (rect?.left ?? 0) + (rect?.width ?? 0) / 2, y: (rect?.top ?? 0) + (rect?.height ?? 0) / 2 });
+	}
+
+	function newStep(kind: string, position: Point): CanvasNode | null {
 		const def: AnyNodeDefinition | undefined = registry.get(kind);
-		if (!def || readonly) return;
-		let position = at;
-		if (!position) {
-			const rect = canvasEl?.getBoundingClientRect();
-			const center = screenToFlowPosition({ x: (rect?.left ?? 0) + (rect?.width ?? 0) / 2, y: (rect?.top ?? 0) + (rect?.height ?? 0) / 2 });
-			position = findFreeSpot({ x: center.x - nodeWidth / 2, y: center.y - 50 });
-		}
-		insertNode({ id: makeId(kind), type: 'step', position, data: { kind, config: defaultsOf(def.config) } });
+		if (!def) return null;
+		return { id: makeId(kind), type: 'step', position, data: { kind, config: defaultsOf(def.config) } };
+	}
+
+	function addNode(kind: string, at?: Point) {
+		if (readonly) return;
+		const center = viewportCenter();
+		const node = newStep(kind, at ?? findFreeSpot({ x: center.x - nodeWidth / 2, y: center.y - 50 }));
+		if (node) insertNode(node);
+	}
+
+	function addNote() {
+		if (readonly) return;
+		const center = viewportCenter();
+		// Notes go above the steps rather than under them.
+		const spot = findFreeSpot({ x: center.x - NOTE_SIZE.width / 2, y: center.y - NOTE_SIZE.height / 2 }, NOTE_SIZE, -40);
+		const note: CanvasItem = {
+			id: makeId('note'),
+			type: 'note',
+			position: { x: Math.round(spot.x), y: Math.round(spot.y) },
+			...NOTE_SIZE,
+			data: { text: '', editing: true },
+			selected: true
+		};
+		nodes = [note, ...nodes.map(unselect)];
+		edges = edges.map(unselect);
+		selectedId = null;
 	}
 
 	function onDragOver(event: DragEvent) {
@@ -296,6 +434,250 @@
 		c.source !== c.target &&
 		!edges.some((e) => e.source === c.source && (e.sourceHandle ?? 'out') === (c.sourceHandle ?? 'out') && e.target === c.target);
 
+	// ---------- Inserting into connections ----------
+
+	function openPicker(state: Omit<PickerState, 'x' | 'y'>, client: Point) {
+		if (readonly || !canvasEl) return;
+		const rect = canvasEl.getBoundingClientRect();
+		const clamp = (value: number, max: number) => Math.max(8, Math.min(value, max));
+		picker = { ...state, x: clamp(client.x - rect.left + 8, rect.width - 288), y: clamp(client.y - rect.top + 8, rect.height - 368) };
+	}
+
+	editor.onInsert = (edgeId, clientX, clientY) => {
+		openPicker({ edgeId, at: screenToFlowPosition({ x: clientX, y: clientY }) }, { x: clientX, y: clientY });
+	};
+	$effect(() => () => {
+		editor.onInsert = null;
+	});
+
+	const onConnectEnd: OnConnectEnd = (event, connection) => {
+		if (readonly || connection.isValid || connection.toNode || !connection.fromNode || !connection.fromHandle) return;
+		const point = 'changedTouches' in event ? event.changedTouches[0] : event;
+		if (!point) return;
+		const client = { x: point.clientX, y: point.clientY };
+		openPicker(
+			{
+				at: screenToFlowPosition(client),
+				from: { nodeId: connection.fromNode.id, handleId: connection.fromHandle.id ?? null, type: connection.fromHandle.type }
+			},
+			client
+		);
+	};
+
+	/** The port a new step continues from: `done` for loops, otherwise its first output. */
+	function mainOutput(kind: string): string | undefined {
+		const def: AnyNodeDefinition | undefined = registry.get(kind);
+		if (!def) return undefined;
+		const outputs = def.outputs.filter((output) => output.id !== 'error');
+		return def.loop && outputs.some((output) => output.id === 'done') ? 'done' : outputs[0]?.id;
+	}
+
+	/** Steps reachable from `id`, including it. */
+	function downstreamOf(id: string, skipEdge: string) {
+		const found = new Set([id]);
+		let frontier = [id];
+		while (frontier.length) {
+			const next: string[] = [];
+			for (const edge of edges) {
+				if (edge.id === skipEdge || !frontier.includes(edge.source) || found.has(edge.target)) continue;
+				found.add(edge.target);
+				next.push(edge.target);
+			}
+			frontier = next;
+		}
+		return found;
+	}
+
+	function pick(kind: string) {
+		const state = picker;
+		picker = null;
+		if (!state || readonly) return;
+		const out = mainOutput(kind);
+
+		if (state.edgeId) {
+			const edge = edges.find((e) => e.id === state.edgeId);
+			const source = edge && nodes.find((n) => n.id === edge.source);
+			const target = edge && nodes.find((n) => n.id === edge.target);
+			if (!edge || !source || !target) return;
+			const x = source.position.x + (source.measured?.width ?? nodeWidth) + GAP;
+			const node = newStep(kind, { x, y: Math.round((source.position.y + target.position.y) / 2) });
+			if (!node) return;
+			// Make room by moving everything after the connection to the right.
+			const shift = x + nodeWidth + GAP - target.position.x;
+			if (shift > 0) {
+				const moving = downstreamOf(target.id, edge.id);
+				moving.delete(source.id);
+				nodes = nodes.map((n) => (moving.has(n.id) ? { ...n, position: { x: n.position.x + shift, y: n.position.y } } : n));
+			}
+			insertNode(node);
+			edges = [
+				...edges.filter((e) => e.id !== edge.id),
+				canvasEdge(edge.source, edge.sourceHandle ?? 'out', node.id),
+				...(out ? [canvasEdge(node.id, out, edge.target)] : [])
+			];
+			return;
+		}
+
+		if (state.from) {
+			const { from } = state;
+			const position = from.type === 'source' ? { x: state.at.x, y: state.at.y - 30 } : { x: state.at.x - nodeWidth, y: state.at.y - 30 };
+			const node = newStep(kind, position);
+			if (!node) return;
+			insertNode(node);
+			if (from.type === 'source') edges = [...edges, canvasEdge(from.nodeId, from.handleId ?? 'out', node.id)];
+			else if (out) edges = [...edges, canvasEdge(node.id, out, from.nodeId)];
+		}
+	}
+
+	// ---------- Selection, clipboard and shortcuts ----------
+
+	/** Whether keyboard shortcuts and clipboard events belong to this editor (last click was inside it). */
+	let active = false;
+	let pointer: Point | null = null;
+
+	const isTyping = (target: EventTarget | null) =>
+		target instanceof Element && Boolean(target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])'));
+
+	function selectAll() {
+		nodes = nodes.map((node) => (node.selected ? node : { ...node, selected: true }));
+	}
+
+	function clearSelection() {
+		nodes = nodes.map(unselect);
+		edges = edges.map(unselect);
+		selectedId = null;
+	}
+
+	const pickedItems = () => nodes.filter((node) => node.selected);
+
+	/** Selected steps and notes with the connections between them, as flow JSON. */
+	function fragment(items: CanvasItem[]): Flow {
+		const ids = new Set(items.map((item) => item.id));
+		return fromCanvas(meta, items, edges.filter((edge) => ids.has(edge.source) && ids.has(edge.target)));
+	}
+
+	const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+	/**
+	 * Adds a flow (or part of one) next to the current steps with fresh ids, keeping the
+	 * connections between them and pointing `steps.<id>` expressions at the renamed steps.
+	 */
+	function insertFragment(input: unknown, place: { offset: number } | { at: Point }): number {
+		if (readonly || typeof input !== 'object' || input === null || !Array.isArray((input as { nodes?: unknown }).nodes)) return 0;
+		const parsed = registry.parse({ name: meta.name, edges: [], ...input, version: 1 });
+		const flow = parsed.flow;
+		if (!flow || (flow.nodes.length === 0 && !flow.annotations?.length)) return 0;
+
+		const taken = new Set(nodes.map((node) => node.id));
+		const rename = new Map<string, string>();
+		for (const item of [...flow.nodes, ...(flow.annotations ?? [])]) rename.set(item.id, uniqueId(item.id, taken));
+		const renamed = [...rename].filter(([from, to]) => from !== to);
+		const retarget = (config: Record<string, unknown>) => {
+			if (!renamed.length) return config;
+			let json = JSON.stringify(config);
+			for (const [from, to] of renamed) json = json.replace(new RegExp(`\\bsteps\\.${escapeRegExp(from)}(?![A-Za-z0-9_-])`, 'g'), `steps.${to}`);
+			return JSON.parse(json) as Record<string, unknown>;
+		};
+
+		const canvas = toCanvas(
+			{
+				...flow,
+				nodes: flow.nodes.map((node) => ({ ...node, id: rename.get(node.id)!, config: retarget(node.config) })),
+				edges: flow.edges
+					.filter((edge) => rename.has(edge.from) && rename.has(edge.to))
+					.map((edge) => ({ ...edge, from: rename.get(edge.from)!, to: rename.get(edge.to)! })),
+				annotations: flow.annotations?.map((note) => ({ ...note, id: rename.get(note.id)! }))
+			},
+			registry
+		);
+
+		let dx: number;
+		let dy: number;
+		if ('offset' in place) {
+			dx = dy = place.offset;
+		} else {
+			dx = place.at.x - Math.min(...canvas.nodes.map((node) => node.position.x));
+			dy = place.at.y - Math.min(...canvas.nodes.map((node) => node.position.y));
+		}
+		const placed = canvas.nodes.map((node) => ({
+			...node,
+			position: { x: Math.round(node.position.x + dx), y: Math.round(node.position.y + dy) },
+			selected: true
+		}));
+		const existing = nodes.map(unselect);
+		nodes = [...placed.filter((node) => !isStep(node)), ...existing, ...placed.filter(isStep)];
+		edges = [...edges.map(unselect), ...canvas.edges];
+		return placed.length;
+	}
+
+	function duplicate() {
+		const items = pickedItems();
+		if (items.length) insertFragment(fragment(items), { offset: 40 });
+	}
+
+	function deleteSelection() {
+		if (readonly) return;
+		deleteElements({ nodes: pickedItems().map((node) => ({ id: node.id })), edges: edges.filter((edge) => edge.selected) });
+	}
+
+	function onWindowPointerDown(event: PointerEvent) {
+		active = Boolean(rootEl?.contains(event.target as Node));
+	}
+
+	function onWindowKeydown(event: KeyboardEvent) {
+		if (!active || isTyping(event.target)) return;
+		if (event.key === 'Escape') {
+			if (picker) picker = null;
+			else clearSelection();
+			return;
+		}
+		if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+		switch (event.key.toLowerCase()) {
+			case 'z':
+				event.preventDefault();
+				if (event.shiftKey) redo();
+				else undo();
+				break;
+			case 'y':
+				event.preventDefault();
+				redo();
+				break;
+			case 'd':
+				event.preventDefault();
+				duplicate();
+				break;
+			case 'a':
+				event.preventDefault();
+				selectAll();
+				break;
+		}
+	}
+
+	function onClipboard(event: ClipboardEvent) {
+		if (!active || isTyping(event.target) || !event.clipboardData) return;
+		if (event.type === 'paste') {
+			const text = event.clipboardData.getData('text/plain');
+			let data: unknown;
+			try {
+				data = JSON.parse(text);
+			} catch {
+				return;
+			}
+			const center = viewportCenter();
+			const at = pointer ? screenToFlowPosition(pointer) : { x: center.x - nodeWidth / 2, y: center.y - 50 };
+			if (insertFragment(data, { at })) event.preventDefault();
+			return;
+		}
+		if (document.getSelection()?.toString()) return; // copying page text
+		const items = pickedItems();
+		if (!items.length) return;
+		event.preventDefault();
+		event.clipboardData.setData('text/plain', JSON.stringify(fragment(items), null, 2));
+		if (event.type === 'cut') deleteSelection();
+	}
+
+	// ---------- Editing the selected step ----------
+
 	function updateSelected(update: (data: StepData) => Partial<StepData>) {
 		if (selectedId && !readonly) updateNodeData(selectedId, (node) => update(node.data as StepData));
 	}
@@ -314,16 +696,6 @@
 		selectedId = null;
 	}
 
-	function duplicateSelected() {
-		if (!selected || readonly) return;
-		insertNode({
-			id: makeId(selected.data.kind),
-			type: 'step',
-			position: { x: selected.position.x + 40, y: selected.position.y + 40 },
-			data: structuredClone($state.snapshot(selected.data)) as StepData
-		});
-	}
-
 	function focusNode(id: string) {
 		const node = nodes.find((n) => n.id === id);
 		if (!node) return;
@@ -332,6 +704,8 @@
 		panel = 'step';
 		setCenter(node.position.x + nodeWidth / 2, node.position.y + 60, { zoom: 1, duration: 400 });
 	}
+
+	// ---------- Test runs ----------
 
 	function resetRunVisuals() {
 		editor.runStatus = {};
@@ -443,12 +817,14 @@
 	}
 
 	function stepName(nodeId: string) {
-		const node = nodes.find((n) => n.id === nodeId);
+		const node = steps.find((n) => n.id === nodeId);
 		return node?.data.label || (node && registry.get(node.data.kind)?.title) || nodeId;
 	}
 </script>
 
-<div class="fb-root" class:no-toolbar={!ui.toolbar} data-theme={themeMode} style={themeStyle}>
+<svelte:window onpointerdown={onWindowPointerDown} onkeydown={onWindowKeydown} oncopy={onClipboard} oncut={onClipboard} onpaste={onClipboard} />
+
+<div class="fb-root" class:no-toolbar={!ui.toolbar} data-theme={themeMode} style={themeStyle} bind:this={rootEl}>
 	{#if ui.toolbar}
 		<header class="fb-topbar">
 			{#if brand}
@@ -466,6 +842,11 @@
 
 			<div class="fb-spacer"></div>
 
+			{#if !readonly}
+				<button class="fb-icon-btn" onclick={undo} disabled={!canUndo} aria-label={labels.undo} title="{labels.undo} (⌘Z)"><Icon name="undo" size={16} /></button>
+				<button class="fb-icon-btn" onclick={redo} disabled={!canRedo} aria-label={labels.redo} title="{labels.redo} (⇧⌘Z)"><Icon name="redo" size={16} /></button>
+				<button class="fb-btn" onclick={addNote}><Icon name="note" size={15} />{labels.addNote}</button>
+			{/if}
 			{#if ui.json}
 				<button class="fb-btn" class:is-on={panel === 'json'} onclick={() => (panel = panel === 'json' ? 'step' : 'json')}>{labels.json}</button>
 			{/if}
@@ -493,11 +874,21 @@
 			<StepPalette onadd={(kind) => addNode(kind)} />
 		{/if}
 
-		<div class="fb-canvas" bind:this={canvasEl} ondragover={onDragOver} ondrop={onDrop} role="application" aria-label={meta.name}>
+		<div
+			class="fb-canvas"
+			bind:this={canvasEl}
+			ondragover={onDragOver}
+			ondrop={onDrop}
+			onpointermove={(event) => (pointer = { x: event.clientX, y: event.clientY })}
+			onpointerleave={() => (pointer = null)}
+			role="application"
+			aria-label={meta.name}
+		>
 			<SvelteFlow
 				bind:nodes
 				bind:edges
 				{nodeTypes}
+				{edgeTypes}
 				{isValidConnection}
 				colorMode={themeMode}
 				fitView
@@ -507,9 +898,11 @@
 				nodesDraggable={!readonly}
 				nodesConnectable={!readonly}
 				deleteKey={readonly ? null : ['Backspace', 'Delete']}
-				defaultEdgeOptions={{ type: 'default' }}
+				defaultEdgeOptions={{ type: 'flow' }}
+				onconnectend={onConnectEnd}
 				onselectionchange={({ nodes: picked }) => {
-					selectedId = picked.length === 1 ? picked[0].id : null;
+					selectedCount = picked.length;
+					selectedId = picked.length === 1 && picked[0].type === 'step' ? picked[0].id : null;
 					if (selectedId) panel = 'step';
 				}}
 			>
@@ -528,6 +921,25 @@
 				<div class="fb-empty">
 					<div><strong>{labels.emptyTitle}</strong>{labels.emptyBody}</div>
 				</div>
+			{/if}
+
+			{#if selectedCount > 1 && !readonly}
+				<div class="fb-selection-bar" role="toolbar" aria-label={format(labels.selectedCount, { count: selectedCount })}>
+					<span>{format(labels.selectedCount, { count: selectedCount })}</span>
+					<button class="fb-btn ghost" onclick={duplicate}><Icon name="copy" size={14} />{labels.duplicate}</button>
+					<button class="fb-btn ghost danger" onclick={deleteSelection}><Icon name="trash" size={14} />{labels.delete}</button>
+				</div>
+			{/if}
+
+			{#if picker}
+				<StepPicker
+					x={picker.x}
+					y={picker.y}
+					title={picker.edgeId ? labels.pickToInsert : labels.pickToConnect}
+					triggers={picker.from?.type === 'target'}
+					onpick={pick}
+					onclose={() => (picker = null)}
+				/>
 			{/if}
 
 			{#if logOpen}
@@ -580,7 +992,7 @@
 				onlabel={(label) => updateSelected(() => ({ label }))}
 				ontoggle={() => updateSelected((data) => ({ disabled: !data.disabled }))}
 				ondelete={removeSelected}
-				onduplicate={duplicateSelected}
+				onduplicate={duplicate}
 				onfocus={focusNode}
 			/>
 		{/if}

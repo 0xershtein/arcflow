@@ -18,6 +18,10 @@ export interface EditorInstance {
 	getIssues(): Issue[];
 	/** Updates options in place — theme, ui, labels, readonly, callbacks. `steps` cannot change. */
 	setOptions(options: Partial<Omit<EditorOptions, 'steps'>>): void;
+	/** Reverts the last change (also ⌘Z / Ctrl+Z on the canvas). */
+	undo(): void;
+	/** Re-applies the last undone change (⇧⌘Z / Ctrl+Y). */
+	redo(): void;
 	/** Starts a simulated run on the canvas, or stops the one in progress. */
 	run(): Promise<void>;
 	/** Removes the editor from the page. */
@@ -81,6 +85,8 @@ export function createEditor(target: HTMLElement | string, options: CreateEditor
 		setOptions: (next) => {
 			current = { ...current, ...next, steps: current.steps };
 		},
+		undo: () => component.undo(),
+		redo: () => component.redo(),
 		run: () => component.run(),
 		destroy: () => {
 			unmount(component);

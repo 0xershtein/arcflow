@@ -203,7 +203,15 @@ export const defaultLabels = {
 	notRunYet: 'Not run yet',
 	preview: 'Preview',
 	previewNeedsRun: 'Run a test to preview this value.',
-	waitingFor: 'Waiting: {reason}'
+	waitingFor: 'Waiting: {reason}',
+	undo: 'Undo',
+	redo: 'Redo',
+	addNote: 'Note',
+	notePlaceholder: 'Write a note…',
+	selectedCount: '{count} selected',
+	insertStep: 'Insert a step',
+	pickToInsert: 'Insert a step here',
+	pickToConnect: 'Add a connected step'
 };
 
 export type Labels = { [K in keyof typeof defaultLabels]: string };

@@ -29,6 +29,8 @@ export class EditorState {
 	issuesByNode = $state<Record<string, Issue[]>>({});
 	/** The most recent test run, used to inspect step data, suggest expressions and preview them. */
 	lastRun = $state.raw<RunState | null>(null);
+	/** Opens the step picker to insert a step into a connection (screen coordinates). Set by the workspace. */
+	onInsert: ((edgeId: string, clientX: number, clientY: number) => void) | null = null;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	constructor(registry: Registry<any>, labels: Labels, ui: ResolvedUi, readonly: boolean) {

@@ -125,6 +125,27 @@ export function flowSchema(nodes: readonly AnyNodeDefinition[], options: SchemaO
 			description: { type: 'string' },
 			vars: { type: 'object', description: 'Initial run variables, readable as {{ vars.name }}.' },
 			nodes: { type: 'array', items: { oneOf: variants } },
+			annotations: {
+				type: 'array',
+				description: 'Sticky notes shown on the canvas. Ignored when the flow runs.',
+				items: {
+					type: 'object',
+					properties: {
+						id: { type: 'string', pattern: '^[A-Za-z0-9_-]+$' },
+						text: { type: 'string' },
+						position: {
+							type: 'object',
+							properties: { x: { type: 'number' }, y: { type: 'number' } },
+							required: ['x', 'y'],
+							additionalProperties: false
+						},
+						width: { type: 'number', exclusiveMinimum: 0 },
+						height: { type: 'number', exclusiveMinimum: 0 }
+					},
+					required: ['id', 'text'],
+					additionalProperties: false
+				}
+			},
 			edges: {
 				type: 'array',
 				items: {

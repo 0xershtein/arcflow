@@ -123,6 +123,24 @@ describe('parse & validate', () => {
 	});
 });
 
+describe('annotations', () => {
+	it('keeps sticky notes and rejects ids that clash with nodes', () => {
+		const flow = {
+			version: 1,
+			name: 'Notes',
+			nodes: [{ id: 'start', kind: 'test.start' }],
+			edges: [],
+			annotations: [
+				{ id: 'why', text: 'Runs every Monday', position: { x: 10, y: -80 }, width: 240 },
+				{ id: 'start', text: 'clash' }
+			]
+		};
+		const result = registry.parse(flow);
+		expect(result.flow?.annotations).toEqual([{ id: 'why', text: 'Runs every Monday', position: { x: 10, y: -80 }, width: 240 }]);
+		expect(codes(result.issues)).toContain('duplicate_id@annotations[1].id');
+	});
+});
+
 describe('LLM helpers', () => {
 	it('produces a JSON Schema with one variant per step kind', () => {
 		const schema = registry.toJSONSchema() as {

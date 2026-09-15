@@ -28,6 +28,15 @@ export interface FlowEdge {
 	to: string;
 }
 
+/** A sticky note on the canvas. Ignored when the flow runs. */
+export interface FlowAnnotation {
+	id: string;
+	text: string;
+	position: Position;
+	width?: number;
+	height?: number;
+}
+
 export interface Flow {
 	version: typeof FLOW_VERSION;
 	name: string;
@@ -36,6 +45,7 @@ export interface Flow {
 	vars?: Record<string, unknown>;
 	nodes: FlowNode[];
 	edges: FlowEdge[];
+	annotations?: FlowAnnotation[];
 }
 
 export const ID_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -128,8 +138,30 @@ export function normalizeFlow(input: unknown): { flow: Flow | null; issues: Issu
 		edges.push({ id, from, port, to });
 	});
 
+	const annotations: FlowAnnotation[] = [];
+	if (input.annotations !== undefined && !Array.isArray(input.annotations)) {
+		push('error', 'invalid_document', 'annotations', '"annotations" must be an array.');
+	}
+	(Array.isArray(input.annotations) ? input.annotations : []).forEach((raw: unknown, index) => {
+		const path = `annotations[${index}]`;
+		if (!isObject(raw)) return push('error', 'invalid_type', path, 'Each annotation must be an object.');
+		if (typeof raw.id !== 'string' || !ID_PATTERN.test(raw.id)) {
+			return push('error', 'invalid_type', `${path}.id`, 'Annotation id must use only letters, digits, "-" or "_".');
+		}
+		if (ids.has(raw.id)) return push('error', 'duplicate_id', `${path}.id`, `Id "${raw.id}" is already used by a node or annotation.`);
+		ids.add(raw.id);
+		const position = isObject(raw.position) && Number.isFinite(raw.position.x) && Number.isFinite(raw.position.y)
+			? { x: Number(raw.position.x), y: Number(raw.position.y) }
+			: { x: 0, y: 0 };
+		const annotation: FlowAnnotation = { id: raw.id, text: typeof raw.text === 'string' ? raw.text : '', position };
+		if (Number(raw.width) > 0) annotation.width = Number(raw.width);
+		if (Number(raw.height) > 0) annotation.height = Number(raw.height);
+		annotations.push(annotation);
+	});
+
 	const flow: Flow = { version: FLOW_VERSION, name, nodes, edges };
 	if (typeof input.description === 'string' && input.description) flow.description = input.description;
 	if (isObject(input.vars)) flow.vars = { ...input.vars };
+	if (annotations.length) flow.annotations = annotations;
 	return { flow, issues };
 }

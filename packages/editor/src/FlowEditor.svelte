@@ -65,6 +65,16 @@
 		return workspace!.load(input);
 	}
 
+	/** Reverts the last change. */
+	export function undo() {
+		workspace!.undo();
+	}
+
+	/** Re-applies the last undone change. */
+	export function redo() {
+		workspace!.redo();
+	}
+
 	/** Starts a simulated run on the canvas, or stops the one in progress. */
 	export function run(): Promise<void> {
 		return workspace!.run();

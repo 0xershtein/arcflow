@@ -55,6 +55,8 @@ Done when: a flow saved in the editor fires from a real webhook and a cron sched
 
 Done when: a new user can build the M2 example flow end to end without typing an expression by hand.
 
+**Status: data and editing done; server mode next.** The inspector has Settings / Input / Output tabs with JSON trees per step and loop iteration, drag-to-map values, `{{` autocomplete from run data and live previews. Editing has undo/redo, copy/cut/paste as flow JSON (including fragments from an LLM), duplicate, select all, a selection bar, `+` on connections, drop-a-connection-to-add, and sticky notes stored as `annotations`. Sub-flow navigation and server mode remain.
+
 ## M5 — AI (`@arcflow/ai`, `@arcflow/mcp`)
 
 - `generateFlow(prompt)` and `editFlow(flow, instruction)` returning validated flows or JSON patch operations, with an automatic repair loop on issues.

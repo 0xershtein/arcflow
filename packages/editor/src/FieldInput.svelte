@@ -129,8 +129,8 @@
 	/>
 {:else if field.kind === 'json'}
 	<ExpressionInput
-		value={typeof value === 'string' ? value : value === undefined ? '' : JSON.stringify(value, null, 2)}
-		multiline
+		value={typeof value === 'string' ? value : value === undefined ? '' : JSON.stringify(value, null, compact ? 0 : 2)}
+		multiline={!compact}
 		mono
 		placeholder={placeholder ?? field.placeholder ?? '{ }'}
 		{disabled}
