@@ -14,6 +14,10 @@
 			"types": "./src/svelte.ts",
 			"svelte": "./src/svelte.ts",
 			"default": "./src/svelte.ts"
+		},
+		"./app": {
+			"types": "./dist/svelte/app.d.ts",
+			"default": "./dist/app.js"
 		}
 	},
 	"publishConfig": {
@@ -27,6 +31,10 @@
 				"types": "./dist/svelte/svelte.d.ts",
 				"svelte": "./dist/svelte/svelte.js",
 				"default": "./dist/svelte/svelte.js"
+			},
+			"./app": {
+				"types": "./dist/svelte/app.d.ts",
+				"default": "./dist/app.js"
 			}
 		}
 	},
@@ -34,7 +42,7 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "vite build && svelte-package -i src -o dist/svelte",
+		"build": "vite build && vite build -c vite.app.config.ts && svelte-package -i src -o dist/svelte",
 		"check": "svelte-check --tsconfig ./tsconfig.json"
 	},
 	"dependencies": {

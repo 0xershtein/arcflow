@@ -3,7 +3,7 @@ import { bearerAuth } from 'hono/bearer-auth';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { streamSSE } from 'hono/streaming';
-import { FlowError, hasErrors, shapeSchema, type AnyNodeDefinition, type Registry, type RunEvent } from '@arcflow/core';
+import { FlowError, hasErrors, shapeSchema, toManifest, type AnyNodeDefinition, type Registry, type RunEvent } from '@arcflow/core';
 import type { HttpResponseData } from '@arcflow/nodes';
 import { HttpError, badRequest, conflict, notFound } from './errors.js';
 import { runResult, type RunManager } from './runs.js';
@@ -119,7 +119,9 @@ export function createApp(ctx: AppContext) {
 				config: shapeSchema(def.config)
 			})),
 			schema: registry.toJSONSchema(),
-			catalog: registry.describe()
+			catalog: registry.describe(),
+			// Everything a browser editor needs to show and validate flows, minus the code.
+			manifest: toManifest(registry)
 		})
 	);
 

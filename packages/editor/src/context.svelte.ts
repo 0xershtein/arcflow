@@ -1,5 +1,6 @@
 import { getContext, setContext } from 'svelte';
 import type { Issue, Registry, RunState } from '@arcflow/core';
+import type { Backend, ServerCredential } from './backend.js';
 import type { Labels, ResolvedUi } from './options.js';
 
 export type StepRunStatus = 'running' | 'success' | 'waiting' | 'error' | 'skipped';
@@ -31,6 +32,14 @@ export class EditorState {
 	lastRun = $state.raw<RunState | null>(null);
 	/** Opens the step picker to insert a step into a connection (screen coordinates). Set by the workspace. */
 	onInsert: ((edgeId: string, clientX: number, clientY: number) => void) | null = null;
+	/** The flow server, when the editor runs in server mode. */
+	backend = $state.raw<Backend | null>(null);
+	/** Credentials on the server, for `f.credential` fields. */
+	credentials = $state.raw<ServerCredential[]>([]);
+	/** Set when the server has no secret configured, so credentials cannot be stored. */
+	credentialsOff = $state(false);
+	/** Asks the workspace to store a new credential of this type; resolves with its id. */
+	onCreateCredential: ((type: string, name: string, value: unknown) => Promise<string | null>) | null = null;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	constructor(registry: Registry<any>, labels: Labels, ui: ResolvedUi, readonly: boolean) {

@@ -50,6 +50,33 @@ The container needs a height; the editor fills it. Styles are injected into the 
 
 Shortcuts apply to the editor that was clicked last, and never while typing in a field.
 
+## Server mode
+
+Pass a `backend` and the editor opens and saves flows on a server, activates them, picks stored credentials, runs them for real and replays past runs:
+
+```ts
+import { createEditor, createHttpBackend } from '@arcflow/editor';
+
+createEditor('#editor', {
+	steps,
+	backend: createHttpBackend('http://localhost:8787', { apiKey })
+});
+```
+
+The toolbar then has a flow list with Save and Activate, an Executions panel with the run history, and a Run button that runs on the server and streams events onto the canvas — Test run still simulates locally. Credential fields become a picker over the server's credentials. `Backend` is a plain interface, so your own API can implement it instead.
+
+Without a build step, let the server hand over its step catalog too:
+
+```html
+<div id="app" style="height: 100vh"></div>
+<script type="module">
+	import { createArcflowApp } from 'https://esm.sh/@arcflow/editor/app';
+	createArcflowApp('#app', { url: 'http://localhost:8787' });
+</script>
+```
+
+`npx arcflow dev` serves exactly this page next to the API.
+
 Exports `lightColors`, `darkColors`, `defaultLabels` and `defaultUi` so you can start from the defaults.
 
 Svelte apps can import the component instead: `import { FlowEditor } from '@arcflow/editor/svelte'`.

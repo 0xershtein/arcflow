@@ -55,7 +55,7 @@ Done when: a flow saved in the editor fires from a real webhook and a cron sched
 
 Done when: a new user can build the M2 example flow end to end without typing an expression by hand.
 
-**Status: data and editing done; server mode next.** The inspector has Settings / Input / Output tabs with JSON trees per step and loop iteration, drag-to-map values, `{{` autocomplete from run data and live previews. Editing has undo/redo, copy/cut/paste as flow JSON (including fragments from an LLM), duplicate, select all, a selection bar, `+` on connections, drop-a-connection-to-add, and sticky notes stored as `annotations`. Sub-flow navigation and server mode remain.
+**Status: done except sub-flow navigation.** The inspector has Settings / Input / Output tabs with JSON trees per step and loop iteration, drag-to-map values, `{{` autocomplete from run data and live previews. Editing has undo/redo, copy/cut/paste as flow JSON (including fragments from an LLM), duplicate, select all, a selection bar, `+` on connections, drop-a-connection-to-add, and sticky notes stored as `annotations`. Server mode adds a `backend` option (`createHttpBackend` for `@arcflow/server`, or your own API): flow list, Save, Activate, credential picker, execution history, and a Run button that runs on the server and streams events onto the canvas. `registryFromManifest` rebuilds the step catalog in the browser from `GET /api/steps`, so `arcflow dev` serves the whole editor next to the API with no build step.
 
 ## M5 — AI (`@arcflow/ai`, `@arcflow/mcp`)
 

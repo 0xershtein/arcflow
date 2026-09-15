@@ -10,6 +10,12 @@ ARCFLOW_SECRET="a long random string" npx arcflow serve --db ./arcflow.db --step
 
 Loads the standard steps plus any modules passed with `--steps` (exporting a pack or step definitions), stores everything in one SQLite file, and listens on `http://127.0.0.1:8787`. `--api-key` protects `/api`; `--cors` allows a browser editor on another origin.
 
+```sh
+npx arcflow dev
+```
+
+Same server with the editor on the same address: open `http://127.0.0.1:8787` and build flows against your real steps, credentials and run history. The page takes its step catalog from `GET /api/steps`, so custom steps passed with `--steps` show up with no build step. It needs `@arcflow/editor` installed next to the server.
+
 ## In your app
 
 ```ts
@@ -33,7 +39,7 @@ await serveNode(server, { port: 8787 });
 
 | | |
 | --- | --- |
-| `GET /api/steps` | Step catalog: config schemas, outputs, the flow JSON Schema and a Markdown catalog for prompts |
+| `GET /api/steps` | Step catalog: config schemas, outputs, the flow JSON Schema, a Markdown catalog for prompts, and a `manifest` that `registryFromManifest` turns back into a registry in the browser |
 | `POST /api/flows/validate` | Parse and validate a flow without saving it |
 | `GET /api/flows`, `POST /api/flows` | List flows; create one from `{ id?, flow, active? }` |
 | `GET/PUT/DELETE /api/flows/:id` | Read (with issues), update (new version), delete |

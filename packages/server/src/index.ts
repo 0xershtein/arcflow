@@ -5,4 +5,5 @@ export { Scheduler, type SchedulerOptions, type TickResult } from './scheduler.j
 export { MemoryStorage } from './storage/memory.js';
 export { createSecretBox, type SecretBox } from './secrets.js';
 export { HttpError } from './errors.js';
+export { createEditorUi, type EditorUiOptions } from './ui.js';
 export type * from './types.js';

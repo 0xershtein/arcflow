@@ -1,3 +1,4 @@
+import type { Backend } from './backend.js';
 import {
 	createRegistry,
 	type AnyNodeDefinition,
@@ -111,6 +112,10 @@ export interface UiOptions {
 	json?: boolean;
 	/** "Import" and "Export" buttons. */
 	importExport?: boolean;
+	/** Flow list, Save and Activate — with a `backend` only. */
+	flows?: boolean;
+	/** Run history panel — with a `backend` only. */
+	executions?: boolean;
 	/** Zoom buttons on the canvas. */
 	controls?: boolean;
 	minimap?: boolean;
@@ -126,6 +131,8 @@ export const defaultUi: ResolvedUi = {
 	testRun: true,
 	json: true,
 	importExport: true,
+	flows: true,
+	executions: true,
 	controls: true,
 	minimap: false,
 	background: 'dots'
@@ -211,7 +218,40 @@ export const defaultLabels = {
 	selectedCount: '{count} selected',
 	insertStep: 'Insert a step',
 	pickToInsert: 'Insert a step here',
-	pickToConnect: 'Add a connected step'
+	pickToConnect: 'Add a connected step',
+	flows: 'Flows',
+	newFlow: 'New flow',
+	noFlows: 'No flows on the server yet.',
+	save: 'Save',
+	saving: 'Saving…',
+	saved: 'Saved “{name}”.',
+	savedState: 'Saved',
+	unsaved: 'Unsaved',
+	saveFirst: 'Save the flow first.',
+	active: 'Active',
+	paused: 'Paused',
+	activate: 'Activate',
+	deactivate: 'Pause',
+	activeHint: 'Active flows answer webhooks and schedules.',
+	versionLabel: 'v{version}',
+	deleteFlowConfirm: 'Delete “{name}” and its runs from the server?',
+	executions: 'Executions',
+	noExecutions: 'No runs yet. Press Run to start one.',
+	runLive: 'Run',
+	liveRun: 'Live run — steps really happen',
+	openExecution: 'Open',
+	backToEditing: 'Back to editing',
+	viewingRun: 'Viewing run {id}',
+	cancelRun: 'Cancel run',
+	resumeStep: 'Resume',
+	credentials: 'Credentials',
+	noCredential: 'None',
+	newCredential: 'New credential…',
+	credentialValue: 'Value',
+	credentialsOff: 'Credentials are disabled on this server.',
+	create: 'Create',
+	cancel: 'Cancel',
+	serverError: 'Server: {error}'
 };
 
 export type Labels = { [K in keyof typeof defaultLabels]: string };
@@ -226,6 +266,11 @@ export interface EditorOptions {
 	theme?: ThemeMode | ThemeOptions;
 	/** Show or hide parts of the interface. */
 	ui?: UiOptions;
+	/**
+	 * Connects the editor to a flow server: open and save flows, activate them, pick credentials,
+	 * run for real and watch past runs. `createHttpBackend(url)` talks to `@arcflow/server`.
+	 */
+	backend?: Backend;
 	/** Replace any interface text, e.g. to translate the editor. */
 	labels?: Partial<Labels>;
 	/** View only: no adding, moving, connecting or editing. */

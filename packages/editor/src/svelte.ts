@@ -10,3 +10,16 @@ export * from './options.js';
 export { toCanvas, fromCanvas, type CanvasEdge, type CanvasItem, type CanvasNode, type CanvasNote, type NoteData, type StepData } from './convert.js';
 export { EditorState, getEditor, type StepRunStatus } from './context.svelte.js';
 export { icons, type IconName } from './icons.js';
+export {
+	BackendError,
+	createHttpBackend,
+	type Backend,
+	type HttpBackendOptions,
+	type RunQuery,
+	type ServerCredential,
+	type ServerFlow,
+	type ServerFlowSummary,
+	type ServerRun,
+	type ServerRunSummary,
+	type StartRunOptions
+} from './backend.js';

@@ -24,6 +24,8 @@ export interface EditorInstance {
 	redo(): void;
 	/** Starts a simulated run on the canvas, or stops the one in progress. */
 	run(): Promise<void>;
+	/** With a `backend`: saves the flow and runs it for real, or cancels the run in progress. */
+	runOnServer(): Promise<void>;
 	/** Removes the editor from the page. */
 	destroy(): void;
 }
@@ -45,6 +47,7 @@ const OPTION_KEYS = [
 	'flow',
 	'theme',
 	'ui',
+	'backend',
 	'labels',
 	'readonly',
 	'storageKey',
@@ -88,6 +91,7 @@ export function createEditor(target: HTMLElement | string, options: CreateEditor
 		undo: () => component.undo(),
 		redo: () => component.redo(),
 		run: () => component.run(),
+		runOnServer: () => component.runOnServer(),
 		destroy: () => {
 			unmount(component);
 		}

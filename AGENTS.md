@@ -43,6 +43,9 @@ packages/editor/src        the editor (Svelte 5 inside, framework-free outside)
   NoteNode.svelte          sticky notes (flow.annotations, ignored by the engine)
   InsertEdge.svelte        connection with the "+" insert button
   StepPicker.svelte        searchable step popover used by "+" and drop-to-add
+  backend.ts               Backend interface + createHttpBackend (fetch + SSE, no server dependency)
+  ServerBar / ExecutionsPanel  server mode: flow list, Save, Activate, run history
+  app.ts                   createArcflowApp: catalog from the server → registry → editor (dist/app.js)
   theme.css, editor.css    all colors via --fb-* variables
 packages/nodes/src         standard steps (kinds trigger.*, http.*, code.javascript, data.set, logic.*, flow.call)
   code.ts                  runSandboxed: QuickJS sandbox, loaded lazily with a dynamic import

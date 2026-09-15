@@ -16,6 +16,7 @@
 		flow,
 		theme,
 		ui,
+		backend,
 		labels,
 		readonly = false,
 		storageKey,
@@ -35,6 +36,7 @@
 		editor.labels = resolveLabels(labels);
 		editor.ui = resolveUi(ui);
 		editor.readonly = readonly;
+		editor.backend = backend ?? null;
 	});
 
 	const darkQuery = typeof window !== 'undefined' ? window.matchMedia?.('(prefers-color-scheme: dark)') : undefined;
@@ -78,6 +80,11 @@
 	/** Starts a simulated run on the canvas, or stops the one in progress. */
 	export function run(): Promise<void> {
 		return workspace!.run();
+	}
+
+	/** Server mode: saves the flow and runs it for real, or cancels the run in progress. */
+	export function runOnServer(): Promise<void> {
+		return workspace!.runOnServer();
 	}
 </script>
 

@@ -18,6 +18,7 @@
 		type Flow,
 		type Issue,
 		type RunEvent,
+		type RunState,
 		type RunStatus,
 		type Services
 	} from '@arcflow/core';
@@ -29,6 +30,9 @@
 	import StepNode from './StepNode.svelte';
 	import StepPalette from './StepPalette.svelte';
 	import StepPicker from './StepPicker.svelte';
+	import ExecutionsPanel from './ExecutionsPanel.svelte';
+	import ServerBar from './ServerBar.svelte';
+	import { BackendError, type ServerFlowSummary, type ServerRunSummary } from './backend.js';
 	import { DRAG_TYPE, getEditor, type StepRunStatus } from './context.svelte.js';
 	import {
 		NOTE_SIZE,
@@ -98,6 +102,17 @@
 	let canvasEl = $state<HTMLDivElement>();
 	let fileInput = $state<HTMLInputElement>();
 	let notice = $state<string | null>(null);
+
+	const backend = $derived(editor.backend);
+	let serverFlows = $state.raw<ServerFlowSummary[]>([]);
+	let serverFlow = $state.raw<ServerFlowSummary | null>(null);
+	let serverRuns = $state.raw<ServerRunSummary[]>([]);
+	let serverBusy = $state(false);
+	let runsOpen = $state(false);
+	let viewingRunId = $state<string | null>(null);
+	/** The flow as it is on the server, to tell edited from saved. */
+	let savedJson = $state('');
+	let stopWatching: (() => void) | null = null;
 
 	type PickerState = {
 		x: number;
@@ -338,6 +353,231 @@
 		setTimeout(() => {
 			if (notice === message) notice = null;
 		}, 3500);
+	}
+
+	// ---------- Server mode ----------
+
+	const dirty = $derived(savedJson !== JSON.stringify(current));
+	const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
+	async function withServer<T>(work: () => Promise<T>): Promise<T | null> {
+		serverBusy = true;
+		try {
+			return await work();
+		} catch (error) {
+			flash(format(labels.serverError, { error: errorText(error) }));
+			return null;
+		} finally {
+			serverBusy = false;
+		}
+	}
+
+	async function refreshFlows() {
+		if (!backend) return;
+		const list = await withServer(() => backend.listFlows());
+		if (list) serverFlows = list;
+	}
+
+	async function refreshRuns() {
+		const flow = serverFlow;
+		if (!backend || !flow) return;
+		const list = await withServer(() => backend.listRuns({ flowId: flow.id, limit: 25 }));
+		if (list) serverRuns = list;
+	}
+
+	async function refreshCredentials() {
+		if (!backend) return;
+		try {
+			editor.credentials = await backend.listCredentials();
+		} catch {
+			// credentials are optional; credential fields fall back to a plain id input
+		}
+	}
+
+	$effect(() => {
+		if (!backend) return;
+		untrack(() => {
+			refreshFlows();
+			refreshCredentials();
+		});
+	});
+
+	$effect(() => () => stopWatching?.());
+
+	editor.onCreateCredential = async (type, name, value) => {
+		if (!backend) return null;
+		try {
+			const created = await backend.createCredential({ name, type, value });
+			editor.credentials = [...editor.credentials, created];
+			return created.id;
+		} catch (error) {
+			if (error instanceof BackendError && error.status === 503) editor.credentialsOff = true;
+			flash(format(labels.serverError, { error: errorText(error) }));
+			return null;
+		}
+	};
+
+	/** Records that the canvas now matches the server. */
+	function markSaved(record: ServerFlowSummary) {
+		serverFlow = record;
+		savedJson = JSON.stringify(current);
+		serverFlows = serverFlows.some((flow) => flow.id === record.id)
+			? serverFlows.map((flow) => (flow.id === record.id ? record : flow))
+			: [...serverFlows, record];
+	}
+
+	function stopViewingRun() {
+		stopWatching?.();
+		stopWatching = null;
+		viewingRunId = null;
+		running = false;
+		editor.lastRun = null;
+		closeLog();
+	}
+
+	async function openServerFlow(id: string) {
+		if (!backend) return;
+		const result = await withServer(() => backend.getFlow(id));
+		if (!result) return;
+		stopViewingRun();
+		await load(result.record.flow);
+		const { flow: _flow, ...summary } = result.record;
+		markSaved(summary);
+		past = [];
+		future = [];
+		committed = savedJson;
+		syncHistory();
+		serverRuns = [];
+		refreshRuns();
+	}
+
+	async function newServerFlow() {
+		stopViewingRun();
+		serverFlow = null;
+		serverRuns = [];
+		savedJson = '';
+		await load({ version: 1, name: labels.untitled, nodes: [], edges: [] });
+	}
+
+	async function saveToServer(active?: boolean) {
+		if (!backend || readonly) return;
+		const result = await withServer(() =>
+			backend.saveFlow({ ...(serverFlow ? { id: serverFlow.id } : {}), flow: getFlow(), ...(active === undefined ? {} : { active }) })
+		);
+		if (!result) return;
+		const { flow: _flow, ...summary } = result.record;
+		markSaved(summary);
+		flash(format(labels.saved, { name: summary.name }));
+	}
+
+	function toggleActive() {
+		if (!serverFlow) flash(labels.saveFirst);
+		else saveToServer(!serverFlow.active);
+	}
+
+	async function deleteServerFlow(id: string) {
+		if (!backend) return;
+		const record = serverFlows.find((flow) => flow.id === id);
+		if (typeof confirm === 'function' && !confirm(format(labels.deleteFlowConfirm, { name: record?.name ?? id }))) return;
+		const done = await withServer(async () => {
+			await backend.deleteFlow(id);
+			return true;
+		});
+		if (!done) return;
+		serverFlows = serverFlows.filter((flow) => flow.id !== id);
+		if (serverFlow?.id === id) newServerFlow();
+	}
+
+	const STEP_STATUS: Record<string, StepRunStatus> = {
+		success: 'success',
+		error: 'error',
+		waiting: 'waiting',
+		skipped: 'skipped',
+		running: 'running'
+	};
+
+	/** Shows a stored run: step states on the canvas, entries in the log, data in the inspector. */
+	function paintRun(state: RunState) {
+		resetRunVisuals();
+		outcome = state.status;
+		// Steps inside loops and sub-flows have compound keys; the canvas shows the outer ones.
+		const steps = Object.entries(state.steps)
+			.filter(([key]) => !key.includes('>') && !key.includes('/'))
+			.map(([, step]) => step);
+		for (const step of steps) setStatus(step.nodeId, STEP_STATUS[step.status] ?? 'running', step.message ?? step.error);
+		log = steps
+			.filter((step) => step.status !== 'skipped' && step.status !== 'pending')
+			.map((step) => ({
+				nodeId: step.nodeId,
+				status: step.status === 'error' ? ('error' as const) : step.status === 'waiting' ? ('waiting' as const) : ('success' as const),
+				message: step.message ?? step.error,
+				at: step.startedAt ?? state.updatedAt
+			}))
+			.sort((a, b) => a.at - b.at);
+		logOpen = true;
+	}
+
+	/** Opens a run from the history; an empty id goes back to editing. */
+	async function showServerRun(id: string) {
+		if (!backend) return;
+		if (!id) return stopViewingRun();
+		const run = await withServer(() => backend.getRun(id));
+		if (!run) return;
+		viewingRunId = id;
+		editor.lastRun = run.state;
+		paintRun(run.state);
+	}
+
+	async function cancelServerRun(id: string) {
+		if (!backend) return;
+		await withServer(async () => {
+			await backend.cancelRun(id);
+			return true;
+		});
+		refreshRuns();
+	}
+
+	/** Saves the flow and runs it on the server for real, streaming events onto the canvas. */
+	export async function runOnServer() {
+		if (!backend) return;
+		if (running) {
+			if (viewingRunId) await cancelServerRun(viewingRunId);
+			return;
+		}
+		if (hasErrors(issues)) {
+			flash(labels.fixBeforeRun);
+			return;
+		}
+		if (!serverFlow || dirty) await saveToServer();
+		const flow = serverFlow;
+		if (!flow) return;
+		stopViewingRun();
+		log = [];
+		outcome = null;
+		logOpen = true;
+		running = true;
+		const started = await withServer(() => backend.startRun(flow.id, { mode: 'live' }));
+		if (!started) {
+			running = false;
+			return;
+		}
+		viewingRunId = started.id;
+		serverRuns = [started, ...serverRuns.filter((run) => run.id !== started.id)];
+		stopWatching?.();
+		stopWatching = backend.watchRun(
+			started.id,
+			(event) => {
+				handleEvent(event);
+				onRun?.(event);
+			},
+			(error) => {
+				running = false;
+				stopWatching = null;
+				if (error) flash(format(labels.serverError, { error: errorText(error) }));
+				showServerRun(started.id);
+				refreshRuns();
+			}
+		);
 	}
 
 	// ---------- Adding steps ----------
@@ -847,6 +1087,19 @@
 				<button class="fb-icon-btn" onclick={redo} disabled={!canRedo} aria-label={labels.redo} title="{labels.redo} (⇧⌘Z)"><Icon name="redo" size={16} /></button>
 				<button class="fb-btn" onclick={addNote}><Icon name="note" size={15} />{labels.addNote}</button>
 			{/if}
+			{#if backend && ui.flows}
+				<ServerBar
+					flows={serverFlows}
+					current={serverFlow}
+					{dirty}
+					busy={serverBusy}
+					onopen={openServerFlow}
+					onnew={newServerFlow}
+					onsave={() => saveToServer()}
+					ontoggleActive={toggleActive}
+					ondelete={deleteServerFlow}
+				/>
+			{/if}
 			{#if ui.json}
 				<button class="fb-btn" class:is-on={panel === 'json'} onclick={() => (panel = panel === 'json' ? 'step' : 'json')}>{labels.json}</button>
 			{/if}
@@ -857,8 +1110,25 @@
 				{/if}
 				<button class="fb-btn" onclick={exportFlow}><Icon name="download" size={15} />{labels.export}</button>
 			{/if}
+			{#if backend && ui.executions}
+				<button
+					class="fb-btn"
+					class:is-on={runsOpen}
+					onclick={() => {
+						runsOpen = !runsOpen;
+						if (runsOpen) refreshRuns();
+					}}
+				>
+					<Icon name="clock" size={15} />{labels.executions}
+				</button>
+			{/if}
+			{#if backend && !readonly}
+				<button class="fb-btn primary" onclick={runOnServer} disabled={serverBusy} title={labels.liveRun}>
+					<Icon name={running ? 'stop' : 'play'} size={13} />{running ? labels.stop : labels.runLive}
+				</button>
+			{/if}
 			{#if ui.testRun}
-				<button class="fb-btn primary" onclick={run}>
+				<button class="fb-btn" class:primary={!backend} onclick={run}>
 					{#if running}
 						<Icon name="stop" size={13} />{labels.stop}
 					{:else}
@@ -939,6 +1209,17 @@
 					triggers={picker.from?.type === 'target'}
 					onpick={pick}
 					onclose={() => (picker = null)}
+				/>
+			{/if}
+
+			{#if runsOpen && backend}
+				<ExecutionsPanel
+					runs={serverRuns}
+					selectedId={viewingRunId}
+					onopen={showServerRun}
+					onclose={() => (runsOpen = false)}
+					onrefresh={refreshRuns}
+					oncancel={cancelServerRun}
 				/>
 			{/if}
 

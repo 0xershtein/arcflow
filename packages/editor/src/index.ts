@@ -12,3 +12,16 @@ export {
 	type UiOptions
 } from './options.js';
 export { icons, type IconName } from './icons.js';
+export {
+	BackendError,
+	createHttpBackend,
+	type Backend,
+	type HttpBackendOptions,
+	type RunQuery,
+	type ServerCredential,
+	type ServerFlow,
+	type ServerFlowSummary,
+	type ServerRun,
+	type ServerRunSummary,
+	type StartRunOptions
+} from './backend.js';

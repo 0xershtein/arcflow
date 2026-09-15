@@ -47,6 +47,8 @@
 		if (node?.id === lastNodeId) return;
 		lastNodeId = node?.id;
 		iteration = -1;
+		// A different step opens on its settings, not on the data of the one before it.
+		tab = 'settings';
 	});
 
 	const def = $derived<AnyNodeDefinition | undefined>(node ? editor.registry.get(node.data.kind) : undefined);

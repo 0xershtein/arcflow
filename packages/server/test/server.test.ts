@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createRegistry, type Flow } from '@arcflow/core';
+import { createRegistry, registryFromManifest, type Flow } from '@arcflow/core';
 import { standardSteps } from '@arcflow/nodes';
 import { createServer, type ServerOptions } from '../src/index.js';
 import { SqliteStorage } from '../src/node.js';
@@ -78,6 +78,10 @@ describe('flows API', () => {
 		const steps = await call('GET', '/api/steps');
 		expect(steps.body.steps.find((step: { kind: string }) => step.kind === 'http.request')).toMatchObject({ outputs: [{ id: 'out' }, { id: 'error', label: 'Error' }] });
 		expect(steps.body.catalog).toContain('`logic.loop`');
+		// The manifest is what a browser editor rebuilds a registry from.
+		const remote = registryFromManifest(steps.body.manifest);
+		expect(remote.nodes.map((node) => node.kind)).toEqual(registry.nodes.map((node) => node.kind));
+		expect(remote.parse(waitingFlow).ok).toBe(true);
 	});
 
 	it('requires the API key when configured', async () => {

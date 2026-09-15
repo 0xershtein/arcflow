@@ -6,10 +6,12 @@ import { createRegistry, type AnyNodeDefinition, type Pack } from '@arcflow/core
 import { standardSteps } from '@arcflow/nodes';
 import { serveNode, SqliteStorage } from './node.js';
 import { createServer } from './server.js';
+import { createEditorUi } from './ui.js';
 
-const USAGE = `Usage: arcflow serve [options]
+const USAGE = `Usage: arcflow serve|dev [options]
 
 Runs flows with the standard steps (and your own) over HTTP.
+"dev" also serves the editor at the same address (needs @arcflow/editor).
 
 Options:
   --port <number>     Port to listen on (default 8787)
@@ -37,7 +39,8 @@ const { values, positionals } = parseArgs({
 	}
 });
 
-if (values.help || positionals[0] !== 'serve') {
+const command = positionals[0];
+if (values.help || (command !== 'serve' && command !== 'dev')) {
 	console.log(USAGE);
 	process.exit(values.help ? 0 : 1);
 }
@@ -57,10 +60,16 @@ const server = await createServer({
 	apiKey: values['api-key'] ?? process.env.ARCFLOW_API_KEY,
 	cors: values.cors
 });
-const { url } = await serveNode(server, { port: Number(values.port), hostname: values.host });
+// In dev mode the editor is served from the same origin, so the browser needs no CORS and no build step.
+const editorUi = command === 'dev' ? createEditorUi() : undefined;
+const served = editorUi
+	? { ...server, fetch: async (request: Request) => (await editorUi(request)) ?? server.fetch(request) }
+	: server;
+
+const { url } = await serveNode(served, { port: Number(values.port), hostname: values.host });
 
 console.log(`arcflow is running at ${url}
-  API       ${url}/api
+${editorUi ? `  Editor    ${url}\n` : ''}  API       ${url}/api
   Webhooks  ${url}/hooks/<path>
   Database  ${resolve(values.db)}
   Credentials ${process.env.ARCFLOW_SECRET ? 'enabled' : 'disabled (set ARCFLOW_SECRET)'}`);
