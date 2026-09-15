@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import Code from '$lib/Code.svelte';
 	import Demo from '$lib/Demo.svelte';
 
@@ -85,4 +86,4 @@ createEditor('#editor', {
 	runs on the server and streams events onto the canvas.
 </p>
 <Code code={server} />
-<p>See <a href="/server">Server</a> for the API behind it, and <a href="/ai">AI and agents</a> for the prompt bar.</p>
+<p>See <a href="{base}/server">Server</a> for the API behind it, and <a href="{base}/ai">AI and agents</a> for the prompt bar.</p>

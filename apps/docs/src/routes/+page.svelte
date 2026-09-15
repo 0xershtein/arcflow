@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import Code from '$lib/Code.svelte';
 	import Demo from '$lib/Demo.svelte';
 	import { createDemoFlow } from '$lib/demo-flow.js';
@@ -51,11 +52,11 @@ check.on('false').to(hold);`;
 
 <h2>Start somewhere</h2>
 <ul>
-	<li><a href="/quick-start">Quick start</a> — build a flow, run it, open it on a canvas.</li>
-	<li><a href="/flows">Flows and steps</a> — the format, the schema, expressions, what the engine handles.</li>
-	<li><a href="/editor">Editor</a> — embedding, theming, shortcuts, server mode.</li>
-	<li><a href="/server">Server</a> — one command to run flows for real.</li>
-	<li><a href="/ai">AI and agents</a> — the prompt bar, the repair loop, MCP.</li>
+	<li><a href="{base}/quick-start">Quick start</a> — build a flow, run it, open it on a canvas.</li>
+	<li><a href="{base}/flows">Flows and steps</a> — the format, the schema, expressions, what the engine handles.</li>
+	<li><a href="{base}/editor">Editor</a> — embedding, theming, shortcuts, server mode.</li>
+	<li><a href="{base}/server">Server</a> — one command to run flows for real.</li>
+	<li><a href="{base}/ai">AI and agents</a> — the prompt bar, the repair loop, MCP.</li>
 </ul>
 
 <style>

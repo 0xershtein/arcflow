@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { page } from '$app/state';
 
 	let { children } = $props();
@@ -12,12 +13,13 @@
 		{ href: '/ai', label: 'AI & agents' }
 	];
 
-	const current = $derived(page.url.pathname.replace(/\/$/, '') || '/');
+	// The site can be served under a base path (a GitHub project page), so compare without it.
+	const current = $derived((page.url.pathname.slice(base.length) || '/').replace(/(.)\/$/, '$1'));
 </script>
 
 <div class="shell">
 	<header>
-		<a class="brand" href="/">
+		<a class="brand" href="{base}/">
 			<svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
 				<rect width="32" height="32" rx="7" fill="var(--brand-bg)" />
 				<g fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round">
@@ -30,7 +32,7 @@
 		</a>
 		<nav>
 			{#each sections as section (section.href)}
-				<a href={section.href} class:is-on={current === section.href}>{section.label}</a>
+				<a href="{base}{section.href}" class:is-on={current === section.href}>{section.label}</a>
 			{/each}
 		</nav>
 		<a class="github" href="https://github.com/0xershtein/arcflow">GitHub</a>

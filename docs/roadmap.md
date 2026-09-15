@@ -75,6 +75,8 @@ Done when: from an empty canvas, a prompt produces a runnable version of the M2 
 - npm publish with provenance, changelog, semver.
 - Short video and launch thread.
 
+**Status: the parts that do not need an account are done.** `apps/docs` is a prerendered SvelteKit site — overview, quick start, flows and steps, editor, server, AI and agents — with a real editor embedded in the page, and a Pages workflow that builds and deploys it on every push to `main`. `CHANGELOG.md` covers 0.1.0, and the release workflow packs each package with pnpm (which rewrites `workspace:*`) and publishes the tarballs with `npm --provenance` on a `v*` tag. What is left needs credentials: an npm token for the `@arcflow` scope, a host (or GitHub Pages turned on), and the video and thread.
+
 ## Order
 
 M1 → M2 → M3 → M4 → M5 → M6. M5's core (`generateFlow`, MCP) only needs M1 and can start in parallel once M1 lands.

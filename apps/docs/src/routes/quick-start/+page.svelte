@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import Code from '$lib/Code.svelte';
 
 	const install = `npm install @arcflow/core @arcflow/nodes`;
@@ -67,7 +68,7 @@ createEditor('#editor', {
 <Code code={editor} language="sh" />
 <Code code={editorCode} />
 <p>
-	The container needs a height; the editor fills it. Everything it produces is the same flow JSON you just built in code — see <a href="/editor">Editor</a>.
+	The container needs a height; the editor fills it. Everything it produces is the same flow JSON you just built in code — see <a href="{base}/editor">Editor</a>.
 </p>
 
 <h2>5. Run it for real</h2>
@@ -75,4 +76,4 @@ createEditor('#editor', {
 	The server adds webhooks, cron schedules, timers that survive restarts, run history and encrypted credentials — and serves the editor on the same address.
 </p>
 <Code code={server} language="sh" />
-<p>Open <code>http://127.0.0.1:8787</code> and the editor is there, with your steps and your runs. See <a href="/server">Server</a>.</p>
+<p>Open <code>http://127.0.0.1:8787</code> and the editor is there, with your steps and your runs. See <a href="{base}/server">Server</a>.</p>

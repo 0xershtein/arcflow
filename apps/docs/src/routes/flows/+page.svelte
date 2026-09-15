@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Code from '$lib/Code.svelte';
+	// No cross-links on this page yet; import `base` here too when one is added.
 
 	const flowJson = `{
 	"version": 1,
