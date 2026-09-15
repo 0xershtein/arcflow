@@ -1,6 +1,14 @@
 <script lang="ts">
 	import { tick, untrack, type Snippet } from 'svelte';
-	import { Background, BackgroundVariant, Controls, SvelteFlow, useSvelteFlow, type IsValidConnection } from '@xyflow/svelte';
+	import {
+		Background,
+		BackgroundVariant,
+		Controls,
+		MiniMap,
+		SvelteFlow,
+		useSvelteFlow,
+		type IsValidConnection
+	} from '@xyflow/svelte';
 	import {
 		createEngine,
 		defaultsOf,
@@ -19,28 +27,49 @@
 	import StepPalette from './StepPalette.svelte';
 	import { DRAG_TYPE, getEditor, type StepRunStatus } from './context.svelte.js';
 	import { fromCanvas, toCanvas, type CanvasEdge, type CanvasNode, type StepData } from './convert.js';
+	import { format } from './options.js';
 
 	interface Props {
 		flow?: unknown;
 		storageKey?: string;
 		services?: Services;
-		readonly?: boolean;
+		runStepDelay: number;
+		themeStyle: string;
+		themeMode: 'light' | 'dark';
+		nodeWidth: number;
 		brand?: Snippet;
-		onchange?: (flow: Flow) => void;
-		onrun?: (event: RunEvent) => void;
+		onChange?: (flow: Flow) => void;
+		onValidate?: (issues: Issue[]) => void;
+		onSelect?: (nodeId: string | null) => void;
+		onRun?: (event: RunEvent) => void;
 	}
 
-	let { flow: incoming, storageKey, services, readonly = false, brand, onchange, onrun }: Props = $props();
+	let {
+		flow: incoming,
+		storageKey,
+		services,
+		runStepDelay,
+		themeStyle,
+		themeMode,
+		nodeWidth,
+		brand,
+		onChange,
+		onValidate,
+		onSelect,
+		onRun
+	}: Props = $props();
 
-	const NODE_WIDTH = 240;
-	const EMPTY: Flow = { version: 1, name: 'Untitled flow', nodes: [], edges: [] };
 	const nodeTypes = { step: StepNode };
+	const BACKGROUND = { dots: BackgroundVariant.Dots, lines: BackgroundVariant.Lines, cross: BackgroundVariant.Cross } as const;
 
 	const editor = getEditor();
 	const registry = editor.registry;
+	const labels = $derived(editor.labels);
+	const ui = $derived(editor.ui);
+	const readonly = $derived(editor.readonly);
 	const { screenToFlowPosition, fitView, updateNodeData, deleteElements, setCenter } = useSvelteFlow();
 
-	let meta = $state<Pick<Flow, 'name' | 'description' | 'vars'>>({ name: EMPTY.name });
+	let meta = $state<Pick<Flow, 'name' | 'description' | 'vars'>>({ name: '' });
 	let nodes = $state.raw<CanvasNode[]>([]);
 	let edges = $state.raw<CanvasEdge[]>([]);
 	let selectedId = $state<string | null>(null);
@@ -60,6 +89,11 @@
 	const issues = $derived(registry.validate(current));
 	const errorCount = $derived(issues.filter((issue) => issue.level === 'error').length);
 	const selected = $derived(nodes.find((node) => node.id === selectedId) ?? null);
+
+	const showPanel = $derived(ui.inspector || panel === 'json');
+	const columns = $derived(
+		[ui.palette && !readonly ? '264px' : '', 'minmax(0, 1fr)', showPanel ? (panel === 'json' ? '420px' : '320px') : ''].filter(Boolean).join(' ')
+	);
 
 	function apply(input: unknown): { loaded: boolean; issues: Issue[] } {
 		const parsed = registry.parse(input);
@@ -84,7 +118,9 @@
 
 	untrack(() => {
 		const stored = readStored();
-		if (stored === undefined || !apply(stored).loaded) apply(incoming ?? EMPTY);
+		if (stored === undefined || !apply(stored).loaded) {
+			apply(incoming ?? { version: 1, name: labels.untitled, nodes: [], edges: [] });
+		}
 	});
 
 	/** The current flow as plain JSON. */
@@ -92,7 +128,12 @@
 		return JSON.parse(JSON.stringify(current));
 	}
 
-	/** Replaces the canvas with a flow (JSON string, object, or builder output). */
+	/** Current problems. */
+	export function getIssues(): Issue[] {
+		return JSON.parse(JSON.stringify(issues));
+	}
+
+	/** Replaces the canvas with a flow (object or JSON string). */
 	export async function load(input: unknown) {
 		closeLog();
 		const result = apply(input);
@@ -109,6 +150,26 @@
 		editor.issuesByNode = grouped;
 	});
 
+	let lastIssues = '';
+	$effect(() => {
+		const json = JSON.stringify(issues);
+		untrack(() => {
+			if (json === lastIssues) return;
+			lastIssues = json;
+			onValidate?.(JSON.parse(json));
+		});
+	});
+
+	let lastSelected: string | null = null;
+	$effect(() => {
+		const id = selectedId;
+		untrack(() => {
+			if (id === lastSelected) return;
+			lastSelected = id;
+			onSelect?.(id);
+		});
+	});
+
 	let lastJson = '';
 	let saveTimer: ReturnType<typeof setTimeout> | undefined;
 	$effect(() => {
@@ -120,7 +181,7 @@
 			if (initial) return;
 			clearTimeout(saveTimer);
 			saveTimer = setTimeout(() => {
-				onchange?.(JSON.parse(json));
+				onChange?.(JSON.parse(json));
 				if (!storageKey) return;
 				try {
 					localStorage.setItem(storageKey, json);
@@ -132,7 +193,7 @@
 	});
 	$effect(() => () => clearTimeout(saveTimer));
 
-	// Reload when the parent passes a different flow (ignoring echoes of our own changes).
+	// Reload when the host passes a different flow, ignoring echoes of our own changes.
 	let lastIncoming = untrack(() => incoming);
 	$effect(() => {
 		const next = incoming;
@@ -141,7 +202,10 @@
 			lastIncoming = next;
 			if (next === undefined) return;
 			const parsed = registry.parse(next);
-			if (parsed.flow && JSON.stringify(fromCanvas(parsed.flow, toCanvas(parsed.flow, registry).nodes, toCanvas(parsed.flow, registry).edges)) === lastJson) return;
+			if (parsed.flow) {
+				const canvas = toCanvas(parsed.flow, registry);
+				if (JSON.stringify(fromCanvas(parsed.flow, canvas.nodes, canvas.edges)) === lastJson) return;
+			}
 			load(next);
 		});
 	});
@@ -153,12 +217,10 @@
 		}, 3500);
 	}
 
-	let seq = 0;
 	const makeId = (kind: string) => {
 		const base = (kind.split('.').pop() || 'step').replace(/[^A-Za-z0-9_-]+/g, '-');
 		let id = base;
 		for (let n = 2; nodes.some((node) => node.id === id); n++) id = `${base}-${n}`;
-		seq++;
 		return id;
 	};
 
@@ -174,9 +236,9 @@
 		const height = 110;
 		const overlaps = () =>
 			nodes.some((n) => {
-				const w = n.measured?.width ?? NODE_WIDTH;
+				const w = n.measured?.width ?? nodeWidth;
 				const h = n.measured?.height ?? height;
-				return spot.x < n.position.x + w + 16 && spot.x + NODE_WIDTH + 16 > n.position.x && spot.y < n.position.y + h + 16 && spot.y + height + 16 > n.position.y;
+				return spot.x < n.position.x + w + 16 && spot.x + nodeWidth + 16 > n.position.x && spot.y < n.position.y + h + 16 && spot.y + height + 16 > n.position.y;
 			});
 		for (let i = 0; i < 40 && overlaps(); i++) spot.y += 40;
 		return spot;
@@ -189,7 +251,7 @@
 		if (!position) {
 			const rect = canvasEl?.getBoundingClientRect();
 			const center = screenToFlowPosition({ x: (rect?.left ?? 0) + (rect?.width ?? 0) / 2, y: (rect?.top ?? 0) + (rect?.height ?? 0) / 2 });
-			position = findFreeSpot({ x: center.x - NODE_WIDTH / 2, y: center.y - 50 });
+			position = findFreeSpot({ x: center.x - nodeWidth / 2, y: center.y - 50 });
 		}
 		insertNode({ id: makeId(kind), type: 'step', position, data: { kind, config: defaultsOf(def.config) } });
 	}
@@ -205,7 +267,7 @@
 		if (!kind || readonly) return;
 		event.preventDefault();
 		const point = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-		addNode(kind, { x: point.x - NODE_WIDTH / 2, y: point.y - 30 });
+		addNode(kind, { x: point.x - nodeWidth / 2, y: point.y - 30 });
 	}
 
 	const isValidConnection: IsValidConnection = (c) =>
@@ -213,7 +275,7 @@
 		!edges.some((e) => e.source === c.source && (e.sourceHandle ?? 'out') === (c.sourceHandle ?? 'out') && e.target === c.target);
 
 	function updateSelected(update: (data: StepData) => Partial<StepData>) {
-		if (selectedId) updateNodeData(selectedId, (node) => update(node.data as StepData));
+		if (selectedId && !readonly) updateNodeData(selectedId, (node) => update(node.data as StepData));
 	}
 
 	const setConfig = (key: string, value: unknown) =>
@@ -225,13 +287,13 @@
 		});
 
 	function removeSelected() {
-		if (!selectedId) return;
+		if (!selectedId || readonly) return;
 		deleteElements({ nodes: [{ id: selectedId }] });
 		selectedId = null;
 	}
 
 	function duplicateSelected() {
-		if (!selected) return;
+		if (!selected || readonly) return;
 		insertNode({
 			id: makeId(selected.data.kind),
 			type: 'step',
@@ -246,7 +308,7 @@
 		nodes = nodes.map((n) => (Boolean(n.selected) !== (n.id === id) ? { ...n, selected: n.id === id } : n));
 		selectedId = id;
 		panel = 'step';
-		setCenter(node.position.x + NODE_WIDTH / 2, node.position.y + 60, { zoom: 1, duration: 400 });
+		setCenter(node.position.x + nodeWidth / 2, node.position.y + 60, { zoom: 1, duration: 400 });
 	}
 
 	function resetRunVisuals() {
@@ -271,7 +333,7 @@
 				);
 				break;
 			case 'step:wait':
-				setStatus(event.nodeId, 'waiting', event.message ?? `Waiting: ${event.reason}`);
+				setStatus(event.nodeId, 'waiting', event.message ?? event.reason);
 				log = [...log, { nodeId: event.nodeId, status: 'waiting', message: event.message ?? event.reason, at: event.at }];
 				break;
 			case 'step:error':
@@ -295,7 +357,7 @@
 		}
 		resetRunVisuals();
 		if (hasErrors(issues)) {
-			flash(`Fix ${errorCount} ${errorCount === 1 ? 'problem' : 'problems'} before running.`);
+			flash(labels.fixBeforeRun);
 			panel = 'step';
 			selectedId = null;
 			return;
@@ -308,16 +370,16 @@
 		try {
 			await createEngine(registry, { services }).start(current, {
 				mode: 'simulate',
-				stepDelayMs: 450,
+				stepDelayMs: runStepDelay,
 				signal: controller.signal,
 				onEvent: (event) => {
 					handleEvent(event);
-					onrun?.(event);
+					onRun?.(event);
 				}
 			});
 		} catch (error) {
 			outcome = 'failed';
-			flash(error instanceof Error ? error.message.split('\n')[0] : 'The test run crashed.');
+			flash(error instanceof Error ? error.message.split('\n')[0] : String(error));
 		} finally {
 			running = false;
 			controller = null;
@@ -351,8 +413,8 @@
 		if (!file) return;
 		const result = await load(await file.text());
 		const errors = result.issues.filter((issue) => issue.level === 'error').length;
-		if (!result.loaded) flash(result.issues[0]?.message ?? 'Could not read that file.');
-		else flash(errors ? `Imported with ${errors} ${errors === 1 ? 'problem' : 'problems'} to fix.` : `Imported “${meta.name}”.`);
+		if (!result.loaded) flash(result.issues[0]?.message ?? labels.couldNotRead);
+		else flash(errors ? format(labels.importedWithProblems, { count: errors }) : format(labels.imported, { name: meta.name }));
 	}
 
 	function stepName(nodeId: string) {
@@ -361,56 +423,61 @@
 	}
 </script>
 
-<div class="fb-root">
-	<header class="fb-topbar">
-		{#if brand}
-			<div class="fb-brand">{@render brand()}</div>
-			<span class="fb-divider"></span>
-		{/if}
-		<input class="fb-name" bind:value={meta.name} aria-label="Flow name" spellcheck="false" disabled={readonly} />
-		<span class="fb-status" class:has-errors={errorCount > 0}>
-			{#if errorCount}
-				<Icon name="alert" size={13} />{errorCount} {errorCount === 1 ? 'problem' : 'problems'}
-			{:else}
-				<Icon name="check" size={13} stroke={2} />Ready
+<div class="fb-root" class:no-toolbar={!ui.toolbar} data-theme={themeMode} style={themeStyle}>
+	{#if ui.toolbar}
+		<header class="fb-topbar">
+			{#if brand}
+				<div class="fb-brand">{@render brand()}</div>
+				<span class="fb-divider"></span>
 			{/if}
-		</span>
+			<input class="fb-name" bind:value={meta.name} aria-label={labels.flowName} placeholder={labels.untitled} spellcheck="false" disabled={readonly} />
+			<span class="fb-status" class:has-errors={errorCount > 0}>
+				{#if errorCount}
+					<Icon name="alert" size={13} />{format(errorCount === 1 ? labels.problemCount : labels.problemsCount, { count: errorCount })}
+				{:else}
+					<Icon name="check" size={13} stroke={2} />{labels.ready}
+				{/if}
+			</span>
 
-		<div class="fb-spacer"></div>
+			<div class="fb-spacer"></div>
 
-		{#if incoming !== undefined && !readonly}
-			<button class="fb-btn ghost" onclick={() => load(incoming)}>Reset</button>
-		{/if}
-		<button class="fb-btn" class:is-on={panel === 'json'} onclick={() => (panel = panel === 'json' ? 'step' : 'json')}>JSON</button>
-		{#if !readonly}
-			<button class="fb-btn" onclick={() => fileInput?.click()}><Icon name="upload" size={15} />Import</button>
-			<input bind:this={fileInput} type="file" accept="application/json,.json" hidden onchange={importFlow} />
-		{/if}
-		<button class="fb-btn" onclick={exportFlow}><Icon name="download" size={15} />Export</button>
-		<button class="fb-btn primary" onclick={run}>
-			{#if running}
-				<Icon name="stop" size={13} />Stop
-			{:else}
-				<Icon name="play" size={13} />Test run
+			{#if ui.json}
+				<button class="fb-btn" class:is-on={panel === 'json'} onclick={() => (panel = panel === 'json' ? 'step' : 'json')}>{labels.json}</button>
 			{/if}
-		</button>
-	</header>
+			{#if ui.importExport}
+				{#if !readonly}
+					<button class="fb-btn" onclick={() => fileInput?.click()}><Icon name="upload" size={15} />{labels.import}</button>
+					<input bind:this={fileInput} type="file" accept="application/json,.json" hidden onchange={importFlow} />
+				{/if}
+				<button class="fb-btn" onclick={exportFlow}><Icon name="download" size={15} />{labels.export}</button>
+			{/if}
+			{#if ui.testRun}
+				<button class="fb-btn primary" onclick={run}>
+					{#if running}
+						<Icon name="stop" size={13} />{labels.stop}
+					{:else}
+						<Icon name="play" size={13} />{labels.testRun}
+					{/if}
+				</button>
+			{/if}
+		</header>
+	{/if}
 
-	<div class="fb-body" class:no-palette={readonly} class:wide-panel={panel === 'json'}>
-		{#if !readonly}
-			<StepPalette {registry} onadd={(kind) => addNode(kind)} />
+	<div class="fb-body" style:grid-template-columns={columns}>
+		{#if ui.palette && !readonly}
+			<StepPalette onadd={(kind) => addNode(kind)} />
 		{/if}
 
-		<div class="fb-canvas" bind:this={canvasEl} ondragover={onDragOver} ondrop={onDrop} role="application" aria-label="Flow canvas">
+		<div class="fb-canvas" bind:this={canvasEl} ondragover={onDragOver} ondrop={onDrop} role="application" aria-label={meta.name}>
 			<SvelteFlow
 				bind:nodes
 				bind:edges
 				{nodeTypes}
 				{isValidConnection}
-				colorMode="dark"
+				colorMode={themeMode}
 				fitView
-				fitViewOptions={{ padding: 0.1 }}
-				minZoom={0.3}
+				fitViewOptions={{ padding: 0.1, minZoom: 0.15 }}
+				minZoom={0.15}
 				maxZoom={1.6}
 				nodesDraggable={!readonly}
 				nodesConnectable={!readonly}
@@ -421,44 +488,51 @@
 					if (selectedId) panel = 'step';
 				}}
 			>
-				<Background variant={BackgroundVariant.Dots} gap={24} size={1.2} />
-				<Controls position="bottom-right" showLock={false} />
+				{#if ui.background !== 'none'}
+					<Background variant={BACKGROUND[ui.background]} gap={24} size={1.2} />
+				{/if}
+				{#if ui.controls}
+					<Controls position="bottom-right" showLock={false} />
+				{/if}
+				{#if ui.minimap}
+					<MiniMap position="bottom-left" />
+				{/if}
 			</SvelteFlow>
 
 			{#if nodes.length === 0}
 				<div class="fb-empty">
-					<div><strong>Start with a trigger</strong>Pick one from the left, or paste a flow into JSON.</div>
+					<div><strong>{labels.emptyTitle}</strong>{labels.emptyBody}</div>
 				</div>
 			{/if}
 
 			{#if logOpen}
-				<section class="fb-log" aria-label="Test run" aria-live="polite">
+				<section class="fb-log" aria-label={labels.runTitle} aria-live="polite">
 					<div class="fb-log-head">
-						<span>Test run</span>
+						<span>{labels.runTitle}</span>
 						{#if running}
-							<span class="fb-badge">Running…</span>
+							<span class="fb-badge">{labels.running}</span>
 						{:else if outcome === 'completed'}
-							<span class="fb-badge ok">Completed</span>
+							<span class="fb-badge ok">{labels.completed}</span>
 						{:else if outcome === 'waiting'}
-							<span class="fb-badge ok">Waiting</span>
+							<span class="fb-badge ok">{labels.waiting}</span>
 						{:else if outcome === 'failed'}
-							<span class="fb-badge bad">Failed</span>
+							<span class="fb-badge bad">{labels.failed}</span>
 						{:else if outcome === 'cancelled'}
-							<span class="fb-badge">Stopped</span>
+							<span class="fb-badge">{labels.stopped}</span>
 						{/if}
-						<span class="fb-log-note">Simulated — nothing is sent</span>
-						<button class="fb-icon-btn" onclick={closeLog} aria-label="Close test run"><Icon name="x" size={15} /></button>
+						<span class="fb-log-note">{labels.simulated}</span>
+						<button class="fb-icon-btn" onclick={closeLog} aria-label={labels.close}><Icon name="x" size={15} /></button>
 					</div>
 					<div class="fb-log-list">
 						{#each log as entry, i (i)}
 							<button class="fb-log-row" class:bad={entry.status === 'error'} onclick={() => focusNode(entry.nodeId)}>
 								<Icon name={entry.status === 'error' ? 'x' : entry.status === 'waiting' ? 'hourglass' : 'check'} size={14} stroke={2.2} />
 								<span class="fb-log-node">{stepName(entry.nodeId)}</span>
-								<span class="fb-log-msg">{entry.message ?? 'Done'}</span>
+								<span class="fb-log-msg">{entry.message ?? labels.done}</span>
 								<time>{new Date(entry.at).toLocaleTimeString([], { hour12: false })}</time>
 							</button>
 						{:else}
-							<div class="fb-log-empty">Starting…</div>
+							<div class="fb-log-empty">{labels.starting}</div>
 						{/each}
 					</div>
 				</section>
@@ -470,13 +544,11 @@
 		</div>
 
 		{#if panel === 'json'}
-			<JsonPanel flow={current} {registry} {readonly} onapply={load} onclose={() => (panel = 'step')} />
-		{:else}
+			<JsonPanel flow={current} onapply={load} onclose={() => (panel = 'step')} />
+		{:else if ui.inspector}
 			<StepInspector
 				node={selected}
-				{registry}
 				{issues}
-				{readonly}
 				onconfig={setConfig}
 				onlabel={(label) => updateSelected(() => ({ label }))}
 				ontoggle={() => updateSelected((data) => ({ disabled: !data.disabled }))}

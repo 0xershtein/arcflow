@@ -14,9 +14,10 @@
 	},
 	"scripts": {
 		"dev": "pnpm --filter playground dev",
-		"build": "pnpm --filter \"./packages/**\" build && pnpm --filter playground build",
+		"dev:vanilla": "pnpm --filter @arcflow/editor build && pnpm --filter vanilla-example dev",
+		"build": "pnpm --filter \"./packages/**\" build && pnpm --filter playground --filter vanilla-example build",
 		"test": "vitest run",
-		"check": "pnpm -r check"
+		"check": "pnpm --filter @arcflow/editor build && pnpm -r check"
 	},
 	"devDependencies": {
 		"typescript": "^6.0.3",

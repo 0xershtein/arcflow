@@ -19,7 +19,7 @@ export function createPayrollFlow(registry = paymentsRegistry): Flow {
 	);
 	const approve = flow.add(
 		'approval.multisig',
-		{ signers: ['eren.eth', 'mert.eth', 'deniz.eth'], threshold: 2, note: 'September payroll' },
+		{ signers: ['alice.eth', 'bob.eth', 'carol.eth'], threshold: 2, note: 'September payroll' },
 		{ id: 'approve', label: 'Founders approve' }
 	);
 	const pay = flow.add(
@@ -27,12 +27,12 @@ export function createPayrollFlow(registry = paymentsRegistry): Flow {
 		{
 			token: 'USDC',
 			recipients: [
-				{ to: 'mert.eth', amount: 9_500 },
-				{ to: 'deniz.eth', amount: 8_200 },
-				{ to: 'selin.eth', amount: 7_400 },
-				{ to: 'burak.eth', amount: 6_800 },
-				{ to: 'ayse.eth', amount: 5_900 },
-				{ to: 'can.eth', amount: 5_000 }
+				{ to: 'bob.eth', amount: 9_500 },
+				{ to: 'carol.eth', amount: 8_200 },
+				{ to: 'dave.eth', amount: 7_400 },
+				{ to: 'erin.eth', amount: 6_800 },
+				{ to: 'frank.eth', amount: 5_900 },
+				{ to: 'grace.eth', amount: 5_000 }
 			],
 			memo: 'Payroll'
 		},

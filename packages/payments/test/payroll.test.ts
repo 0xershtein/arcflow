@@ -34,7 +34,7 @@ describe('payroll flow', () => {
 		const waiting = await engine.start(flow);
 		expect(waiting.status).toBe('waiting');
 		expect(waitingSteps(waiting)).toEqual([{ nodeId: 'approve', reason: 'approval', data: { requestId: 'req-1' } }]);
-		expect(services.requestApproval).toHaveBeenCalledWith(expect.objectContaining({ threshold: 2, signers: ['eren.eth', 'mert.eth', 'deniz.eth'] }));
+		expect(services.requestApproval).toHaveBeenCalledWith(expect.objectContaining({ threshold: 2, signers: ['alice.eth', 'bob.eth', 'carol.eth'] }));
 		expect(services.transfer).not.toHaveBeenCalled();
 
 		const done = await engine.resume(flow, waiting, { nodeId: 'approve', data: { approved: true } });

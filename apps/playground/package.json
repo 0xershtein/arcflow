@@ -13,7 +13,7 @@
 	"dependencies": {
 		"@arcflow/core": "workspace:*",
 		"@arcflow/payments": "workspace:*",
-		"@arcflow/svelte": "workspace:*"
+		"@arcflow/editor": "workspace:*"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.1",

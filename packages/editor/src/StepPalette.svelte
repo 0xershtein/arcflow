@@ -1,19 +1,21 @@
 <script lang="ts">
-	import type { AnyNodeDefinition, Registry } from '@arcflow/core';
+	import type { AnyNodeDefinition } from '@arcflow/core';
 	import Icon from './Icon.svelte';
-	import { DRAG_TYPE } from './context.svelte.js';
+	import { DRAG_TYPE, getEditor } from './context.svelte.js';
+	import { format } from './options.js';
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let { registry, onadd }: { registry: Registry<any>; onadd: (kind: string) => void } = $props();
+	let { onadd }: { onadd: (kind: string) => void } = $props();
 
+	const editor = getEditor();
+	const labels = $derived(editor.labels);
 	let query = $state('');
 
 	const groups = $derived.by(() => {
 		const q = query.trim().toLowerCase();
-		const defs = (registry.nodes as readonly AnyNodeDefinition[]).filter(
+		const defs = (editor.registry.nodes as readonly AnyNodeDefinition[]).filter(
 			(def) => !q || `${def.title} ${def.description} ${def.kind}`.toLowerCase().includes(q)
 		);
-		return (registry.categories as { id: string; label: string }[])
+		return (editor.registry.categories as { id: string; label: string }[])
 			.map((category) => ({ ...category, items: defs.filter((def) => (def.category ?? 'other') === category.id) }))
 			.filter((group) => group.items.length > 0);
 	});
@@ -25,10 +27,10 @@
 	}
 </script>
 
-<aside class="fb-palette" aria-label="Steps">
+<aside class="fb-palette" aria-label={labels.searchSteps}>
 	<div class="fb-search">
 		<Icon name="search" size={15} />
-		<input class="fb-input" type="search" placeholder="Search steps" bind:value={query} />
+		<input class="fb-input" type="search" placeholder={labels.searchSteps} bind:value={query} />
 	</div>
 
 	<div class="fb-palette-list">
@@ -38,7 +40,7 @@
 				<button
 					class="fb-item"
 					draggable="true"
-					title="Click to add, or drag onto the canvas"
+					title={labels.addStepHint}
 					ondragstart={(event) => startDrag(event, def.kind)}
 					onclick={() => onadd(def.kind)}
 				>
@@ -50,7 +52,7 @@
 				</button>
 			{/each}
 		{:else}
-			<p class="fb-palette-empty">No steps match “{query}”.</p>
+			<p class="fb-palette-empty">{format(labels.noStepsMatch, { query })}</p>
 		{/each}
 	</div>
 </aside>

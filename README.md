@@ -1,146 +1,201 @@
 # arcflow
 
-**A typed flow engine and n8n-style canvas you can drive from code, JSON, or an LLM.**
+**An embeddable, n8n-style flow editor and engine. Flow JSON in, flow JSON out.**
 
-Define step types once. You get TypeScript types, validation with machine-readable issues, a JSON Schema and prompt catalog for AI, a runtime that can pause for humans and resume later, and a visual editor — all from the same definition.
+Drop a visual workflow builder into your own product — an automation panel, an internal tool, an agent console — and keep full control of the data. You define the step types; arcflow gives you the canvas, validation, test runs, a runtime that can pause for humans, and the JSON Schema an LLM needs to write flows for you.
 
-| Package | What it is |
+- **No branding, fully themeable** — light / dark / auto, every color, font, radius and label is an option.
+- **Framework-free** — `createEditor(element, options)` works in React, Vue, Angular or plain HTML. Svelte users get a component.
+- **A plain data contract** — the flow is versioned JSON with a published schema; parsing never throws and returns coded issues.
+- **Built for code and agents** — typed builder API, headless engine, `describe()` catalog and JSON Schema for LLMs.
+
+| Package | |
 | --- | --- |
-| [`@arcflow/core`](./packages/core) | Headless engine. Zero dependencies. Step definitions, flow builder, parser/validator, runner with retries and pause/resume, JSON Schema + LLM catalog. |
-| [`@arcflow/svelte`](./packages/svelte) | Canvas editor on [Svelte Flow](https://svelteflow.dev): palette, generated config forms, live validation, animated test runs, JSON paste-in. |
-| [`@arcflow/payments`](./packages/payments) | Example pack: schedules, runway checks, multisig approvals, stablecoin transfers. |
-| [`apps/playground`](./apps/playground) | SvelteKit demo of the editor with the payments pack. |
+| [`@arcflow/core`](./packages/core) | Headless engine, zero dependencies: step definitions, flow builder, parser/validator, runner with retries and pause/resume, JSON Schema + LLM catalog. |
+| [`@arcflow/editor`](./packages/editor) | The canvas editor. One ES module with styles included. |
+| [`@arcflow/payments`](./packages/payments) | Example step pack (schedule → check → approval → transfer) to copy from. |
 
-## Why
+## Quick start
 
-Workflow tools are usually either a UI with an export button or a code SDK with no UI. arcflow treats the **flow JSON as the product**: humans edit it on a canvas, programs build it with a typed API, and LLMs write it against a schema — and the same engine runs it.
-
-## Define steps
+```sh
+npm install @arcflow/core @arcflow/editor
+```
 
 ```ts
-import { defineNode, definePack, f } from '@arcflow/core';
+import { createRegistry, defineNode, f } from '@arcflow/core';
+import { createEditor } from '@arcflow/editor';
 
-export const approval = defineNode({
-	kind: 'approval.multisig',
-	title: 'Approval',
-	description: 'Waits until enough signers approve.',
-	outputs: [{ id: 'approved' }, { id: 'rejected' }],
-	config: {
-		signers: f.list(f.string(), { minItems: 1 }),
-		threshold: f.number({ integer: true, min: 1, default: 2 })
-	},
-	check: (c) => (c.threshold > c.signers.length ? 'threshold is higher than the number of signers' : null),
-	async run(ctx) {
-		// ctx.config is typed: { signers: string[]; threshold: number }
-		if (ctx.resumed) return { port: ctx.resumed.data.approved ? 'approved' : 'rejected' };
-		await ctx.services.approvals.request(ctx.config);
-		return { wait: { reason: 'approval' } }; // the run pauses here
-	},
-	simulate: () => ({ port: 'approved' })
+// 1. Describe the steps your product supports.
+const steps = createRegistry([
+	defineNode({ kind: 'webhook', title: 'Webhook', description: 'Starts on an HTTP call.', trigger: true }),
+	defineNode({
+		kind: 'email',
+		title: 'Send email',
+		description: 'Sends an email.',
+		config: { to: f.string(), subject: f.string({ default: 'Hello' }) },
+		run: async (ctx) => ({ output: await mailer.send(ctx.config) })
+	})
+]);
+
+// 2. Mount the editor. Give the element a height.
+const editor = createEditor('#editor', {
+	steps,
+	flow: savedFlowJson,
+	theme: { mode: 'auto', colors: { accent: '#0ea5e9' }, radius: 8 },
+	onChange: (flow) => api.saveFlow(flow)
 });
-
-export const pack = definePack({ id: 'treasury', label: 'Treasury', nodes: [approval /* … */] });
 ```
 
-## Build flows in code
+## Input and output
+
+Everything that goes in or comes out is JSON-serializable, so it can be stored, diffed, reviewed and generated.
+
+**In**
+
+| Option | Type | |
+| --- | --- | --- |
+| `steps` | `Registry` or `(Pack \| NodeDefinition)[]` | Step types the user can place. |
+| `flow` | `Flow` or JSON string | Flow to show. Changing it reloads the canvas. Positions are optional. |
+| `theme` | `'light' \| 'dark' \| 'auto'` or `ThemeOptions` | `mode`, `colors`, `light`, `dark`, `fontFamily`, `monoFontFamily`, `fontSize`, `radius`, `nodeWidth`. |
+| `ui` | `UiOptions` | `toolbar`, `palette`, `inspector`, `testRun`, `json`, `importExport`, `controls`, `minimap`, `background`. |
+| `labels` | `Partial<Labels>` | Replace or translate any interface text. |
+| `readonly` | `boolean` | View only. |
+| `storageKey` | `string` | Autosave to `localStorage`. |
+| `services` | `Services` | Passed to steps during Test run (always `simulate` mode). |
+
+**Out**
+
+| Callback | Receives |
+| --- | --- |
+| `onChange` | `Flow` after every edit (debounced) |
+| `onValidate` | `Issue[]` whenever problems change, and once on load |
+| `onSelect` | selected step id or `null` |
+| `onRun` | `RunEvent` for each Test run event |
+
+**Control**
 
 ```ts
-import { createRegistry } from '@arcflow/core';
-
-const registry = createRegistry([pack]);
-const flow = registry.flow('Monthly payroll');
-
-const start = flow.add('trigger.schedule', { every: 'month', day: 1 });
-const healthy = flow.add('logic.condition', { value: '{{ steps.runway.output.runwayMonths }}', operator: '>', than: 6 });
-const approve = flow.add('approval.multisig', { signers: ['a.eth', 'b.eth', 'c.eth'] });
-
-start.to(healthy);
-healthy.on('true').to(approve); // ports are type-checked: .on('maybe') does not compile
-const json = flow.build();       // validated, auto-laid-out, plain JSON
+editor.getFlow();                  // Flow
+editor.getIssues();                // Issue[]
+await editor.setFlow(json);        // { loaded, issues }
+editor.setOptions({ theme: 'dark', readonly: true, labels: { testRun: 'Dry run' } });
+await editor.run();                // simulated run on the canvas
+editor.destroy();
 ```
 
-## Run, pause, resume
-
-```ts
-import { createEngine, waitingSteps } from '@arcflow/core';
-
-const engine = createEngine(registry, { services: { approvals, payments } });
-
-let state = await engine.start(json, { onEvent: console.log });
-if (state.status === 'waiting') {
-	await db.save(state);                     // RunState is plain JSON
-	// …later, when signers have approved:
-	state = await engine.resume(json, await db.load(), { nodeId: 'approve', data: { approved: true } });
-}
-```
-
-Steps can retry (`retry: { attempts, delayMs }`), time out (`timeoutMs`), route failures to an `error` output, and read earlier results with `{{ steps.<id>.output.<field> }}` expressions (lookups only, no `eval`). `mode: 'simulate'` runs `simulate()` handlers for side-effect-free test runs.
-
-## Let an LLM write flows
-
-```ts
-const schema = registry.toJSONSchema(); // structured output / tool parameters
-const catalog = registry.describe();    // Markdown: flow format, every step, ports, config
-
-const draft = await llm.generate({ system: catalog, schema, prompt: 'Pay contractors every Friday after two approvals' });
-const result = registry.parse(draft);    // never throws
-
-if (!result.ok) {
-	// every issue has a stable code and a JSON path, e.g.
-	// { code: 'missing_upstream', path: 'nodes[3]', message: 'Pay: money can only move after an Approval step.' }
-	// feed them back to the model and retry
-}
-```
-
-## Embed the editor
-
-```svelte
-<script lang="ts">
-	import { FlowEditor } from '@arcflow/svelte';
-	let editor: FlowEditor;
-</script>
-
-<div style="height: 100dvh">
-	<FlowEditor bind:this={editor} {registry} flow={json} onchange={(flow) => save(flow)} />
-</div>
-```
-
-`editor.getFlow()`, `editor.load(json)` and `editor.run()` let your code (or an agent) drive it. The **JSON** panel accepts pasted flows and copies the step catalog and schema for prompts.
-
-## Flow format
+### Flow JSON
 
 ```json
 {
 	"version": 1,
-	"name": "Monthly payroll",
+	"name": "Welcome email",
 	"nodes": [
-		{ "id": "schedule", "kind": "trigger.schedule", "config": { "every": "month" } },
-		{ "id": "approve", "kind": "approval.multisig", "config": { "signers": ["a.eth", "b.eth"] } }
+		{ "id": "hook", "kind": "webhook", "config": {} },
+		{ "id": "mail", "kind": "email", "config": { "to": "{{ trigger.email }}" } }
 	],
-	"edges": [{ "from": "schedule", "to": "approve" }]
+	"edges": [{ "from": "hook", "to": "mail" }]
 }
 ```
 
-`position` is optional — flows without one are laid out automatically.
+Get the exact schema for your steps with `steps.toJSONSchema()`.
+
+### Issues
+
+`steps.parse(json)` never throws. Each issue has a stable `code` and a JSON `path`:
+
+```json
+{ "level": "error", "code": "required", "path": "nodes[1].config.to", "nodeId": "mail", "message": "Send email: To is required." }
+```
+
+## Theming
+
+```ts
+createEditor(el, {
+	steps,
+	theme: {
+		mode: 'auto',
+		colors: { accent: '#16a34a', accentSoft: 'rgba(22, 163, 74, 0.14)' },
+		dark: { background: '#0b0f0c' },
+		fontFamily: 'Inter, system-ui, sans-serif',
+		radius: 4
+	},
+	ui: { palette: false, minimap: true, background: 'lines' },
+	labels: { testRun: 'Çalıştır', searchSteps: 'Adım ara' }
+});
+```
+
+All colors map to `--fb-*` CSS variables on `.fb-root`, so CSS overrides work as well. The defaults are a neutral gray palette with system fonts.
+
+## Running flows (headless)
+
+```ts
+import { createEngine, waitingSteps } from '@arcflow/core';
+
+const engine = createEngine(steps, { services });
+let state = await engine.start(flow, { payload: request.body });
+
+if (state.status === 'waiting') {
+	await db.save(state); // plain JSON
+	// later, e.g. after an approval
+	state = await engine.resume(flow, state, { nodeId: waitingSteps(state)[0].nodeId, data: { approved: true } });
+}
+```
+
+Retries, timeouts, `error` output ports, `{{ steps.<id>.output }}` expressions (no `eval`), cancellation and `simulate` mode are built in. See [`@arcflow/core`](./packages/core).
+
+## Building flows in code
+
+```ts
+const flow = steps.flow('Welcome');
+flow.add('webhook').to(flow.add('email', { to: '{{ trigger.email }}' }));
+const json = flow.build(); // validated and laid out
+```
+
+Kinds, config and port names are type-checked.
+
+## For agents and LLMs
+
+```ts
+const prompt = steps.describe();     // Markdown: flow format, expressions, every step with ports and config
+const schema = steps.toJSONSchema(); // for structured output or tool parameters
+
+const draft = await llm({ system: prompt, schema, input: 'When a user signs up, wait a day, then email them' });
+const result = steps.parse(draft);
+if (!result.ok) retryWith(result.issues); // codes and paths make repair loops reliable
+editor.setFlow(result.flow);
+```
+
+The editor's **JSON** panel does the same by hand: paste a generated flow, apply, and copy the catalog or schema for your prompts. [AGENTS.md](./AGENTS.md) documents the repository and the issue codes for coding agents.
+
+## Svelte
+
+```svelte
+<script lang="ts">
+	import { FlowEditor } from '@arcflow/editor/svelte';
+</script>
+
+<div style="height: 100dvh">
+	<FlowEditor {steps} {flow} theme="dark" onChange={save} />
+</div>
+```
 
 ## Development
 
 ```sh
 pnpm install
-pnpm dev      # playground on http://localhost:5173
-pnpm test     # vitest, including type tests
-pnpm check    # type-check every package
+pnpm dev           # Svelte playground with a live settings bar
+pnpm dev:vanilla   # the built bundle in a plain HTML page
+pnpm test          # vitest, including type tests
+pnpm check
 pnpm build
 ```
 
-See [AGENTS.md](./AGENTS.md) for architecture notes aimed at AI coding assistants.
-
 ## Roadmap
 
-- Undo / redo and multi-select editing in the canvas
-- Parallel branches that wait for each other (joins)
-- MCP server exposing `describe`, `parse` and `run` as tools
-- React bindings
+- Undo / redo, multi-select, copy and paste
+- Joins that wait for parallel branches
+- Custom node renderers per step kind
+- MCP server exposing `describe`, `parse` and `run`
 
 ## License
 

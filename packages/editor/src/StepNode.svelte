@@ -3,20 +3,24 @@
 	import Icon from './Icon.svelte';
 	import { getEditor } from './context.svelte.js';
 	import type { CanvasNode } from './convert.js';
+	import { format } from './options.js';
 
 	let { id, data, selected }: NodeProps<CanvasNode> = $props();
 
 	const editor = getEditor();
+	const labels = $derived(editor.labels);
 	const def = $derived(editor.registry.get(data.kind));
 	const outputs = $derived<{ id: string; label?: string }[]>(def?.outputs ?? []);
 	const labeledPorts = $derived(outputs.length > 1 || Boolean(outputs[0]?.label));
 	const category = $derived(
-		def?.trigger ? 'Trigger' : (editor.registry.categories.find((c: { id: string }) => c.id === (def?.category ?? 'other'))?.label ?? 'Unknown')
+		def?.trigger
+			? labels.trigger
+			: ((editor.registry.categories as { id: string; label: string }[]).find((c) => c.id === (def?.category ?? 'other'))?.label ?? '')
 	);
 	const run = $derived(editor.runStatus[id]);
 	const hasError = $derived((editor.issuesByNode[id] ?? []).some((issue) => issue.level === 'error'));
 	const summary = $derived.by(() => {
-		if (!def) return `Unknown step type “${data.kind}”`;
+		if (!def) return format(labels.unknownStep, { kind: data.kind });
 		try {
 			return def.summary?.(data.config) ?? def.description;
 		} catch {
@@ -43,7 +47,7 @@
 			{:else if run?.status === 'running'}
 				<span class="fb-spinner"></span>
 			{:else if hasError}
-				<span class="fb-dot-error" title="Needs attention"></span>
+				<span class="fb-dot-error" title={labels.needsAttention}></span>
 			{/if}
 		</span>
 	</div>

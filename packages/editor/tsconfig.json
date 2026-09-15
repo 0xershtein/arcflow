@@ -8,5 +8,5 @@
 		"noUncheckedSideEffectImports": false,
 		"types": []
 	},
-	"include": ["src"]
+	"include": ["src", "vite.config.ts"]
 }

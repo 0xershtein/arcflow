@@ -2,6 +2,7 @@
 	import { defaultsOf, fieldLabel, isExpression, isField, type Field, type Shape } from '@arcflow/core';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
+	import { getEditor } from './context.svelte.js';
 
 	/** Renders an input for one config field, recursing into lists. */
 	let {
@@ -20,9 +21,12 @@
 		placeholder?: string;
 	} = $props();
 
+	const editor = getEditor();
+	const labels = $derived(editor.labels);
+
 	const NUMBER = /^\s*-?\d+(\.\d+)?\s*$/;
 	const text = (v: unknown) => (v === undefined || v === null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v));
-	// Keep partial input ("1.", "{{ vars") as text; the inspector shows the validation issue until it parses.
+	// Keep partial input ("1.", "{{ vars") as text; the inspector shows the issue until it parses.
 	const readNumber = (raw: string) => (raw.trim() === '' ? undefined : NUMBER.test(raw) ? Number(raw) : raw);
 
 	const items = $derived(Array.isArray(value) ? value : []);
@@ -95,7 +99,7 @@
 	{#if isExpression(value)}
 		<div class="fb-list-expression">
 			<input class="fb-input mono" {value} {disabled} oninput={(event) => onchange(event.currentTarget.value)} />
-			<button class="fb-btn ghost" type="button" {disabled} onclick={() => onchange([])}>Use a list</button>
+			<button class="fb-btn ghost" type="button" {disabled} onclick={() => onchange([])}>{labels.useList}</button>
 		</div>
 	{:else}
 		<div class="fb-list">
@@ -123,13 +127,13 @@
 					{:else if itemField}
 						<FieldInput field={itemField} value={item} compact {disabled} onchange={(next) => setItem(index, next)} />
 					{/if}
-					<button class="fb-icon-btn" type="button" aria-label="Remove item {index + 1}" {disabled} onclick={() => removeItem(index)}>
+					<button class="fb-icon-btn" type="button" aria-label="{labels.remove} {index + 1}" {disabled} onclick={() => removeItem(index)}>
 						<Icon name="x" size={14} />
 					</button>
 				</div>
 			{/each}
 			<button class="fb-btn ghost fb-list-add" type="button" {disabled} onclick={() => onchange([...items, newItem()])}>
-				<Icon name="plus" size={14} />Add
+				<Icon name="plus" size={14} />{labels.add}
 			</button>
 		</div>
 	{/if}

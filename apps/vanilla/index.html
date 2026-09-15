@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>arcflow — no framework</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				height: 100%;
+				font: 13px/1.4 ui-sans-serif, system-ui, sans-serif;
+			}
+			body {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) 360px;
+			}
+			#editor {
+				height: 100vh;
+			}
+			aside {
+				display: flex;
+				flex-direction: column;
+				border-left: 1px solid #e4e4e7;
+				min-height: 0;
+			}
+			aside header {
+				display: flex;
+				gap: 8px;
+				padding: 10px;
+				border-bottom: 1px solid #e4e4e7;
+			}
+			pre {
+				flex: 1;
+				margin: 0;
+				padding: 12px;
+				overflow: auto;
+				font-size: 11px;
+				background: #fafafa;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="editor"></div>
+		<aside>
+			<header>
+				<button id="dark">Dark</button>
+				<button id="light">Light</button>
+				<button id="run">Run</button>
+				<button id="load">Load minimal flow</button>
+			</header>
+			<pre id="output">Waiting for onChange…</pre>
+		</aside>
+		<script type="module" src="/main.ts"></script>
+	</body>
+</html>

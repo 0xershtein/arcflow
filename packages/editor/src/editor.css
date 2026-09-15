@@ -1,16 +1,4 @@
-/* Styles added on top of theme.css for config forms, the JSON panel and run states. */
-
-.fb-body.no-palette {
-	grid-template-columns: minmax(0, 1fr) 320px;
-}
-
-.fb-body.wide-panel {
-	grid-template-columns: 264px minmax(0, 1fr) 420px;
-}
-
-.fb-body.no-palette.wide-panel {
-	grid-template-columns: minmax(0, 1fr) 420px;
-}
+/* Config forms, the JSON panel and extra run states. */
 
 .fb-node[data-run='waiting'] {
 	border-color: var(--fb-accent);
@@ -43,7 +31,7 @@
 }
 
 .fb-field.has-issue :is(.fb-input, .fb-select, .fb-textarea) {
-	border-color: rgba(229, 128, 107, 0.6);
+	border-color: color-mix(in srgb, var(--fb-danger) 60%, transparent);
 }
 
 .fb-list {
@@ -88,10 +76,6 @@
 .fb-btn:disabled {
 	opacity: 0.45;
 	cursor: not-allowed;
-}
-
-.fb-btn.primary:disabled:hover {
-	background: var(--fb-primary);
 }
 
 .fb-btn.is-on {
