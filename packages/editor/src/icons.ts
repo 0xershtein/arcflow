@@ -20,6 +20,7 @@ export const icons = {
 	merge: '<path d="M4 7h4c3 0 4 5 7 5h5M4 17h4c3 0 4-5 7-5"/><path d="m17 9 3 3-3 3"/>',
 	repeat: '<path d="m17 4 3 3-3 3"/><path d="M4 11V9a2 2 0 0 1 2-2h14M7 20l-3-3 3-3"/><path d="M20 13v2a2 2 0 0 1-2 2H4"/>',
 	layers: '<path d="m12 4 8 4-8 4-8-4z"/><path d="m4 12 8 4 8-4M4 16l8 4 8-4"/>',
+	chevron: '<path d="m9 6 6 6-6 6"/>',
 	plus: '<path d="M12 5v14M5 12h14"/>',
 	search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
 	trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',

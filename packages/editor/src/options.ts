@@ -189,7 +189,21 @@ export const defaultLabels = {
 	copyJson: 'Copy flow JSON',
 	copyCatalog: 'Copy step catalog (for prompts)',
 	copySchema: 'Copy JSON Schema',
-	clipboardUnavailable: 'The clipboard is not available here.'
+	clipboardUnavailable: 'The clipboard is not available here.',
+	settings: 'Settings',
+	inputTab: 'Input',
+	outputTab: 'Output',
+	noRunData: 'Run a test to see the data this step receives and produces.',
+	runNow: 'Run a test',
+	iteration: 'Iteration',
+	logs: 'Logs',
+	dataFromSteps: 'Data from earlier steps',
+	dragToMap: 'Drag a value onto a field, or type {{ in a field to pick one.',
+	noUpstream: 'Connect earlier steps to use their data here.',
+	notRunYet: 'Not run yet',
+	preview: 'Preview',
+	previewNeedsRun: 'Run a test to preview this value.',
+	waitingFor: 'Waiting: {reason}'
 };
 
 export type Labels = { [K in keyof typeof defaultLabels]: string };

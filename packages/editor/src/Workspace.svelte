@@ -90,6 +90,27 @@
 	const errorCount = $derived(issues.filter((issue) => issue.level === 'error').length);
 	const selected = $derived(nodes.find((node) => node.id === selectedId) ?? null);
 
+	/** Steps that run before the selected one, nearest first. */
+	const upstream = $derived.by(() => {
+		if (!selectedId) return [];
+		const found: { id: string; title: string }[] = [];
+		const seen = new Set([selectedId]);
+		let frontier = [selectedId];
+		while (frontier.length) {
+			const next: string[] = [];
+			for (const id of frontier) {
+				for (const edge of edges) {
+					if (edge.target !== id || seen.has(edge.source)) continue;
+					seen.add(edge.source);
+					next.push(edge.source);
+					found.push({ id: edge.source, title: stepName(edge.source) });
+				}
+			}
+			frontier = next;
+		}
+		return found;
+	});
+
 	const showPanel = $derived(ui.inspector || panel === 'json');
 	const columns = $derived(
 		[ui.palette && !readonly ? '264px' : '', 'minmax(0, 1fr)', showPanel ? (panel === 'json' ? '420px' : '320px') : ''].filter(Boolean).join(' ')
@@ -103,6 +124,7 @@
 		nodes = canvas.nodes;
 		edges = canvas.edges;
 		selectedId = null;
+		editor.lastRun = null;
 		return { loaded: true, issues: parsed.issues };
 	}
 
@@ -371,7 +393,7 @@
 		running = true;
 		controller = new AbortController();
 		try {
-			await createEngine(registry, { services }).start(current, {
+			editor.lastRun = await createEngine(registry, { services }).start(current, {
 				mode: 'simulate',
 				stepDelayMs: runStepDelay,
 				signal: controller.signal,
@@ -552,6 +574,8 @@
 			<StepInspector
 				node={selected}
 				{issues}
+				{upstream}
+				onrun={run}
 				onconfig={setConfig}
 				onlabel={(label) => updateSelected(() => ({ label }))}
 				ontoggle={() => updateSelected((data) => ({ disabled: !data.disabled }))}
