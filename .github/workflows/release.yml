@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm provenance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm -r check
+
+      # pnpm 8 cannot publish with provenance, but `pnpm pack` already rewrites
+      # workspace:* dependencies and applies publishConfig, so npm publishes the tarballs.
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          packs=$(mktemp -d)
+          for dir in packages/*/; do
+            name=$(node -p "require('./$dir/package.json').name")
+            if [ "$(node -p "require('./$dir/package.json').private === true")" = "true" ]; then
+              echo "skipping $name (private)"
+              continue
+            fi
+            echo "packing $name"
+            (cd "$dir" && pnpm pack --pack-destination "$packs")
+          done
+          for tarball in "$packs"/*.tgz; do
+            echo "publishing $(basename "$tarball")"
+            npm publish "$tarball" --provenance --access public
+          done
