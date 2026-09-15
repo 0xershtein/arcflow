@@ -21,6 +21,8 @@ export interface AiResult {
 export interface FlowAiService {
 	generate(input: { prompt: string; vars?: Record<string, unknown> }): Promise<AiResult>;
 	edit(input: { flow: Flow; instruction: string }): Promise<AiResult>;
+	/** Describes a flow in plain language, or answers a question about it. */
+	explain(input: { flow: Flow; question?: string }): Promise<{ text: string; model?: string }>;
 }
 
 export interface FlowAiOptions {
@@ -75,6 +77,19 @@ export function createFlowAi(options: FlowAiOptions): FlowAiService {
 			const ai = await load();
 			const result = await ai.editFlow({ ...(await shared(ai)), flow, instruction });
 			return { ...summarize(result), changes: result.changes };
+		},
+
+		async explain({ flow, question }) {
+			const ai = await load();
+			const base = await shared(ai);
+			const result = await ai.explainFlow({
+				registry: base.registry,
+				model: base.model,
+				...(options.instructions ? { instructions: options.instructions } : {}),
+				flow,
+				...(question ? { question } : {})
+			});
+			return { text: result.text, model: result.model };
 		}
 	};
 }

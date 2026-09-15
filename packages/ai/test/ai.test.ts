@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createRegistry, defineNode, f, type Flow } from '@arcflow/core';
-import { buildSystemPrompt, diffFlows, editFlow, extractJson, generateFlow, summarizeChanges, type ModelAdapter } from '../src/index.js';
+import { buildSystemPrompt, diffFlows, editFlow, explainFlow, extractJson, generateFlow, summarizeChanges, type ModelAdapter } from '../src/index.js';
 
 const start = defineNode({ kind: 'test.start', title: 'Start', description: 'Starts the flow.', trigger: true, category: 'triggers' });
 const notify = defineNode({
@@ -85,6 +85,28 @@ describe('generateFlow', () => {
 		expect(prompt).toContain('Do not use these steps: `test.notify`');
 		expect(prompt).toContain('Prefer short ids.');
 		expect(prompt).toContain('# Flow format');
+	});
+});
+
+describe('explainFlow', () => {
+	it('asks in prose, with the catalog and the flow', async () => {
+		const model = scripted(['  It waits for a manual run, then emails the team.  ']);
+		const flow = registry.parse(JSON.parse(flowJson('Deployed'))).flow!;
+		const result = await explainFlow({ registry, model, flow });
+
+		expect(result.text).toBe('It waits for a manual run, then emails the team.');
+		expect(result.model).toBe('scripted');
+		expect(model.seen[0].system).toContain('no JSON, no code fences');
+		expect(model.seen[0].system).toContain('`test.notify`');
+		expect(model.seen[0].messages[0].content).toContain('"kind": "test.notify"');
+		expect(model.seen[0].messages[0].content).toContain('What does this flow do?');
+	});
+
+	it('answers a specific question instead', async () => {
+		const model = scripted(['Nothing is sent twice.']);
+		const flow = registry.parse(JSON.parse(flowJson('Deployed'))).flow!;
+		await explainFlow({ registry, model, flow, question: 'Can this send the same message twice?' });
+		expect(model.seen[0].messages[0].content).toContain('Can this send the same message twice?');
 	});
 });
 

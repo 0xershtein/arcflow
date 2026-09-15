@@ -723,13 +723,24 @@ textarea.fb-note-text {
 
 /* ---------- Prompt bar ---------- */
 
-.fb-prompt {
+.fb-prompt-wrap {
 	position: absolute;
 	bottom: 16px;
 	left: 50%;
 	z-index: 7;
 	transform: translateX(-50%);
 	width: min(640px, calc(100% - 32px));
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	transition: bottom 0.2s;
+}
+
+.fb-prompt-wrap.is-raised {
+	bottom: calc(42% + 28px);
+}
+
+.fb-prompt {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -738,11 +749,28 @@ textarea.fb-note-text {
 	border-radius: var(--fb-radius);
 	background: var(--fb-surface);
 	box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2);
-	transition: bottom 0.2s;
 }
 
-.fb-prompt.is-raised {
-	bottom: calc(42% + 28px);
+.fb-explain {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	max-height: 220px;
+	overflow-y: auto;
+	padding: 12px 8px 12px 14px;
+	border: 1px solid var(--fb-line-strong);
+	border-radius: var(--fb-radius);
+	background: var(--fb-surface);
+	box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+}
+
+.fb-explain p {
+	flex: 1;
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.55;
+	color: var(--fb-text-soft);
+	white-space: pre-wrap;
 }
 
 .fb-prompt-icon {

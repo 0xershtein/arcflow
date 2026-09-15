@@ -128,6 +128,8 @@
 	} | null>(null);
 	/** Bumped to ignore a reply the user stopped waiting for. */
 	let aiToken = 0;
+	let aiExplaining = $state(false);
+	let aiExplanation = $state<string | null>(null);
 
 	type PickerState = {
 		x: number;
@@ -652,6 +654,29 @@
 	function stopAi() {
 		aiToken++;
 		aiBusy = false;
+	}
+
+	/** Asks the model what this flow does, in plain language. */
+	export async function explainAi() {
+		if (!backend?.explainFlow || aiExplaining) return;
+		aiExplaining = true;
+		try {
+			const explanation = await backend.explainFlow({ flow: getFlow() });
+			aiExplanation = explanation.text;
+		} catch (error) {
+			flash(format(labels.serverError, { error: errorText(error) }));
+		} finally {
+			aiExplaining = false;
+		}
+	}
+
+	/** Hands the current errors to the model, with their paths, and asks for the smallest fix. */
+	function fixProblems() {
+		const errors = issues.filter((issue) => issue.level === 'error');
+		if (!errors.length) return;
+		askAi(
+			`Fix these problems, changing as little as possible:\n${errors.map((issue) => `- ${issue.path || '(flow)'}: ${issue.message} [${issue.code}]`).join('\n')}`
+		);
 	}
 
 	// ---------- Adding steps ----------
@@ -1290,12 +1315,19 @@
 				<PromptBar
 					mode={steps.length ? 'edit' : 'create'}
 					busy={aiBusy}
+					problems={errorCount}
 					suggestion={aiSuggestion}
 					raised={logOpen}
 					onsubmit={askAi}
 					onkeep={keepAi}
 					ondiscard={discardAi}
 					onstop={stopAi}
+					onfix={fixProblems}
+					canExplain={Boolean(backend?.explainFlow)}
+					explaining={aiExplaining}
+					explanation={aiExplanation}
+					onexplain={explainAi}
+					ondismiss={() => (aiExplanation = null)}
 				/>
 			{/if}
 

@@ -52,6 +52,7 @@ packages/ai/src            generateFlow / editFlow: prompt from registry.describ
   model.ts                 ModelAdapter (text in, text out) + anthropicModel (SDK imported lazily)
   prompt.ts                system prompt, JSON extraction, issue feedback
   generate.ts              the loop, diffFlows and change summaries
+  explain.ts               plain-language description of a flow (prose, not JSON)
 packages/mcp/src           MCP server over stdio for agents (list_steps, validate_flow, test_flow, save_flow, run_flow, …)
   protocol.ts              JSON-RPC 2.0 framing, no SDK
   tools.ts                 the tools; remote ones need a FlowStore

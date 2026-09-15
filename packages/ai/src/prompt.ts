@@ -43,6 +43,18 @@ export function buildSystemPrompt(registry: Registry<any>, options: PromptOption
 		.join('\n\n');
 }
 
+/** The system prompt for explaining a flow: same catalog, prose instead of JSON. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildExplainPrompt(registry: Registry<any>, options: PromptOptions = {}): string {
+	return [
+		'You explain automation flows to the person who has to run them. Be short and concrete: what starts it, what each step does with which data, where it branches, waits or can fail. Name steps the way the flow does. Plain prose or a short list — no JSON, no code fences.',
+		registry.describe(),
+		options.instructions?.trim() ?? ''
+	]
+		.filter(Boolean)
+		.join('\n\n');
+}
+
 /** The first JSON object in a reply, tolerating code fences and stray prose. */
 export function extractJson(text: string): unknown {
 	const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);

@@ -268,7 +268,10 @@ export const defaultLabels = {
 	aiLeftovers: 'Kept, but {count} problems remain.',
 	aiFailed: 'The model could not build a valid flow. Try describing it differently.',
 	aiOff: 'Flow generation is off on this server.',
-	aiStop: 'Stop'
+	aiStop: 'Stop',
+	aiFix: 'Fix problems',
+	aiExplain: 'Explain',
+	aiExplaining: 'Reading the flow…'
 };
 
 export type Labels = { [K in keyof typeof defaultLabels]: string };

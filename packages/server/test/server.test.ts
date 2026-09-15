@@ -149,7 +149,8 @@ describe('flow generation', () => {
 	it('passes prompts to the service and returns the flow it built', async () => {
 		const ai = {
 			generate: vi.fn(async () => ({ ok: true, flow: waitingFlow, issues: [], model: 'fake', attempts: 2 })),
-			edit: vi.fn(async () => ({ ok: true, flow: waitingFlow, issues: [], changes: [{ type: 'step:added', id: 'wait' }] }))
+			edit: vi.fn(async () => ({ ok: true, flow: waitingFlow, issues: [], changes: [{ type: 'step:added', id: 'wait' }] })),
+			explain: vi.fn(async () => ({ text: 'It waits two hours, then finishes.', model: 'fake' }))
 		};
 		const { call } = await setup({ ai });
 
@@ -166,6 +167,11 @@ describe('flow generation', () => {
 		expect(ai.edit).toHaveBeenCalledWith({ flow: expect.objectContaining({ name: waitingFlow.name }), instruction: 'wait three hours instead' });
 
 		expect((await call('POST', '/api/ai/edit', { instruction: 'no flow here' })).status).toBe(422);
+
+		const explained = await call('POST', '/api/ai/explain', { flow: waitingFlow, question: 'How long does it wait?' });
+		expect(explained.body.text).toContain('waits two hours');
+		expect(ai.explain).toHaveBeenCalledWith({ flow: expect.objectContaining({ name: waitingFlow.name }), question: 'How long does it wait?' });
+		expect((await call('POST', '/api/ai/explain', {})).status).toBe(422);
 	});
 });
 

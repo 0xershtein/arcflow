@@ -50,7 +50,7 @@ await serveNode(server, { port: 8787 });
 | `POST /api/runs/:id/cancel` | Cancel a running or waiting run |
 | `GET /api/runs/:id/events` | Server-Sent Events for a live run |
 | `GET/POST /api/credentials`, `PUT/DELETE /api/credentials/:id` | Credentials; values are write-only and stored with AES-256-GCM |
-| `POST /api/ai/generate`, `POST /api/ai/edit` | Build a flow from a description, or change one — `{ prompt }` / `{ flow, instruction }`. 501 when generation is off |
+| `POST /api/ai/generate`, `POST /api/ai/edit`, `POST /api/ai/explain` | Build a flow from a description, change one, or describe it — `{ prompt }` / `{ flow, instruction }` / `{ flow, question? }`. 501 when generation is off |
 | `ANY /hooks/<path>` | Webhook triggers of active flows |
 
 Flows with errors can be saved as drafts but not activated. Only active flows answer webhooks and schedules.

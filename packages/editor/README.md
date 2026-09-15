@@ -79,7 +79,7 @@ Without a build step, let the server hand over its step catalog too:
 
 ## Prompt bar
 
-When the backend can generate flows (`@arcflow/server` with an API key, or your own `generateFlow` / `editFlow`), a prompt bar appears on the canvas. Describe a flow and it is built and validated; describe a change and it is applied to the flow that is open. The result lands on the canvas straight away with **Keep** and **Discard** — discarding restores what was there, and either way undo still works. `ui: { ai: false }` hides it.
+When the backend can generate flows (`@arcflow/server` with an API key, or your own `generateFlow` / `editFlow`), a prompt bar appears on the canvas. Describe a flow and it is built and validated; describe a change and it is applied to the flow that is open. The result lands on the canvas straight away with **Keep** and **Discard** — discarding restores what was there, and either way undo still works. With errors on the canvas the bar offers **Fix problems**, which hands the model the issues and their paths; otherwise it offers **Explain**, which describes the open flow in plain language. `ui: { ai: false }` hides it.
 
 Exports `lightColors`, `darkColors`, `defaultLabels` and `defaultUi` so you can start from the defaults.
 

@@ -101,6 +101,8 @@ export interface Backend {
 	generateFlow?(input: { prompt: string; vars?: Record<string, unknown> }): Promise<AiSuggestion>;
 	/** Changes a flow the way the instruction asks. */
 	editFlow?(input: { flow: Flow; instruction: string }): Promise<AiSuggestion>;
+	/** Describes a flow in plain language, or answers a question about it. */
+	explainFlow?(input: { flow: Flow; question?: string }): Promise<{ text: string; model?: string }>;
 }
 
 export interface HttpBackendOptions {
@@ -247,6 +249,8 @@ export function createHttpBackend(url: string, options: HttpBackendOptions = {})
 		generateFlow: (input) => request<AiSuggestion>('/ai/generate', { method: 'POST', body: JSON.stringify(input) }),
 
 		editFlow: (input) => request<AiSuggestion>('/ai/edit', { method: 'POST', body: JSON.stringify(input) }),
+
+		explainFlow: (input) => request<{ text: string; model?: string }>('/ai/explain', { method: 'POST', body: JSON.stringify(input) }),
 
 		async listCredentials() {
 			return (await request<{ credentials: ServerCredential[] }>('/credentials')).credentials;

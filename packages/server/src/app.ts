@@ -332,6 +332,14 @@ export function createApp(ctx: AppContext) {
 		return json(await ai.edit({ flow: parsed.flow, instruction: body.instruction }));
 	});
 
+	app.post('/api/ai/explain', async (c) => {
+		const ai = requireAi();
+		const body = await readJson(c);
+		const parsed = registry.parse(body.flow);
+		if (!parsed.flow) throw new HttpError(422, 'The body has no flow to explain.', { issues: parsed.issues });
+		return json(await ai.explain({ flow: parsed.flow, ...(typeof body.question === 'string' ? { question: body.question } : {}) }));
+	});
+
 	// ---------- Webhooks ----------
 
 	app.all('/hooks/*', async (c) => {

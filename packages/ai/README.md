@@ -29,6 +29,17 @@ console.log(summarizeChanges(result.changes)); // "2 added, 1 changed"
 
 `changes` is a list of `step:added`, `step:changed`, `edge:removed`, … entries — enough to show a diff and let someone accept or reject it. Positions are ignored, so moving a step is not a change.
 
+## Explaining
+
+```ts
+import { explainFlow } from '@arcflow/ai';
+
+const { text } = await explainFlow({ registry, model, flow });
+const answer = await explainFlow({ registry, model, flow, question: 'Can this pay someone twice?' });
+```
+
+Prose, not JSON — for a "what does this do?" panel, a pull request comment, or handing a flow to someone who did not build it.
+
 ## The repair loop
 
 1. The system prompt is the flow format plus `registry.describe()` — every step, setting and output that exists.

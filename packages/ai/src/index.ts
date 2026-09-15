@@ -1,5 +1,7 @@
 export { anthropicModel, type AnthropicLike, type AnthropicModelOptions, type ModelAdapter, type ModelMessage, type ModelReply, type ModelRequest } from './model.js';
+export { explainFlow, type ExplainOptions, type ExplainResult } from './explain.js';
 export {
+	buildExplainPrompt,
 	buildSystemPrompt,
 	describeEdit,
 	describeTask,
