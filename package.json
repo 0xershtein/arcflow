@@ -14,8 +14,9 @@
 	},
 	"scripts": {
 		"dev": "pnpm --filter playground dev",
+		"dev:docs": "pnpm --filter docs dev",
 		"dev:vanilla": "pnpm --filter @arcflow/editor build && pnpm --filter vanilla-example dev",
-		"build": "pnpm --filter \"./packages/**\" build && pnpm --filter playground --filter vanilla-example build",
+		"build": "pnpm --filter \"./packages/**\" build && pnpm --filter playground --filter vanilla-example --filter docs build",
 		"test": "vitest run",
 		"check": "pnpm --filter @arcflow/editor build && pnpm -r check"
 	},
