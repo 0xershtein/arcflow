@@ -116,6 +116,8 @@ export interface UiOptions {
 	flows?: boolean;
 	/** Run history panel — with a `backend` only. */
 	executions?: boolean;
+	/** Prompt bar for building and changing flows with AI — needs a `backend` that supports it. */
+	ai?: boolean;
 	/** Zoom buttons on the canvas. */
 	controls?: boolean;
 	minimap?: boolean;
@@ -133,6 +135,7 @@ export const defaultUi: ResolvedUi = {
 	importExport: true,
 	flows: true,
 	executions: true,
+	ai: true,
 	controls: true,
 	minimap: false,
 	background: 'dots'
@@ -251,7 +254,21 @@ export const defaultLabels = {
 	credentialsOff: 'Credentials are disabled on this server.',
 	create: 'Create',
 	cancel: 'Cancel',
-	serverError: 'Server: {error}'
+	serverError: 'Server: {error}',
+	askAi: 'Ask AI',
+	aiPlaceholder: 'Describe what this flow should do…',
+	aiEditPlaceholder: 'What should change?',
+	aiWorking: 'Building…',
+	aiKeep: 'Keep',
+	aiDiscard: 'Discard',
+	aiChangeCount: '{count} changes',
+	aiNoChanges: 'Nothing changed.',
+	aiBuilt: 'Built {count} steps',
+	aiFixed: 'fixed after {count} tries',
+	aiLeftovers: 'Kept, but {count} problems remain.',
+	aiFailed: 'The model could not build a valid flow. Try describing it differently.',
+	aiOff: 'Flow generation is off on this server.',
+	aiStop: 'Stop'
 };
 
 export type Labels = { [K in keyof typeof defaultLabels]: string };

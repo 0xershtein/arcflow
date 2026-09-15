@@ -50,9 +50,25 @@ await serveNode(server, { port: 8787 });
 | `POST /api/runs/:id/cancel` | Cancel a running or waiting run |
 | `GET /api/runs/:id/events` | Server-Sent Events for a live run |
 | `GET/POST /api/credentials`, `PUT/DELETE /api/credentials/:id` | Credentials; values are write-only and stored with AES-256-GCM |
+| `POST /api/ai/generate`, `POST /api/ai/edit` | Build a flow from a description, or change one — `{ prompt }` / `{ flow, instruction }`. 501 when generation is off |
 | `ANY /hooks/<path>` | Webhook triggers of active flows |
 
 Flows with errors can be saved as drafts but not activated. Only active flows answer webhooks and schedules.
+
+## Flow generation
+
+With `ANTHROPIC_API_KEY` set, `arcflow serve` and `arcflow dev` answer `/api/ai/*` and the editor gets a prompt bar. The key stays on the server — browsers never see it. `--no-ai` turns it off.
+
+```ts
+import { createFlowAi, createServer } from '@arcflow/server';
+
+const server = await createServer({
+	registry,
+	ai: createFlowAi({ registry, instructions: 'Prefer our internal steps over raw HTTP.' })
+});
+```
+
+`createFlowAi` uses [`@arcflow/ai`](../ai), which stays optional: install it (with `@anthropic-ai/sdk`) only if you want generation. Pass any `ModelAdapter` as `model` to use a different provider.
 
 ## Triggers and timers
 

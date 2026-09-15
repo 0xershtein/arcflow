@@ -86,6 +86,11 @@
 	export function runOnServer(): Promise<void> {
 		return workspace!.runOnServer();
 	}
+
+	/** Asks the backend's model for a flow, or for a change to this one. */
+	export function askAi(prompt: string): Promise<void> {
+		return workspace!.askAi(prompt);
+	}
 </script>
 
 <SvelteFlowProvider>

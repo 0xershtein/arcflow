@@ -6,4 +6,5 @@ export { MemoryStorage } from './storage/memory.js';
 export { createSecretBox, type SecretBox } from './secrets.js';
 export { HttpError } from './errors.js';
 export { createEditorUi, type EditorUiOptions } from './ui.js';
+export { createFlowAi, type AiResult, type FlowAiOptions, type FlowAiService } from './ai.js';
 export type * from './types.js';

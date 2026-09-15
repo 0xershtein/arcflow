@@ -13,6 +13,7 @@ export { icons, type IconName } from './icons.js';
 export {
 	BackendError,
 	createHttpBackend,
+	type AiSuggestion,
 	type Backend,
 	type HttpBackendOptions,
 	type RunQuery,

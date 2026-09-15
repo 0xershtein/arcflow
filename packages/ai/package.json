@@ -1,0 +1,59 @@
+{
+	"name": "@arcflow/ai",
+	"version": "0.1.0",
+	"description": "Build and edit arcflow flows with an LLM: a model-agnostic adapter, JSON output and a repair loop that feeds validation issues back until the flow is valid.",
+	"license": "MIT",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"default": "./src/index.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"check": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@arcflow/core": "workspace:*"
+	},
+	"peerDependencies": {
+		"@anthropic-ai/sdk": ">=0.60.0"
+	},
+	"peerDependenciesMeta": {
+		"@anthropic-ai/sdk": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@anthropic-ai/sdk": "^0.126.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/0xershtein/arcflow.git",
+		"directory": "packages/ai"
+	},
+	"keywords": [
+		"workflow",
+		"automation",
+		"ai",
+		"llm",
+		"claude",
+		"anthropic",
+		"code-generation"
+	]
+}

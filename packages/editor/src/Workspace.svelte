@@ -31,6 +31,7 @@
 	import StepPalette from './StepPalette.svelte';
 	import StepPicker from './StepPicker.svelte';
 	import ExecutionsPanel from './ExecutionsPanel.svelte';
+	import PromptBar from './PromptBar.svelte';
 	import ServerBar from './ServerBar.svelte';
 	import { BackendError, type ServerFlowSummary, type ServerRunSummary } from './backend.js';
 	import { DRAG_TYPE, getEditor, type StepRunStatus } from './context.svelte.js';
@@ -113,6 +114,20 @@
 	/** The flow as it is on the server, to tell edited from saved. */
 	let savedJson = $state('');
 	let stopWatching: (() => void) | null = null;
+
+	let aiBusy = $state(false);
+	let aiOff = $state(false);
+	let aiSuggestion = $state.raw<{
+		before: Flow;
+		changes: { type: string }[];
+		issues: Issue[];
+		attempts?: number;
+		model?: string;
+		/** Steps in a flow the model built from scratch. Absent when it changed an existing one. */
+		built?: number;
+	} | null>(null);
+	/** Bumped to ignore a reply the user stopped waiting for. */
+	let aiToken = 0;
 
 	type PickerState = {
 		x: number;
@@ -578,6 +593,65 @@
 				refreshRuns();
 			}
 		);
+	}
+
+	// ---------- Flow generation ----------
+
+	const canAi = $derived(Boolean(backend?.generateFlow) && ui.ai && !readonly && !aiOff);
+
+	/**
+	 * Asks the model for a flow (or for a change to this one) and puts it on the canvas straight away,
+	 * keeping the old one so it can be put back.
+	 */
+	export async function askAi(prompt: string) {
+		if (!backend?.generateFlow || aiBusy) return;
+		const before = getFlow();
+		const token = ++aiToken;
+		aiBusy = true;
+		try {
+			const editing = Boolean(steps.length && backend.editFlow);
+			const suggestion = editing ? await backend.editFlow!({ flow: before, instruction: prompt }) : await backend.generateFlow({ prompt });
+			if (token !== aiToken) return; // stopped while waiting
+			if (!suggestion.flow) {
+				flash(suggestion.issues[0]?.message ?? labels.aiFailed);
+				return;
+			}
+			await load(suggestion.flow);
+			aiSuggestion = {
+				before,
+				changes: (suggestion.changes ?? []) as { type: string }[],
+				issues: suggestion.issues,
+				...(suggestion.attempts === undefined ? {} : { attempts: suggestion.attempts }),
+				...(suggestion.model ? { model: suggestion.model } : {}),
+				...(editing ? {} : { built: suggestion.flow.nodes.length })
+			};
+		} catch (error) {
+			if (token !== aiToken) return;
+			if (error instanceof BackendError && error.status === 501) {
+				aiOff = true;
+				flash(labels.aiOff);
+			} else flash(format(labels.serverError, { error: errorText(error) }));
+		} finally {
+			if (token === aiToken) aiBusy = false;
+		}
+	}
+
+	function keepAi() {
+		const suggestion = aiSuggestion;
+		aiSuggestion = null;
+		const errors = suggestion?.issues.filter((issue) => issue.level === 'error').length ?? 0;
+		if (errors) flash(format(labels.aiLeftovers, { count: errors }));
+	}
+
+	async function discardAi() {
+		const suggestion = aiSuggestion;
+		aiSuggestion = null;
+		if (suggestion) await load(suggestion.before);
+	}
+
+	function stopAi() {
+		aiToken++;
+		aiBusy = false;
 	}
 
 	// ---------- Adding steps ----------
@@ -1209,6 +1283,19 @@
 					triggers={picker.from?.type === 'target'}
 					onpick={pick}
 					onclose={() => (picker = null)}
+				/>
+			{/if}
+
+			{#if canAi}
+				<PromptBar
+					mode={steps.length ? 'edit' : 'create'}
+					busy={aiBusy}
+					suggestion={aiSuggestion}
+					raised={logOpen}
+					onsubmit={askAi}
+					onkeep={keepAi}
+					ondiscard={discardAi}
+					onstop={stopAi}
 				/>
 			{/if}
 

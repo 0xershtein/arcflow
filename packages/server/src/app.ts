@@ -5,6 +5,7 @@ import { HTTPException } from 'hono/http-exception';
 import { streamSSE } from 'hono/streaming';
 import { FlowError, hasErrors, shapeSchema, toManifest, type AnyNodeDefinition, type Registry, type RunEvent } from '@arcflow/core';
 import type { HttpResponseData } from '@arcflow/nodes';
+import type { FlowAiService } from './ai.js';
 import { HttpError, badRequest, conflict, notFound } from './errors.js';
 import { runResult, type RunManager } from './runs.js';
 import type { SecretBox } from './secrets.js';
@@ -22,6 +23,8 @@ export interface AppContext {
 	apiKey?: string;
 	cors?: string | string[];
 	webhookTimeoutMs: number;
+	/** Flow generation. Without it, `/api/ai/*` answers 501. */
+	ai?: FlowAiService;
 }
 
 const ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
@@ -304,6 +307,29 @@ export function createApp(ctx: AppContext) {
 	app.delete('/api/credentials/:id', async (c) => {
 		await storage.deleteCredential(c.req.param('id'));
 		return new Response(null, { status: 204 });
+	});
+
+	// ---------- Flow generation ----------
+
+	const requireAi = () => {
+		if (!ctx.ai) throw new HttpError(501, 'Flow generation is off: start the server with a model (ANTHROPIC_API_KEY).');
+		return ctx.ai;
+	};
+
+	app.post('/api/ai/generate', async (c) => {
+		const ai = requireAi();
+		const body = await readJson(c);
+		if (typeof body.prompt !== 'string' || !body.prompt.trim()) throw badRequest('"prompt" is required: what the flow should do.');
+		return json(await ai.generate({ prompt: body.prompt, ...(isRecord(body.vars) ? { vars: body.vars } : {}) }));
+	});
+
+	app.post('/api/ai/edit', async (c) => {
+		const ai = requireAi();
+		const body = await readJson(c);
+		if (typeof body.instruction !== 'string' || !body.instruction.trim()) throw badRequest('"instruction" is required: what to change.');
+		const parsed = registry.parse(body.flow);
+		if (!parsed.flow) throw new HttpError(422, 'The body has no flow to edit.', { issues: parsed.issues });
+		return json(await ai.edit({ flow: parsed.flow, instruction: body.instruction }));
 	});
 
 	// ---------- Webhooks ----------

@@ -15,6 +15,8 @@ Drop a visual workflow builder into your own product — an automation panel, an
 | [`@arcflow/editor`](./packages/editor) | The canvas editor. One ES module with styles included. |
 | [`@arcflow/nodes`](./packages/nodes) | Standard steps: manual, webhook and cron triggers, HTTP request and response, sandboxed JavaScript, set fields, if, switch, merge, loop, wait, run flow. |
 | [`@arcflow/server`](./packages/server) | Runs flows for real: HTTP API, webhook and cron triggers, restart-safe timers, run history, encrypted credentials, live events, `arcflow serve` CLI. |
+| [`@arcflow/ai`](./packages/ai) | Builds and edits flows with an LLM: model-agnostic adapter, JSON output, and a repair loop that feeds validation issues back until the flow is valid. |
+| [`@arcflow/mcp`](./packages/mcp) | MCP server so agents like Claude Code and Cursor can list steps, write, validate, test, save and run flows. |
 | [`@arcflow/payments`](./packages/payments) | Example domain pack (runway check → multisig approval → transfer) built on the standard steps. |
 
 ## Run flows on a server
@@ -197,6 +199,16 @@ const json = flow.build(); // validated and laid out
 Kinds, config and port names are type-checked.
 
 ## For agents and LLMs
+
+Point an agent at your steps and let it build flows:
+
+```sh
+claude mcp add arcflow -- npx -y @arcflow/mcp --url http://127.0.0.1:8787
+```
+
+It gets `list_steps`, `validate_flow`, `test_flow` (a simulated run, nothing sent), `save_flow`, `run_flow` and `get_run` — see [`@arcflow/mcp`](./packages/mcp). In your own code, [`@arcflow/ai`](./packages/ai) does the same through `generateFlow` / `editFlow`, and with `ANTHROPIC_API_KEY` set the server offers `/api/ai/*` so the editor's prompt bar works without a key in the browser.
+
+The pieces underneath are plain data:
 
 ```ts
 const prompt = steps.describe();     // Markdown: flow format, expressions, every step with ports and config

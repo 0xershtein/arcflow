@@ -66,6 +66,19 @@ export interface StartRunOptions {
 	trigger?: string;
 }
 
+/** What a flow the model wrote comes back as. */
+export interface AiSuggestion {
+	/** False when the model could not produce a valid flow; `issues` says why. */
+	ok: boolean;
+	flow: Flow | null;
+	issues: Issue[];
+	/** What changed, when editing an existing flow. */
+	changes?: { type: string; id?: string; kind?: string; fields?: string[] }[];
+	model?: string;
+	/** How many tries the repair loop needed. */
+	attempts?: number;
+}
+
 export interface Backend {
 	/** Step catalog as JSON (`registryFromManifest` turns it into a registry). Optional. */
 	manifest?(): Promise<unknown>;
@@ -84,6 +97,10 @@ export interface Backend {
 	listCredentials(): Promise<ServerCredential[]>;
 	createCredential(input: { name: string; type: string; value: unknown }): Promise<ServerCredential>;
 	deleteCredential(id: string): Promise<void>;
+	/** Builds a flow from a description. Optional; the prompt bar hides itself without it. */
+	generateFlow?(input: { prompt: string; vars?: Record<string, unknown> }): Promise<AiSuggestion>;
+	/** Changes a flow the way the instruction asks. */
+	editFlow?(input: { flow: Flow; instruction: string }): Promise<AiSuggestion>;
 }
 
 export interface HttpBackendOptions {
@@ -226,6 +243,10 @@ export function createHttpBackend(url: string, options: HttpBackendOptions = {})
 			})();
 			return () => controller.abort();
 		},
+
+		generateFlow: (input) => request<AiSuggestion>('/ai/generate', { method: 'POST', body: JSON.stringify(input) }),
+
+		editFlow: (input) => request<AiSuggestion>('/ai/edit', { method: 'POST', body: JSON.stringify(input) }),
 
 		async listCredentials() {
 			return (await request<{ credentials: ServerCredential[] }>('/credentials')).credentials;

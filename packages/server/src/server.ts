@@ -1,5 +1,6 @@
 import type { EngineOptions, Registry, Services } from '@arcflow/core';
 import type { HttpResponseData } from '@arcflow/nodes';
+import type { FlowAiService } from './ai.js';
 import { createApp } from './app.js';
 import { RunManager } from './runs.js';
 import { Scheduler } from './scheduler.js';
@@ -25,6 +26,8 @@ export interface ServerOptions {
 	webhookTimeoutMs?: number;
 	/** Scheduler interval. Default 1000 ms. */
 	schedulerIntervalMs?: number;
+	/** Flow generation for `/api/ai/*`, e.g. `createFlowAi({ registry })`. */
+	ai?: FlowAiService;
 	engine?: Pick<EngineOptions, 'maxOutputBytes' | 'maxDepth'>;
 	now?: () => number;
 	onError?: (error: unknown) => void;
@@ -78,7 +81,8 @@ export async function createServer(options: ServerOptions) {
 		now,
 		apiKey: options.apiKey,
 		cors: options.cors,
-		webhookTimeoutMs: options.webhookTimeoutMs ?? 30_000
+		webhookTimeoutMs: options.webhookTimeoutMs ?? 30_000,
+		...(options.ai ? { ai: options.ai } : {})
 	});
 
 	return {

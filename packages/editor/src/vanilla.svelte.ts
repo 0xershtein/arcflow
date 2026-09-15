@@ -26,6 +26,8 @@ export interface EditorInstance {
 	run(): Promise<void>;
 	/** With a `backend`: saves the flow and runs it for real, or cancels the run in progress. */
 	runOnServer(): Promise<void>;
+	/** With a backend that generates flows: builds one from a description, or changes the open one. */
+	askAi(prompt: string): Promise<void>;
 	/** Removes the editor from the page. */
 	destroy(): void;
 }
@@ -92,6 +94,7 @@ export function createEditor(target: HTMLElement | string, options: CreateEditor
 		redo: () => component.redo(),
 		run: () => component.run(),
 		runOnServer: () => component.runOnServer(),
+		askAi: (prompt) => component.askAi(prompt),
 		destroy: () => {
 			unmount(component);
 		}

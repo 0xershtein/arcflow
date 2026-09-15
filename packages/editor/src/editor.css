@@ -720,3 +720,83 @@ textarea.fb-note-text {
 	flex-direction: column;
 	gap: 6px;
 }
+
+/* ---------- Prompt bar ---------- */
+
+.fb-prompt {
+	position: absolute;
+	bottom: 16px;
+	left: 50%;
+	z-index: 7;
+	transform: translateX(-50%);
+	width: min(640px, calc(100% - 32px));
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 8px 8px 12px;
+	border: 1px solid var(--fb-line-strong);
+	border-radius: var(--fb-radius);
+	background: var(--fb-surface);
+	box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2);
+	transition: bottom 0.2s;
+}
+
+.fb-prompt.is-raised {
+	bottom: calc(42% + 28px);
+}
+
+.fb-prompt-icon {
+	display: grid;
+	place-items: center;
+	width: 20px;
+	flex-shrink: 0;
+	color: var(--fb-accent);
+}
+
+.fb-prompt-input {
+	flex: 1;
+	min-width: 0;
+	max-height: 96px;
+	padding: 6px 0;
+	border: 0;
+	background: transparent;
+	color: var(--fb-text);
+	font-size: 13.5px;
+	line-height: 1.45;
+	resize: none;
+	outline: none;
+	field-sizing: content;
+}
+
+.fb-prompt-input::placeholder {
+	color: var(--fb-text-muted);
+}
+
+.fb-prompt-summary {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	font-weight: 500;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.fb-prompt-errors {
+	font-weight: 400;
+	color: var(--fb-danger);
+}
+
+.fb-prompt-busy {
+	font-size: 12.5px;
+	color: var(--fb-text-muted);
+	white-space: nowrap;
+}
+
+.fb-prompt .fb-btn {
+	height: 30px;
+	padding: 0 12px;
+}

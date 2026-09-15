@@ -138,6 +138,37 @@ describe('runs', () => {
 	});
 });
 
+describe('flow generation', () => {
+	it('answers 501 until a model is configured', async () => {
+		const { call } = await setup();
+		const response = await call('POST', '/api/ai/generate', { prompt: 'wait two hours' });
+		expect(response.status).toBe(501);
+		expect(response.body.error).toContain('ANTHROPIC_API_KEY');
+	});
+
+	it('passes prompts to the service and returns the flow it built', async () => {
+		const ai = {
+			generate: vi.fn(async () => ({ ok: true, flow: waitingFlow, issues: [], model: 'fake', attempts: 2 })),
+			edit: vi.fn(async () => ({ ok: true, flow: waitingFlow, issues: [], changes: [{ type: 'step:added', id: 'wait' }] }))
+		};
+		const { call } = await setup({ ai });
+
+		const generated = await call('POST', '/api/ai/generate', { prompt: 'wait two hours', vars: { hours: 2 } });
+		expect(generated.status).toBe(200);
+		expect(generated.body).toMatchObject({ ok: true, model: 'fake', attempts: 2 });
+		expect(generated.body.flow.name).toBe(waitingFlow.name);
+		expect(ai.generate).toHaveBeenCalledWith({ prompt: 'wait two hours', vars: { hours: 2 } });
+
+		expect((await call('POST', '/api/ai/generate', {})).status).toBe(400);
+
+		const edited = await call('POST', '/api/ai/edit', { flow: waitingFlow, instruction: 'wait three hours instead' });
+		expect(edited.body.changes).toEqual([{ type: 'step:added', id: 'wait' }]);
+		expect(ai.edit).toHaveBeenCalledWith({ flow: expect.objectContaining({ name: waitingFlow.name }), instruction: 'wait three hours instead' });
+
+		expect((await call('POST', '/api/ai/edit', { instruction: 'no flow here' })).status).toBe(422);
+	});
+});
+
 describe('webhooks', () => {
 	const hookFlow = (respond: 'immediately' | 'when-finished' | 'respond-step') =>
 		build(`Hook ${respond}`, (f) => {

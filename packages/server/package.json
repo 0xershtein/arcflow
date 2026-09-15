@@ -47,9 +47,13 @@
 		"hono": "^4.13.8"
 	},
 	"peerDependencies": {
+		"@arcflow/ai": "^0.1.0",
 		"@arcflow/editor": "^0.1.0"
 	},
 	"peerDependenciesMeta": {
+		"@arcflow/ai": {
+			"optional": true
+		},
 		"@arcflow/editor": {
 			"optional": true
 		}
@@ -68,6 +72,7 @@
 		"sqlite"
 	],
 	"devDependencies": {
+		"@arcflow/ai": "workspace:*",
 		"@arcflow/editor": "workspace:*",
 		"@types/node": "^26.6.0",
 		"tsx": "^4.23.13"

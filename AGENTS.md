@@ -46,7 +46,16 @@ packages/editor/src        the editor (Svelte 5 inside, framework-free outside)
   backend.ts               Backend interface + createHttpBackend (fetch + SSE, no server dependency)
   ServerBar / ExecutionsPanel  server mode: flow list, Save, Activate, run history
   app.ts                   createArcflowApp: catalog from the server → registry → editor (dist/app.js)
+  PromptBar.svelte         ask for a flow or a change, then keep or discard it
   theme.css, editor.css    all colors via --fb-* variables
+packages/ai/src            generateFlow / editFlow: prompt from registry.describe(), JSON reply, repair loop
+  model.ts                 ModelAdapter (text in, text out) + anthropicModel (SDK imported lazily)
+  prompt.ts                system prompt, JSON extraction, issue feedback
+  generate.ts              the loop, diffFlows and change summaries
+packages/mcp/src           MCP server over stdio for agents (list_steps, validate_flow, test_flow, save_flow, run_flow, …)
+  protocol.ts              JSON-RPC 2.0 framing, no SDK
+  tools.ts                 the tools; remote ones need a FlowStore
+  http-store.ts            FlowStore against a running @arcflow/server
 packages/nodes/src         standard steps (kinds trigger.*, http.*, code.javascript, data.set, logic.*, flow.call)
   code.ts                  runSandboxed: QuickJS sandbox, loaded lazily with a dynamic import
   http.ts                  fetch-based request (credentials via ctx.secrets) and webhook response (services.http)

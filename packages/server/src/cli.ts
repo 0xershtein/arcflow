@@ -5,6 +5,7 @@ import { parseArgs } from 'node:util';
 import { createRegistry, type AnyNodeDefinition, type Pack } from '@arcflow/core';
 import { standardSteps } from '@arcflow/nodes';
 import { serveNode, SqliteStorage } from './node.js';
+import { createFlowAi } from './ai.js';
 import { createServer } from './server.js';
 import { createEditorUi } from './ui.js';
 
@@ -20,10 +21,12 @@ Options:
   --steps <module>    JS module exporting a pack or step definitions (repeatable)
   --api-key <key>     Require "Authorization: Bearer <key>" on /api (or ARCFLOW_API_KEY)
   --cors <origin>     Allow browser access to /api from this origin
+  --no-ai             Do not offer flow generation even with an API key
   -h, --help          Show this help
 
 Environment:
   ARCFLOW_SECRET      Encrypts stored credentials (16+ characters). Credentials are disabled without it.
+  ANTHROPIC_API_KEY   Turns on flow generation (/api/ai and the editor's prompt bar).
 `;
 
 const { values, positionals } = parseArgs({
@@ -35,6 +38,7 @@ const { values, positionals } = parseArgs({
 		steps: { type: 'string', multiple: true },
 		'api-key': { type: 'string' },
 		cors: { type: 'string' },
+		ai: { type: 'boolean', default: true },
 		help: { type: 'boolean', short: 'h' }
 	}
 });
@@ -53,12 +57,17 @@ for (const file of values.steps ?? []) {
 	sources.push(...(Array.isArray(exported) ? exported : [exported]));
 }
 
+const registry = createRegistry(sources);
+// Flow generation needs a model; without a key it stays off and /api/ai answers 501.
+const ai = values.ai && process.env.ANTHROPIC_API_KEY ? createFlowAi({ registry }) : undefined;
+
 const server = await createServer({
-	registry: createRegistry(sources),
+	registry,
 	storage: new SqliteStorage(resolve(values.db)),
 	secret: process.env.ARCFLOW_SECRET,
 	apiKey: values['api-key'] ?? process.env.ARCFLOW_API_KEY,
-	cors: values.cors
+	cors: values.cors,
+	...(ai ? { ai } : {})
 });
 // In dev mode the editor is served from the same origin, so the browser needs no CORS and no build step.
 const editorUi = command === 'dev' ? createEditorUi() : undefined;
@@ -72,4 +81,5 @@ console.log(`arcflow is running at ${url}
 ${editorUi ? `  Editor    ${url}\n` : ''}  API       ${url}/api
   Webhooks  ${url}/hooks/<path>
   Database  ${resolve(values.db)}
-  Credentials ${process.env.ARCFLOW_SECRET ? 'enabled' : 'disabled (set ARCFLOW_SECRET)'}`);
+  Credentials ${process.env.ARCFLOW_SECRET ? 'enabled' : 'disabled (set ARCFLOW_SECRET)'}
+  Flow generation ${ai ? 'enabled' : 'disabled (set ANTHROPIC_API_KEY)'}`);

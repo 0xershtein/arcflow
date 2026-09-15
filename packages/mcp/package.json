@@ -1,0 +1,56 @@
+{
+	"name": "@arcflow/mcp",
+	"version": "0.1.0",
+	"description": "MCP server for arcflow: lets Claude Code, Cursor and other agents list steps, write, validate, save and run flows.",
+	"license": "MIT",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"default": "./src/index.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public",
+		"bin": {
+			"arcflow-mcp": "./dist/cli.js"
+		},
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"check": "tsc -p tsconfig.json",
+		"start": "tsx src/cli.ts"
+	},
+	"dependencies": {
+		"@arcflow/core": "workspace:*",
+		"@arcflow/nodes": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.0",
+		"tsx": "^4.23.13"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/0xershtein/arcflow.git",
+		"directory": "packages/mcp"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"workflow",
+		"automation",
+		"agents",
+		"claude"
+	]
+}
