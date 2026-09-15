@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Code from '$lib/Code.svelte';
 	import Demo from '$lib/Demo.svelte';
+	import { createDemoFlow } from '$lib/demo-flow.js';
 
 	const install = `npm install @arcflow/core @arcflow/editor`;
 
@@ -23,7 +24,7 @@ check.on('false').to(hold);`;
 
 <Code code={install} language="sh" />
 
-<Demo storageKey="arcflow:docs-demo" ui={{ inspector: false }} />
+<Demo flow={createDemoFlow()} storageKey="arcflow:docs-demo" ui={{ inspector: false }} />
 <p class="caption">
 	A real editor, running in this page. Drag a step in, connect it, press <strong>Test run</strong> — nothing is sent, every step reports what it would do.
 </p>
