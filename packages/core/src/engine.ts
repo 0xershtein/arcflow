@@ -114,6 +114,11 @@ export interface RunControls {
 	stepDelayMs?: number;
 	/** Safety limit on executed steps per call (default 10 000). */
 	maxSteps?: number;
+	/**
+	 * Called with the live run state when a run starts or resumes and after every step finishes, waits or fails —
+	 * the moment to persist it. Clone it if you keep it.
+	 */
+	onCheckpoint?: (state: RunState) => void;
 }
 
 export interface StartOptions extends RunControls {
@@ -244,11 +249,19 @@ export function createEngine<D extends AnyNodeDefinition>(registry: Registry<D>,
 	const definitionOf = (node: FlowNode) => registry.get(node.kind) as AnyNodeDefinition;
 	const def = (run: Run, nodeId: string) => definitionOf(run.graph.byId.get(nodeId)!);
 
+	const CHECKPOINTS = new Set<RunEvent["type"]>(["run:start", "run:resume", "step:success", "step:wait", "step:error"]);
+
 	function emit(run: Run, event: RunEvent) {
 		try {
 			run.controls.onEvent?.(event);
 		} catch {
 			// a failing listener must not break the run
+		}
+		if (!CHECKPOINTS.has(event.type)) return;
+		try {
+			run.controls.onCheckpoint?.(run.state);
+		} catch {
+			// persistence problems are the host's to report
 		}
 	}
 

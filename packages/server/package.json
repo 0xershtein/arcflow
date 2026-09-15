@@ -1,0 +1,66 @@
+{
+	"name": "@arcflow/server",
+	"version": "0.1.0",
+	"description": "Runs arcflow flows for real: HTTP API, webhook and cron triggers, timers, run history, encrypted credentials and live events.",
+	"license": "MIT",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"default": "./src/index.ts"
+		},
+		"./node": {
+			"types": "./src/node.ts",
+			"default": "./src/node.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public",
+		"bin": {
+			"arcflow": "./dist/cli.js"
+		},
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"./node": {
+				"types": "./dist/node.d.ts",
+				"default": "./dist/node.js"
+			}
+		}
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"check": "tsc -p tsconfig.json",
+		"serve": "tsx src/cli.ts serve"
+	},
+	"dependencies": {
+		"@arcflow/core": "workspace:*",
+		"@arcflow/nodes": "workspace:*",
+		"@hono/node-server": "^2.1.1",
+		"hono": "^4.13.8"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/0xershtein/arcflow.git",
+		"directory": "packages/server"
+	},
+	"keywords": [
+		"workflow",
+		"automation",
+		"webhook",
+		"cron",
+		"hono",
+		"sqlite"
+	],
+	"devDependencies": {
+		"@types/node": "^26.6.0",
+		"tsx": "^4.23.13"
+	}
+}

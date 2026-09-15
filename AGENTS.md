@@ -46,6 +46,14 @@ packages/nodes/src         standard steps (kinds trigger.*, http.*, code.javascr
   logic.ts                 evaluateCondition, if / switch / merge / loop / wait
   schedule.ts              cron trigger and nextRuns (croner)
   examples.ts              standardRegistry, createTodoDigestFlow
+packages/server/src        runtime service (Hono)
+  server.ts                createServer: storage, secret box, services (credentials, http.respond), RunManager, Scheduler, app
+  app.ts                   /api/* routes and /hooks/* webhooks; errors → JSON with issues
+  runs.ts                  RunManager: start/resume/cancel, checkpoint persistence, events, recover(); runResult, wakeAtOf
+  scheduler.ts             tick(): cron triggers (croner via @arcflow/nodes) and due logic.wait timers
+  storage/                 Storage interface implementations: memory, sqlite (node:sqlite)
+  secrets.ts               AES-256-GCM credential encryption (WebCrypto)
+  cli.ts                   `arcflow serve`
 packages/payments          domain pack (treasury.runway, approval.multisig, action.transfer, action.notify) + payroll flow
 apps/playground            SvelteKit demo with a settings bar
 apps/vanilla               plain HTML using the built bundle

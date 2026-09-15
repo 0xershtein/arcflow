@@ -14,7 +14,22 @@ Drop a visual workflow builder into your own product — an automation panel, an
 | [`@arcflow/core`](./packages/core) | Headless engine, zero dependencies: step definitions, flow builder, parser/validator, runner with retries and pause/resume, JSON Schema + LLM catalog. |
 | [`@arcflow/editor`](./packages/editor) | The canvas editor. One ES module with styles included. |
 | [`@arcflow/nodes`](./packages/nodes) | Standard steps: manual, webhook and cron triggers, HTTP request and response, sandboxed JavaScript, set fields, if, switch, merge, loop, wait, run flow. |
+| [`@arcflow/server`](./packages/server) | Runs flows for real: HTTP API, webhook and cron triggers, restart-safe timers, run history, encrypted credentials, live events, `arcflow serve` CLI. |
 | [`@arcflow/payments`](./packages/payments) | Example domain pack (runway check → multisig approval → transfer) built on the standard steps. |
+
+## Run flows on a server
+
+```sh
+ARCFLOW_SECRET="a long random string" npx arcflow serve --db ./arcflow.db
+```
+
+```sh
+curl -X POST localhost:8787/api/flows -d '{ "id": "orders", "active": true, "flow": { … } }'
+curl -X POST localhost:8787/hooks/orders/created -d '{ "id": 42 }'   # runs every active flow with that webhook
+curl localhost:8787/api/runs?flowId=orders                            # history
+```
+
+Webhooks, cron schedules and `logic.wait` timers are handled for you, runs survive restarts while they wait, and credentials are encrypted at rest. See [`@arcflow/server`](./packages/server) for the full API.
 
 ## Standard steps
 

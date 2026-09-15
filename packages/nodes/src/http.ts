@@ -117,7 +117,7 @@ export const httpRequest = defineNode({
 	icon: 'globe',
 	outputs: [{ id: 'out' }, { id: 'error', label: 'Error' }],
 	config: requestConfig,
-	summary: (c) => `${c.method} ${String(c.url).replace(/^https?:\/\//, '')}`,
+	summary: (c) => (c.url ? `${c.method} ${String(c.url).replace(/^https?:\/\//, '')}` : `${c.method} — no URL yet`),
 	run: sendRequest,
 	simulate: (ctx) =>
 		ctx.config.method === 'GET' || ctx.config.method === 'HEAD'
