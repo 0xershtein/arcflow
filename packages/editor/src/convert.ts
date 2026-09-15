@@ -6,6 +6,7 @@ export interface StepData extends Record<string, unknown> {
 	label?: string;
 	config: Record<string, unknown>;
 	disabled?: boolean;
+	join?: 'any' | 'all';
 	notes?: string;
 }
 
@@ -33,6 +34,7 @@ export function toCanvas(flow: Flow, registry: Registry<any>): { nodes: CanvasNo
 				config: node.config,
 				...(node.label ? { label: node.label } : {}),
 				...(node.disabled ? { disabled: true } : {}),
+				...(node.join ? { join: node.join } : {}),
 				...(node.notes ? { notes: node.notes } : {})
 			}
 		})),
@@ -61,6 +63,7 @@ export function fromCanvas(meta: Pick<Flow, 'name' | 'description' | 'vars'>, no
 				config: node.data.config,
 				position: { x: Math.round(node.position.x), y: Math.round(node.position.y) },
 				...(node.data.disabled ? { disabled: true } : {}),
+				...(node.data.join ? { join: node.data.join } : {}),
 				...(node.data.notes ? { notes: node.data.notes } : {})
 			})
 		),

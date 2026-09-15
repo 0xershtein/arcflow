@@ -1,5 +1,20 @@
 import type { InferShape, Shape, ShapeInput } from './schema.js';
 
+export interface CredentialRequest {
+	/** The id stored in the flow. */
+	id: string;
+	/** The type declared by the field, e.g. "http-bearer". */
+	type: string;
+	runId: string;
+	/** Step key, unique per loop iteration. */
+	nodeId: string;
+}
+
+/** Looks up secrets for `f.credential` fields. Resolved values never enter flow JSON or run state. */
+export interface CredentialResolver {
+	resolve(request: CredentialRequest): unknown | Promise<unknown>;
+}
+
 /**
  * Services your steps call at run time (payment rails, LLMs, notifications).
  * Extend it with declaration merging so `ctx.services` is typed:
@@ -8,8 +23,9 @@ import type { InferShape, Shape, ShapeInput } from './schema.js';
  *     interface Services { slack?: { post(channel: string, text: string): Promise<void> } }
  *   }
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface Services {}
+export interface Services {
+	credentials?: CredentialResolver;
+}
 
 export type RunMode = 'live' | 'simulate';
 
@@ -27,16 +43,28 @@ export interface StepView {
 export interface NodeContext<C = Record<string, unknown>> {
 	/** Config with defaults applied and `{{ expressions }}` resolved. */
 	config: C;
-	/** Output of the step that led here (or the trigger payload). */
+	/**
+	 * Data from the step(s) that led here, or the trigger payload.
+	 * For `join: 'all'` steps reached by several branches this is an array, in connection order.
+	 */
 	input: unknown;
+	/** Inputs keyed by the id of the step they came from. */
+	inputs: Record<string, unknown>;
 	/** Run variables. Mutations are kept in the run state. */
 	vars: Record<string, unknown>;
-	/** Finished steps by id, e.g. `ctx.steps.runway.output`. */
+	/** Finished steps by id, e.g. `ctx.steps.runway.output`. Inside a loop, the current iteration's steps. */
 	steps: Readonly<Record<string, StepView>>;
+	/** Resolved values of `f.credential` fields, by field name. Never stored. */
+	secrets: Record<string, unknown>;
+	/** Current item and its index when running inside a loop. */
+	item?: unknown;
+	index?: number;
 	services: Services;
 	mode: RunMode;
 	runId: string;
 	nodeId: string;
+	/** Step key: the node id, prefixed with the loop iteration when inside one (e.g. `each[2]/send`). */
+	key: string;
 	/** 1 on the first try, higher on retries. */
 	attempt: number;
 	signal: AbortSignal;
@@ -59,6 +87,11 @@ export type StepResult<O extends string = string> =
 			/** Pause the run here until `engine.resume()` is called for this step. */
 			wait: { reason: string; data?: unknown };
 			message?: string;
+	  }
+	| {
+			/** Loop steps only: run the `item` branch once per item, then continue through `done` with the results. */
+			loop: { items: readonly unknown[] };
+			message?: string;
 	  };
 
 export interface NodeDefinition<K extends string = string, S extends Shape = Shape, O extends string = string> {
@@ -70,6 +103,16 @@ export interface NodeDefinition<K extends string = string, S extends Shape = Sha
 	icon?: string;
 	/** Triggers have no incoming edges; runs start at them. */
 	trigger?: boolean;
+	/**
+	 * Loop steps must have `item` and `done` outputs and return `{ loop: { items } }`.
+	 * Steps reachable from `item` form the body and may not connect outside it.
+	 */
+	loop?: boolean;
+	/**
+	 * With several incoming connections: run on the first arrival (`any`, default), or once every branch
+	 * has delivered or been skipped (`all`). A flow node's own `join` overrides this.
+	 */
+	join?: 'any' | 'all';
 	outputs: readonly Port<O>[];
 	config: S;
 	/** Require one of these kinds somewhere upstream (e.g. an approval before a transfer). */

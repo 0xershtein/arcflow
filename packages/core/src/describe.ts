@@ -1,3 +1,4 @@
+import { FILTERS } from './expressions.js';
 import { isField, type Field } from './schema.js';
 import type { AnyNodeDefinition, Category } from './node.js';
 
@@ -12,9 +13,19 @@ A flow is JSON: { "version": 1, "name": "…", "nodes": [ … ], "edges": [ … 
 
 - Node: { "id": "check-runway", "kind": "<step kind>", "config": { … } }. Ids use letters, digits, "-" or "_". "position" is optional — editors lay nodes out automatically.
 - Edge: { "from": "<node id>", "port": "<output of the source step>", "to": "<node id>" }. "port" may be omitted when the source step has one output.
-- A flow starts at a trigger step. Triggers have no incoming edges; every other step needs at least one.
-- Steps with several outputs (for example "true" / "false") need "port" on each outgoing edge.
-- Config values can use expressions: {{ vars.name }}, {{ steps.<node id>.output.<field> }}, {{ input.<field> }} (output of the previous step), {{ trigger.<field> }}. "a ?? b" falls back to b. A value that is only an expression keeps its type, so "{{ vars.limit }}" can fill a number field.
+- A flow starts at a trigger step. Triggers have no incoming edges; every other step needs at least one. Flows must not contain cycles.
+- Steps with several outputs (for example "true" / "false") need "port" on each outgoing edge. Branches that are not taken are skipped.
+- A step reached by several edges runs on the first arrival. Set "join": "all" on the node to wait until every branch has finished; its input is then an array.
+- Loop steps run the steps connected to their "item" output once per item, then continue from "done" with the list of results. Steps inside a loop may only connect to other steps inside the same loop.
+
+## Expressions
+
+Config values can use {{ expressions }}:
+- {{ vars.name }} run variables, {{ trigger.field }} trigger payload, {{ input.field }} output of the previous step, {{ steps.<node id>.output.field }} any earlier step.
+- Inside loops: {{ $item }}, {{ $index }}. Always available: {{ $now }}.
+- "a ?? b" falls back to b when a is missing.
+- Filters: {{ steps.fetch.output.items | map: "price" | sum | round: 2 }}. Available: ${Object.keys(FILTERS).join(', ')}.
+- A value that is only one expression keeps its type, so "{{ vars.limit }}" can fill a number field.
 `;
 
 function typeText(field: Field): string {
@@ -44,6 +55,10 @@ function typeText(field: Field): string {
 						.join(', ')} }`;
 			return `list of ${item}${field.minItems ? ` (at least ${field.minItems})` : ''}`;
 		}
+		case 'json':
+			return 'any JSON value';
+		case 'credential':
+			return `credential id (type "${field.type}")`;
 	}
 }
 
@@ -69,6 +84,8 @@ export function describeNodes(nodes: readonly AnyNodeDefinition[], categories: r
 			lines.push(`### \`${def.kind}\` — ${def.title}${def.trigger ? ' (trigger)' : ''}`, def.description);
 			const outputs = def.outputs.map((port) => `\`${port.id}\`${port.description ? ` (${port.description})` : ''}`);
 			lines.push(`- Outputs: ${outputs.length ? outputs.join(', ') : 'none'}`);
+			if (def.loop) lines.push('- Loop: steps on `item` run once per item; `done` continues with the list of results.');
+			if (def.join === 'all') lines.push('- Waits for every incoming branch before running.');
 			if (def.requires) lines.push(`- Must come after: ${def.requires.upstream.map((kind) => `\`${kind}\``).join(' or ')}`);
 			const fields = Object.entries(def.config);
 			if (fields.length) {

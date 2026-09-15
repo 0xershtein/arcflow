@@ -1,5 +1,6 @@
-import { referencedSteps } from './expressions.js';
+import { checkExpression, collectExpressions, referencedSteps } from './expressions.js';
 import type { Flow } from './flow.js';
+import { analyzeFlow } from './graph.js';
 import type { Issue } from './issues.js';
 import type { AnyNodeDefinition } from './node.js';
 import { parseShape } from './schema.js';
@@ -9,8 +10,8 @@ export interface StepLookup {
 }
 
 /**
- * Semantic checks on a structurally valid flow: known kinds, config values, ports, triggers,
- * loops, reachability, `requires.upstream` rules, and `{{ steps.x }}` references.
+ * Semantic checks on a structurally valid flow: known kinds, config values, expressions, ports,
+ * triggers, loops and loop bodies, reachability, `requires.upstream` rules, and `{{ steps.x }}` references.
  */
 export function validateFlow(flow: Flow, registry: StepLookup): Issue[] {
 	const issues: Issue[] = [];
@@ -23,9 +24,7 @@ export function validateFlow(flow: Flow, registry: StepLookup): Issue[] {
 		const node = flow.nodes[index.get(id)!];
 		return node?.label || defs.get(id)?.title || id;
 	};
-
-	const incoming = new Map(flow.nodes.map((node) => [node.id, [] as string[]]));
-	const outgoing = new Map(flow.nodes.map((node) => [node.id, [] as string[]]));
+	const graph = analyzeFlow(flow, (node) => Boolean(defs.get(node.id)?.loop));
 
 	flow.edges.forEach((edge, i) => {
 		const path = `edges[${i}]`;
@@ -48,18 +47,16 @@ export function validateFlow(flow: Flow, registry: StepLookup): Issue[] {
 				nodeId: edge.to
 			});
 		}
-		incoming.get(edge.to)!.push(edge.from);
-		outgoing.get(edge.from)!.push(edge.to);
 	});
 
 	const upstreamOf = (id: string) => {
 		const seen = new Set<string>();
-		const stack = [...incoming.get(id)!];
+		const stack = graph.incoming.get(id)!.map((edge) => edge.from);
 		while (stack.length) {
 			const next = stack.pop()!;
 			if (seen.has(next)) continue;
 			seen.add(next);
-			stack.push(...incoming.get(next)!);
+			stack.push(...graph.incoming.get(next)!.map((edge) => edge.from));
 		}
 		return seen;
 	};
@@ -78,6 +75,10 @@ export function validateFlow(flow: Flow, registry: StepLookup): Issue[] {
 
 		const parsed = parseShape(def.config, node.config, `${path}.config`, { allowExpressions: true });
 		for (const issue of parsed.issues) issues.push({ ...issue, message: `${name}: ${issue.message}`, nodeId: node.id });
+		for (const expression of collectExpressions(node.config)) {
+			const problem = checkExpression(expression);
+			if (problem) add('error', 'invalid_expression', `${path}.config`, `${name}: ${problem}`, { nodeId: node.id });
+		}
 		if (def.check && !parsed.issues.some((issue) => issue.level === 'error')) {
 			try {
 				const message = def.check(parsed.value);
@@ -87,18 +88,19 @@ export function validateFlow(flow: Flow, registry: StepLookup): Issue[] {
 			}
 		}
 
-		if (!def.trigger && incoming.get(node.id)!.length === 0) {
+		if (!def.trigger && graph.incoming.get(node.id)!.length === 0) {
 			add('warning', 'disconnected', path, `${name} is not connected to anything before it.`, { nodeId: node.id });
 		}
 
-		const upstream = def.requires || referencedSteps(node.config).length ? upstreamOf(node.id) : new Set<string>();
+		const references = referencedSteps(node.config);
+		const upstream = def.requires || references.length ? upstreamOf(node.id) : new Set<string>();
 		if (def.requires) {
 			const kinds = new Set([...upstream].map((id) => flow.nodes[index.get(id)!].kind));
 			if (!def.requires.upstream.some((kind) => kinds.has(kind))) {
 				add('error', 'missing_upstream', path, `${name}: ${def.requires.message}`, { nodeId: node.id });
 			}
 		}
-		for (const ref of referencedSteps(node.config)) {
+		for (const ref of references) {
 			if (!index.has(ref)) {
 				add('warning', 'unknown_reference', `${path}.config`, `${name} refers to missing step "${ref}".`, { nodeId: node.id });
 			} else if (!upstream.has(ref)) {
@@ -109,14 +111,40 @@ export function validateFlow(flow: Flow, registry: StepLookup): Issue[] {
 		}
 	});
 
-	// Loops
+	// Loop bodies must be self-contained.
+	for (const [loopId, body] of graph.bodies) {
+		flow.edges.forEach((edge, i) => {
+			if (!index.has(edge.from) || !index.has(edge.to)) return;
+			const fromInside = body.has(edge.from);
+			const toInside = body.has(edge.to);
+			if (fromInside && !toInside) {
+				add(
+					'error',
+					'loop_body_escape',
+					`edges[${i}]`,
+					`${nameOf(edge.from)} runs inside the loop "${nameOf(loopId)}" and cannot connect outside it. Continue from the loop's "done" output instead.`,
+					{ edgeId: edge.id, nodeId: edge.from }
+				);
+			} else if (!fromInside && toInside && !(edge.from === loopId && edge.port === 'item')) {
+				add(
+					'error',
+					'loop_body_escape',
+					`edges[${i}]`,
+					`${nameOf(edge.to)} runs inside the loop "${nameOf(loopId)}"; only the loop's "item" output can lead into it.`,
+					{ edgeId: edge.id, nodeId: edge.to }
+				);
+			}
+		});
+	}
+
+	// Loops in the connection graph
 	const state = new Map<string, 'open' | 'done'>();
 	const findCycle = (id: string): string | null => {
 		if (state.get(id) === 'open') return id;
 		if (state.get(id) === 'done') return null;
 		state.set(id, 'open');
-		for (const next of outgoing.get(id)!) {
-			const hit = findCycle(next);
+		for (const edge of graph.outgoing.get(id)!) {
+			const hit = findCycle(edge.to);
 			if (hit) return hit;
 		}
 		state.set(id, 'done');
@@ -125,7 +153,9 @@ export function validateFlow(flow: Flow, registry: StepLookup): Issue[] {
 	for (const node of flow.nodes) {
 		const hit = findCycle(node.id);
 		if (hit) {
-			add('error', 'cycle', `nodes[${index.get(hit)}]`, `The flow loops back to ${nameOf(hit)}. Flows must not contain loops.`, { nodeId: hit });
+			add('error', 'cycle', `nodes[${index.get(hit)}]`, `The flow loops back to ${nameOf(hit)}. Use a loop step to repeat work.`, {
+				nodeId: hit
+			});
 			break;
 		}
 	}
@@ -137,11 +167,11 @@ export function validateFlow(flow: Flow, registry: StepLookup): Issue[] {
 		const id = stack.pop()!;
 		if (reached.has(id)) continue;
 		reached.add(id);
-		stack.push(...outgoing.get(id)!);
+		stack.push(...graph.outgoing.get(id)!.map((edge) => edge.to));
 	}
 	if (triggers.length) {
 		flow.nodes.forEach((node, i) => {
-			if (reached.has(node.id) || !defs.get(node.id) || incoming.get(node.id)!.length === 0) return;
+			if (reached.has(node.id) || !defs.get(node.id) || graph.incoming.get(node.id)!.length === 0) return;
 			add('warning', 'unreachable', `nodes[${i}]`, `${nameOf(node.id)} can never run: no trigger leads to it.`, { nodeId: node.id });
 		});
 	}

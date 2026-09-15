@@ -52,6 +52,10 @@ export function createRegistry<const T extends readonly (Pack | AnyNodeDefinitio
 		if (byKind.has(def.kind)) throw new Error(`Step kind "${def.kind}" is registered twice (${origin}).`);
 		const ports = def.outputs.map((port) => port.id);
 		if (new Set(ports).size !== ports.length) throw new Error(`Step kind "${def.kind}" has duplicate output ids.`);
+		if (def.loop && !(ports.includes('item') && ports.includes('done'))) {
+			throw new Error(`Loop step kind "${def.kind}" needs "item" and "done" outputs.`);
+		}
+		if (def.loop && def.trigger) throw new Error(`Step kind "${def.kind}" cannot be both a trigger and a loop.`);
 		byKind.set(def.kind, def);
 		nodes.push(def);
 		addCategory(def.category ?? 'other');

@@ -2,6 +2,7 @@ export * from './issues.js';
 export * from './schema.js';
 export * from './node.js';
 export * from './flow.js';
+export * from './graph.js';
 export * from './expressions.js';
 export * from './layout.js';
 export * from './builder.js';

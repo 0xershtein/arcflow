@@ -95,6 +95,33 @@
 			<option value={option}>{field.labels?.[option] ?? option}</option>
 		{/each}
 	</select>
+{:else if field.kind === 'credential'}
+	<input
+		class="fb-input mono"
+		value={text(value)}
+		placeholder={placeholder ?? field.type}
+		spellcheck="false"
+		autocomplete="off"
+		{disabled}
+		oninput={(event) => onchange(event.currentTarget.value || undefined)}
+	/>
+{:else if field.kind === 'json'}
+	<textarea
+		class="fb-textarea mono"
+		value={typeof value === 'string' ? value : value === undefined ? '' : JSON.stringify(value, null, 2)}
+		placeholder={placeholder ?? field.placeholder ?? '{ }'}
+		spellcheck="false"
+		{disabled}
+		oninput={(event) => {
+			const raw = event.currentTarget.value;
+			if (!raw.trim()) return onchange(undefined);
+			try {
+				onchange(JSON.parse(raw));
+			} catch {
+				onchange(raw); // keep typing; plain text and expressions are valid too
+			}
+		}}
+	></textarea>
 {:else if field.kind === 'list'}
 	{#if isExpression(value)}
 		<div class="fb-list-expression">

@@ -14,8 +14,10 @@ export interface FlowNode {
 	config: Record<string, unknown>;
 	/** Optional. Editors lay out nodes without one. */
 	position?: Position;
-	/** Disabled steps pass their input through their first output. */
+	/** Disabled steps pass their input through (loops through `done`). */
 	disabled?: boolean;
+	/** Overrides the step type's join behavior for several incoming connections. */
+	join?: 'any' | 'all';
 	notes?: string;
 }
 
@@ -103,6 +105,8 @@ export function normalizeFlow(input: unknown): { flow: Flow | null; issues: Issu
 			node.position = { x: Number(position.x), y: Number(position.y) };
 		}
 		if (raw.disabled === true) node.disabled = true;
+		if (raw.join === 'any' || raw.join === 'all') node.join = raw.join;
+		else if (raw.join !== undefined) push('error', 'invalid_type', `${path}.join`, 'Node join must be "any" or "all".', { nodeId: id });
 		if (typeof raw.notes === 'string' && raw.notes) node.notes = raw.notes;
 		nodes.push(node);
 	});

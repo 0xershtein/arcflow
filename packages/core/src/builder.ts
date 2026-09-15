@@ -10,6 +10,8 @@ export interface AddOptions {
 	label?: string;
 	position?: Position;
 	disabled?: boolean;
+	/** Run on the first incoming branch (`any`) or once all branches have finished (`all`). */
+	join?: 'any' | 'all';
 	notes?: string;
 }
 
@@ -22,7 +24,7 @@ export interface NodeRef<D extends AnyNodeDefinition = AnyNodeDefinition> {
 	readonly kind: D['kind'];
 	/** Connects this step's only output to `target` and returns `target`, so calls chain. */
 	to<T extends AnyNodeDefinition>(target: NodeRef<T>): NodeRef<T>;
-	/** Picks an output port: `check.on('true').to(pay)`. */
+	/** Picks an output port: `check.on('true').to(pay)`, `loop.on('item').to(body)`. */
 	on(port: PortsOf<D>): Connector;
 	/** Merges config values into this step. */
 	set(config: Partial<ConfigInputOf<D>>): NodeRef<D>;
@@ -88,6 +90,7 @@ export class FlowBuilder<D extends AnyNodeDefinition = AnyNodeDefinition> {
 		if (options.label) node.label = options.label;
 		if (options.position) node.position = { ...options.position };
 		if (options.disabled) node.disabled = true;
+		if (options.join) node.join = options.join;
 		if (options.notes) node.notes = options.notes;
 		this.#nodes.push(node);
 		return this.#ref(id) as NodeRef<Extract<D, { kind: K }>>;

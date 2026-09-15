@@ -7,7 +7,8 @@ import type { Issue, IssueCode } from './issues.js';
  *   const config = {
  *     threshold: f.number({ integer: true, min: 1 }),
  *     signers: f.list(f.string(), { minItems: 1 }),
- *     note: f.text({ optional: true })
+ *     token: f.credential('api-token'),
+ *     body: f.json({ optional: true })
  *   };
  */
 
@@ -65,18 +66,33 @@ export interface ListField<T = unknown[], I = T> extends FieldBase<T, I> {
 	readonly maxItems?: number;
 }
 
+/** Any JSON value: request bodies, headers, item lists. */
+export interface JsonField<T = unknown, I = T> extends FieldBase<T, I> {
+	readonly kind: 'json';
+	readonly placeholder?: string;
+}
+
+/** A reference to a stored secret. The flow keeps only the id; the value is resolved at run time. */
+export interface CredentialField<T = string, I = T> extends FieldBase<T, I> {
+	readonly kind: 'credential';
+	/** Credential type, e.g. "http-bearer" or "smtp". */
+	readonly type: string;
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type Field =
 	| StringField<any, any>
 	| NumberField<any, any>
 	| BooleanField<any, any>
 	| EnumField<any, any>
-	| ListField<any, any>;
+	| ListField<any, any>
+	| JsonField<any, any>
+	| CredentialField<any, any>;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 export type Shape = { readonly [key: string]: Field };
 
-type Prettify<T> = { [K in keyof T]: T[K] } & {};
+type Prettify<T> = { [K in keyof T]: T[K] };
 
 /** A `{{ expression }}` string, accepted anywhere a config value is expected. */
 export type Expression = `{{${string}}}`;
@@ -110,6 +126,8 @@ export type NumberOptions = Meta &
 export type BooleanOptions = Meta & Presence<boolean>;
 export type EnumOptions<V extends string> = Meta & Presence<V> & { labels?: Partial<Record<V, string>> };
 export type ListOptions<T> = Meta & Presence<T[]> & { minItems?: number; maxItems?: number };
+export type JsonOptions = Meta & Presence<unknown> & { placeholder?: string };
+export type CredentialOptions = Meta & { optional?: boolean };
 
 type ItemOutput<I> = I extends Field ? Infer<I> : I extends Shape ? InferShape<I> : never;
 type ItemInput<I> = I extends Field ? InferInput<I> : I extends Shape ? ShapeInput<I> : never;
@@ -132,7 +150,12 @@ export const f = {
 		make<EnumField<Output<O, V[number]>, Input<O, V[number]>>>('enum', options, { values }),
 	/** A list of values (`f.list(f.string())`) or of objects (`f.list({ to: f.string(), amount: f.number() })`). */
 	list: <const I extends Field | Shape, const O extends ListOptions<ItemOutput<I>> = {}>(item: I, options?: O) =>
-		make<ListField<Output<O, ItemOutput<I>[]>, Input<O, ItemInput<I>[]>>>('list', options, { item })
+		make<ListField<Output<O, ItemOutput<I>[]>, Input<O, ItemInput<I>[]>>>('list', options, { item }),
+	/** Any JSON value. */
+	json: <const O extends JsonOptions = {}>(options?: O) => make<JsonField<Output<O, unknown>, Input<O, unknown>>>('json', options),
+	/** A stored secret of the given type, resolved at run time into `ctx.secrets[field]`. */
+	credential: <const O extends CredentialOptions = {}>(type: string, options?: O) =>
+		make<CredentialField<Output<O, string>, Input<O, string>>>('credential', options, { type })
 };
 
 export const isField = (value: Field | Shape): value is Field => typeof (value as { kind?: unknown }).kind === 'string';
@@ -279,6 +302,12 @@ export function parseField(
 				return result.value;
 			});
 			return { value, issues };
+		}
+		case 'json':
+			return { value: raw, issues: [] };
+		case 'credential': {
+			if (typeof raw !== 'string') return fail('invalid_type', `${name} must be a credential id.`);
+			return { value: raw, issues: [] };
 		}
 	}
 }

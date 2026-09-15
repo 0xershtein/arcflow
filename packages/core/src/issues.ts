@@ -20,7 +20,9 @@ export type IssueCode =
 	| 'cycle'
 	| 'missing_upstream'
 	| 'check_failed'
-	| 'unknown_reference';
+	| 'unknown_reference'
+	| 'invalid_expression'
+	| 'loop_body_escape';
 
 /**
  * A problem found while parsing or validating a flow.

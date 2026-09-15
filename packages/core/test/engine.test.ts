@@ -28,7 +28,7 @@ describe('engine', () => {
 		const waiting = await engine.start(flow, { vars: { balance: 500 } });
 
 		expect(waiting.status).toBe('waiting');
-		expect(waitingSteps(waiting)).toEqual([{ nodeId: 'sign', reason: 'approval', data: { signers: ['a', 'b'] } }]);
+		expect(waitingSteps(waiting)).toEqual([{ key: 'sign', nodeId: 'sign', reason: 'approval', data: { signers: ['a', 'b'] } }]);
 		expect(waiting.steps.send).toBeUndefined();
 
 		// the state survives a JSON round trip, e.g. a database

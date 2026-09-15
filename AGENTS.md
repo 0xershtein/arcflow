@@ -13,21 +13,23 @@ pnpm dev           # Svelte playground
 pnpm dev:vanilla   # built editor bundle in plain HTML
 ```
 
-Run `pnpm test` and `pnpm check` before committing. Commit messages are in English. The project is unbranded: no product names, logos or brand colors in packages.
+Run `pnpm test` and `pnpm check` before committing. Commit messages are in English. The project is unbranded: no product names, logos or brand colors in packages. See [docs/roadmap.md](./docs/roadmap.md) for what is planned.
 
 ## Layout
 
 ```
 packages/core/src          dependency-free engine
-  schema.ts                f.* field DSL → types, parseShape/parseField, defaults, visibility
+  schema.ts                f.* field DSL (string, text, number, boolean, enum, list, json, credential)
+                           → types, parseShape/parseField, defaults, visibility
   node.ts                  defineNode, definePack, NodeContext, StepResult, Services (augmentable)
   flow.ts                  Flow JSON types, normalizeFlow (structure only, never throws)
-  validate.ts              kinds, config, ports, triggers, loops, reachability, requires, references
+  graph.ts                 connection index, loop bodies and which loop owns each step
+  validate.ts              kinds, config, expressions, ports, triggers, loop bodies, cycles, reachability, requires, references
   registry.ts              createRegistry → get / parse / validate / flow / toJSONSchema / describe
   builder.ts               typed FlowBuilder
   layout.ts                auto-layout for flows without positions
-  expressions.ts           {{ path ?? fallback }} (no eval)
-  engine.ts                createEngine → start / resume, RunState, RunEvent
+  expressions.ts           {{ path ?? fallback | filter: args }} with FILTERS (no eval)
+  engine.ts                createEngine → start / resume; scopes, joins, loops, credentials, RunState, RunEvent
   json-schema.ts, describe.ts
 packages/editor/src        the editor (Svelte 5 inside, framework-free outside)
   index.ts                 public entry: createEditor + option types (bundled by vite, core external)
@@ -41,14 +43,23 @@ packages/editor/src        the editor (Svelte 5 inside, framework-free outside)
 packages/payments          example pack + payroll flow
 apps/playground            SvelteKit demo with a settings bar
 apps/vanilla               plain HTML using the built bundle
+docs/roadmap.md            milestones M1–M6
 ```
+
+## Runtime model (engine.ts)
+
+- Every connection ends up **delivered** or **dead** (branch not taken). A step runs when a connection delivers (`join: 'any'`, default) or when all incoming connections are settled and at least one delivered (`join: 'all'`). A step whose incoming connections are all dead is skipped, and its outgoing connections die too.
+- **Loops**: a step with `loop: true` returns `{ loop: { items } }`. Steps reachable from its `item` output are the body; each item runs in its own scope with step keys like `each[2]/send`. `done` continues with the list of iteration results (the output of the body's last step, or an object when there are several).
+- **Waiting**: `{ wait }` pauses a step. Resume with `engine.resume(flow, state, { nodeId: key, data | port })`, using the step key from `waitingSteps(state)` — including keys inside loops.
+- **Credentials**: `f.credential(type)` fields hold ids; `services.credentials.resolve()` provides `ctx.secrets[field]` at run time. Secrets never enter flow JSON, events or `RunState`.
+- `RunState` is plain JSON (`scopes`, `steps`, `vars`) and can be stored between `start` and `resume`.
 
 ## Contract rules
 
 - `Flow`, `Issue`, `RunState`, `RunEvent`, `EditorOptions` (minus callbacks and `steps`) must stay JSON-serializable.
-- Issue `code` values and option names are public API: add, don't rename.
+- Issue `code` values, step keys, filter names and option names are public API: add, don't rename.
 - Every interface string lives in `defaultLabels`; every color in `ThemeColors` and `--fb-*`. No hard-coded colors in components or CSS.
-- New field options must work in types, `parseField`, `fieldSchema`, `describe` and `FieldInput`.
+- New field kinds must work in types, `parseField`, `fieldSchema`, `describe` and `FieldInput`.
 - Money-moving or otherwise non-idempotent steps must not set `retry`.
 
 ## Using the library from code
@@ -62,13 +73,15 @@ apps/vanilla               plain HTML using the built bundle
 | `no_trigger` | add a step whose kind is a trigger |
 | `unknown_kind` | use a kind from the catalog |
 | `required`, `invalid_type`, `invalid_enum`, `too_small`, `too_big`, `invalid_pattern` | correct `nodes[i].config.<field>` |
+| `invalid_expression` | fix the `{{ }}` expression: valid roots are vars, steps, input, inputs, trigger, run, $item, $index, $now; filters are listed by `describe()` |
 | `unknown_port` | use one of the source step's outputs on `edges[i].port` |
 | `unknown_node` | point `edges[i].from/to` at an existing node id |
 | `trigger_input` | remove edges that end at a trigger |
 | `missing_upstream` | insert the required step kind before this one |
-| `cycle` | remove the edge that loops back |
+| `loop_body_escape` | steps inside a loop may only connect to each other; continue after the loop from its `done` output |
+| `cycle` | remove the edge that loops back; use a loop step to repeat work |
 | `check_failed` | cross-field rule; read the message |
 | `disconnected`, `unreachable`, `unknown_reference`, `unknown_key` | warnings; the flow still runs |
 
-4. Run with `createEngine(registry, { services }).start(flow)`; use `mode: 'simulate'` for side-effect-free runs. Resume a `waiting` run with `engine.resume(flow, state, { nodeId, data })` or `{ nodeId, port }`.
+4. Run with `createEngine(registry, { services }).start(flow)`; use `mode: 'simulate'` for side-effect-free runs. Resume a `waiting` run with `engine.resume(flow, state, { nodeId: key, data })` or `{ nodeId: key, port }`.
 5. In a browser, `createEditor(el, { steps, flow })` shows it; `editor.getFlow()` returns the edited JSON.

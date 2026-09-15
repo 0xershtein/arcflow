@@ -341,7 +341,8 @@
 				log = [...log, { nodeId: event.nodeId, status: 'error', message: event.error, at: event.at }];
 				break;
 			case 'step:skip':
-				setStatus(event.nodeId, 'skipped');
+				// A branch skipped in one loop iteration should not hide what other iterations did.
+				if (!event.key.includes('/')) setStatus(event.nodeId, 'skipped');
 				break;
 			case 'run:end':
 				outcome = event.status;
