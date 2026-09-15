@@ -1,0 +1,39 @@
+{
+	"name": "@arcflow/payments",
+	"version": "0.1.0",
+	"description": "Example arcflow steps for treasury payouts: schedules, runway checks, multisig approvals and stablecoin transfers.",
+	"license": "MIT",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"default": "./src/index.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"check": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@arcflow/core": "workspace:*"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/0xershtein/arcflow.git",
+		"directory": "packages/payments"
+	}
+}

@@ -1,0 +1,142 @@
+/* Styles added on top of theme.css for config forms, the JSON panel and run states. */
+
+.fb-body.no-palette {
+	grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.fb-body.wide-panel {
+	grid-template-columns: 264px minmax(0, 1fr) 420px;
+}
+
+.fb-body.no-palette.wide-panel {
+	grid-template-columns: minmax(0, 1fr) 420px;
+}
+
+.fb-node[data-run='waiting'] {
+	border-color: var(--fb-accent);
+	border-style: dashed;
+}
+
+.fb-node.is-disabled {
+	opacity: 0.55;
+}
+
+.fb-node.is-disabled .fb-node-title {
+	text-decoration: line-through;
+	text-decoration-color: var(--fb-text-muted);
+}
+
+.fb-field-label {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--fb-text-soft);
+}
+
+.fb-field-issue {
+	font-size: 11.5px;
+	line-height: 1.4;
+	color: var(--fb-danger);
+}
+
+.fb-field-issue.warning {
+	color: var(--fb-accent);
+}
+
+.fb-field.has-issue :is(.fb-input, .fb-select, .fb-textarea) {
+	border-color: rgba(229, 128, 107, 0.6);
+}
+
+.fb-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.fb-list-row {
+	display: grid;
+	gap: 6px;
+	align-items: center;
+}
+
+.fb-list-head span {
+	padding-left: 2px;
+	font-size: 11px;
+	color: var(--fb-text-muted);
+}
+
+.fb-list-row .fb-input {
+	min-height: 32px;
+	padding: 6px 8px;
+}
+
+.fb-list-add {
+	align-self: flex-start;
+	height: 30px;
+	padding: 0 8px;
+}
+
+.fb-list-expression {
+	display: flex;
+	gap: 6px;
+}
+
+.fb-root :is(.fb-input, .fb-select, .fb-textarea):disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.fb-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.fb-btn.primary:disabled:hover {
+	background: var(--fb-primary);
+}
+
+.fb-btn.is-on {
+	background: var(--fb-surface-2);
+	border-color: var(--fb-accent);
+	color: var(--fb-text);
+}
+
+.fb-json {
+	gap: 14px;
+}
+
+.fb-json-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
+.fb-json-text {
+	flex: 1;
+	min-height: 280px;
+	font-size: 11.5px;
+	line-height: 1.55;
+	white-space: pre;
+	overflow: auto;
+	tab-size: 2;
+}
+
+.fb-btn-row {
+	display: flex;
+	gap: 8px;
+}
+
+.fb-copy-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding-top: 14px;
+	border-top: 1px solid var(--fb-line);
+}
+
+.fb-copy-list .fb-btn {
+	justify-content: flex-start;
+}
+
+.fb-insp-actions .danger {
+	margin-left: auto;
+}

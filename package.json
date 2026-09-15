@@ -1,29 +1,25 @@
 {
-	"name": "flow-builder",
+	"name": "arcflow-monorepo",
 	"private": true,
-	"version": "0.0.1",
 	"type": "module",
+	"description": "Typed flow engine and n8n-style canvas for building automations in code, JSON, or by prompting an LLM.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/0xershtein/arcflow.git"
+	},
+	"packageManager": "pnpm@8.5.1",
+	"engines": {
+		"node": ">=20"
+	},
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+		"dev": "pnpm --filter playground dev",
+		"build": "pnpm --filter \"./packages/**\" build && pnpm --filter playground build",
+		"test": "vitest run",
+		"check": "pnpm -r check"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^7.0.1",
-		"@sveltejs/kit": "^2.63.0",
-		"@sveltejs/vite-plugin-svelte": "^7.1.2",
-		"@types/node": "^26.6.0",
-		"svelte": "^5.57.0",
-		"svelte-check": "^4.6.0",
 		"typescript": "^6.0.3",
-		"vite": "^8.0.16"
-	},
-	"dependencies": {
-		"@xyflow/svelte": "1.6.6"
-	},
-	"license": "MIT",
-	"description": "n8n-style visual flow editor for SvelteKit, built on Svelte Flow"
+		"vitest": "^5.0.1"
+	}
 }

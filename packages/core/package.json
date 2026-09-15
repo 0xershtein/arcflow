@@ -1,0 +1,47 @@
+{
+	"name": "@arcflow/core",
+	"version": "0.1.0",
+	"description": "Typed, headless flow engine: define steps, build flows in code or JSON, validate them, and run them with retries and pause/resume.",
+	"license": "MIT",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"default": "./src/index.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"files": [
+		"dist",
+		"src",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"check": "tsc -p tsconfig.json"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/0xershtein/arcflow.git",
+		"directory": "packages/core"
+	},
+	"keywords": [
+		"workflow",
+		"automation",
+		"flow",
+		"n8n",
+		"engine",
+		"llm",
+		"agents",
+		"json-schema"
+	]
+}
