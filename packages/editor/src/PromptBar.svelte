@@ -10,7 +10,6 @@
 		busy,
 		problems = 0,
 		suggestion,
-		raised = false,
 		canExplain = false,
 		explaining = false,
 		explanation = null,
@@ -29,8 +28,6 @@
 		problems?: number;
 		/** The flow on the canvas is the model's; keep it or put the old one back. */
 		suggestion: { changes: { type: string }[]; issues: Issue[]; attempts?: number; model?: string; built?: number } | null;
-		/** Sits above the run log when it is open. */
-		raised?: boolean;
 		/** The backend can describe a flow in plain language. */
 		canExplain?: boolean;
 		explaining?: boolean;
@@ -81,7 +78,7 @@
 	}
 </script>
 
-<div class="fb-prompt-wrap" class:is-raised={raised}>
+<div class="fb-prompt-wrap">
 	{#if explanation}
 		<div class="fb-explain" role="status">
 			<p>{explanation}</p>

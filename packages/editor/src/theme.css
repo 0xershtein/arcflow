@@ -298,8 +298,18 @@
 	min-height: 0;
 }
 
+/* Canvas with the run log docked under it. The log is a row here rather than an
+   overlay, so opening one takes room from the canvas instead of hiding steps. */
+.fb-stage {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+}
+
 .fb-canvas {
 	position: relative;
+	flex: 1;
 	min-width: 0;
 	min-height: 0;
 }
@@ -708,11 +718,9 @@ button.fb-issue:hover {
 /* ---------- Run log, toast, empty ---------- */
 
 .fb-log {
-	position: absolute;
-	left: 16px;
-	right: 16px;
-	bottom: 16px;
-	z-index: 5;
+	flex: 0 0 auto;
+	margin: 0 16px 16px;
+	/* Tall enough for a handful of steps; the list scrolls past that. */
 	max-height: 42%;
 	display: flex;
 	flex-direction: column;
@@ -763,6 +771,8 @@ button.fb-issue:hover {
 
 .fb-log-list {
 	overflow-y: auto;
+	/* A wheel over the log scrolls the log; it never chains to the page. */
+	overscroll-behavior: contain;
 	padding: 6px 0;
 }
 

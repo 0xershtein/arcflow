@@ -145,6 +145,8 @@
 	let outcome = $state<RunStatus | null>(null);
 	let log = $state<LogEntry[]>([]);
 	let logOpen = $state(false);
+	let logListEl = $state<HTMLElement | null>(null);
+	let logPinned = $state(true);
 	let controller: AbortController | null = null;
 
 	const current = $derived(fromCanvas(meta, nodes, edges));
@@ -225,7 +227,7 @@
 		const result = apply(input);
 		if (result.loaded) {
 			await tick();
-			fitView({ padding: 0.1, duration: 300 });
+			fitView({ padding: 0.1, maxZoom: 1, duration: 300 });
 		}
 		return result;
 	}
@@ -532,6 +534,7 @@
 			}))
 			.sort((a, b) => a.at - b.at);
 		logOpen = true;
+		pinLog();
 	}
 
 	/** Opens a run from the history; an empty id goes back to editing. */
@@ -572,6 +575,7 @@
 		log = [];
 		outcome = null;
 		logOpen = true;
+		pinLog();
 		running = true;
 		const started = await withServer(() => backend.startRun(flow.id, { mode: 'live' }));
 		if (!started) {
@@ -1103,6 +1107,7 @@
 		log = [];
 		outcome = null;
 		logOpen = true;
+		pinLog();
 		running = true;
 		controller = new AbortController();
 		try {
@@ -1122,6 +1127,23 @@
 			running = false;
 			controller = null;
 		}
+	}
+
+	/** Keeps the newest entry in view while a run streams in, unless the reader scrolled up. */
+	$effect(() => {
+		const entries = log.length;
+		if (!logListEl || !entries || !logPinned) return;
+		logListEl.scrollTop = logListEl.scrollHeight;
+	});
+
+	function onLogScroll(event: UIEvent) {
+		const el = event.currentTarget as HTMLElement;
+		logPinned = el.scrollHeight - el.scrollTop - el.clientHeight < 8;
+	}
+
+	/** A fresh run scrolls with its events again, however far the reader had scrolled before. */
+	function pinLog() {
+		logPinned = true;
 	}
 
 	function closeLog() {
@@ -1243,106 +1265,112 @@
 			<StepPalette onadd={(kind) => addNode(kind)} />
 		{/if}
 
-		<div
-			class="fb-canvas"
-			bind:this={canvasEl}
-			ondragover={onDragOver}
-			ondrop={onDrop}
-			onpointermove={(event) => (pointer = { x: event.clientX, y: event.clientY })}
-			onpointerleave={() => (pointer = null)}
-			role="application"
-			aria-label={meta.name}
-		>
-			<SvelteFlow
-				bind:nodes
-				bind:edges
-				{nodeTypes}
-				{edgeTypes}
-				{isValidConnection}
-				colorMode={themeMode}
-				fitView
-				fitViewOptions={{ padding: 0.1, minZoom: 0.15 }}
-				minZoom={0.15}
-				maxZoom={1.6}
-				connectionRadius={34}
-				nodesDraggable={!readonly}
-				nodesConnectable={!readonly}
-				deleteKey={readonly ? null : ['Backspace', 'Delete']}
-				defaultEdgeOptions={{ type: 'flow' }}
-				onconnectend={onConnectEnd}
-				onselectionchange={({ nodes: picked }) => {
-					selectedCount = picked.length;
-					selectedId = picked.length === 1 && picked[0].type === 'step' ? picked[0].id : null;
-					if (selectedId) panel = 'step';
-				}}
+		<div class="fb-stage">
+			<div
+				class="fb-canvas"
+				bind:this={canvasEl}
+				ondragover={onDragOver}
+				ondrop={onDrop}
+				onpointermove={(event) => (pointer = { x: event.clientX, y: event.clientY })}
+				onpointerleave={() => (pointer = null)}
+				role="application"
+				aria-label={meta.name}
 			>
-				{#if ui.background !== 'none'}
-					<Background variant={BACKGROUND[ui.background]} gap={24} size={1.2} />
+				<SvelteFlow
+					bind:nodes
+					bind:edges
+					{nodeTypes}
+					{edgeTypes}
+					{isValidConnection}
+					colorMode={themeMode}
+					fitView
+					fitViewOptions={{ padding: 0.1, minZoom: 0.15 }}
+					minZoom={0.15}
+					maxZoom={1.6}
+					connectionRadius={34}
+					nodesDraggable={!readonly}
+					nodesConnectable={!readonly}
+					deleteKey={readonly ? null : ['Backspace', 'Delete']}
+					defaultEdgeOptions={{ type: 'flow' }}
+					onconnectend={onConnectEnd}
+					onselectionchange={({ nodes: picked }) => {
+						selectedCount = picked.length;
+						selectedId = picked.length === 1 && picked[0].type === 'step' ? picked[0].id : null;
+						if (selectedId) panel = 'step';
+					}}
+				>
+					{#if ui.background !== 'none'}
+						<Background variant={BACKGROUND[ui.background]} gap={24} size={1.2} />
+					{/if}
+					{#if ui.controls}
+						<Controls position="bottom-right" showLock={false} />
+					{/if}
+					{#if ui.minimap}
+						<MiniMap position="bottom-left" />
+					{/if}
+				</SvelteFlow>
+
+				{#if nodes.length === 0}
+					<div class="fb-empty">
+						<div><strong>{labels.emptyTitle}</strong>{labels.emptyBody}</div>
+					</div>
 				{/if}
-				{#if ui.controls}
-					<Controls position="bottom-right" showLock={false} />
+
+				{#if selectedCount > 1 && !readonly}
+					<div class="fb-selection-bar" role="toolbar" aria-label={format(labels.selectedCount, { count: selectedCount })}>
+						<span>{format(labels.selectedCount, { count: selectedCount })}</span>
+						<button class="fb-btn ghost" onclick={duplicate}><Icon name="copy" size={14} />{labels.duplicate}</button>
+						<button class="fb-btn ghost danger" onclick={deleteSelection}><Icon name="trash" size={14} />{labels.delete}</button>
+					</div>
 				{/if}
-				{#if ui.minimap}
-					<MiniMap position="bottom-left" />
+
+				{#if picker}
+					<StepPicker
+						x={picker.x}
+						y={picker.y}
+						title={picker.edgeId ? labels.pickToInsert : labels.pickToConnect}
+						triggers={picker.from?.type === 'target'}
+						onpick={pick}
+						onclose={() => (picker = null)}
+					/>
 				{/if}
-			</SvelteFlow>
 
-			{#if nodes.length === 0}
-				<div class="fb-empty">
-					<div><strong>{labels.emptyTitle}</strong>{labels.emptyBody}</div>
-				</div>
-			{/if}
+				{#if canAi}
+					<PromptBar
+						mode={steps.length ? 'edit' : 'create'}
+						busy={aiBusy}
+						problems={errorCount}
+						suggestion={aiSuggestion}
+						onsubmit={askAi}
+						onkeep={keepAi}
+						ondiscard={discardAi}
+						onstop={stopAi}
+						onfix={fixProblems}
+						canExplain={Boolean(backend?.explainFlow)}
+						explaining={aiExplaining}
+						explanation={aiExplanation}
+						onexplain={explainAi}
+						ondismiss={() => (aiExplanation = null)}
+					/>
+				{/if}
 
-			{#if selectedCount > 1 && !readonly}
-				<div class="fb-selection-bar" role="toolbar" aria-label={format(labels.selectedCount, { count: selectedCount })}>
-					<span>{format(labels.selectedCount, { count: selectedCount })}</span>
-					<button class="fb-btn ghost" onclick={duplicate}><Icon name="copy" size={14} />{labels.duplicate}</button>
-					<button class="fb-btn ghost danger" onclick={deleteSelection}><Icon name="trash" size={14} />{labels.delete}</button>
-				</div>
-			{/if}
+				{#if runsOpen && backend}
+					<ExecutionsPanel
+						runs={serverRuns}
+						selectedId={viewingRunId}
+						onopen={showServerRun}
+						onclose={() => (runsOpen = false)}
+						onrefresh={refreshRuns}
+						oncancel={cancelServerRun}
+					/>
+				{/if}
 
-			{#if picker}
-				<StepPicker
-					x={picker.x}
-					y={picker.y}
-					title={picker.edgeId ? labels.pickToInsert : labels.pickToConnect}
-					triggers={picker.from?.type === 'target'}
-					onpick={pick}
-					onclose={() => (picker = null)}
-				/>
-			{/if}
+				{#if notice}
+					<div class="fb-toast" role="status">{notice}</div>
+				{/if}
+			</div>
 
-			{#if canAi}
-				<PromptBar
-					mode={steps.length ? 'edit' : 'create'}
-					busy={aiBusy}
-					problems={errorCount}
-					suggestion={aiSuggestion}
-					raised={logOpen}
-					onsubmit={askAi}
-					onkeep={keepAi}
-					ondiscard={discardAi}
-					onstop={stopAi}
-					onfix={fixProblems}
-					canExplain={Boolean(backend?.explainFlow)}
-					explaining={aiExplaining}
-					explanation={aiExplanation}
-					onexplain={explainAi}
-					ondismiss={() => (aiExplanation = null)}
-				/>
-			{/if}
-
-			{#if runsOpen && backend}
-				<ExecutionsPanel
-					runs={serverRuns}
-					selectedId={viewingRunId}
-					onopen={showServerRun}
-					onclose={() => (runsOpen = false)}
-					onrefresh={refreshRuns}
-					oncancel={cancelServerRun}
-				/>
-			{/if}
-
+			<!-- Docked under the canvas, not over it: a run never hides the steps it is running. -->
 			{#if logOpen}
 				<section class="fb-log" aria-label={labels.runTitle} aria-live="polite">
 					<div class="fb-log-head">
@@ -1361,7 +1389,7 @@
 						<span class="fb-log-note">{labels.simulated}</span>
 						<button class="fb-icon-btn" onclick={closeLog} aria-label={labels.close}><Icon name="x" size={15} /></button>
 					</div>
-					<div class="fb-log-list">
+					<div class="fb-log-list" bind:this={logListEl} onscroll={onLogScroll}>
 						{#each log as entry, i (i)}
 							<button class="fb-log-row" class:bad={entry.status === 'error'} onclick={() => focusNode(entry.nodeId)}>
 								<Icon name={entry.status === 'error' ? 'x' : entry.status === 'waiting' ? 'hourglass' : 'check'} size={14} stroke={2.2} />
@@ -1374,10 +1402,6 @@
 						{/each}
 					</div>
 				</section>
-			{/if}
-
-			{#if notice}
-				<div class="fb-toast" role="status">{notice}</div>
 			{/if}
 		</div>
 
