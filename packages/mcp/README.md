@@ -1,6 +1,6 @@
 # @arcflow/mcp
 
-An [MCP](https://modelcontextprotocol.io) server for [arcflow](https://github.com/0xershtein/arcflow): agents like Claude Code and Cursor can look up the steps you registered, write a flow, check it, try it, save it and run it.
+An [MCP](https://modelcontextprotocol.io) server for [arcflow](https://github.com/arcsig-labs/arcflow): agents like Claude Code and Cursor can look up the steps you registered, write a flow, check it, try it, save it and run it.
 
 ```sh
 # with a running server, so flows can be saved and run for real

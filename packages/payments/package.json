@@ -34,7 +34,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/0xershtein/arcflow.git",
+		"url": "git+https://github.com/arcsig-labs/arcflow.git",
 		"directory": "packages/payments"
 	}
 }

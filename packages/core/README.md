@@ -28,4 +28,4 @@ const run = await createEngine(registry).start(flow.build());
 console.log(run.steps.greet.output); // { text: 'Hello, arcflow' }
 ```
 
-See the [repository README](https://github.com/0xershtein/arcflow#readme) for the full guide.
+See the [repository README](https://github.com/arcsig-labs/arcflow#readme) for the full guide.

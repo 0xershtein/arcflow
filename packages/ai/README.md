@@ -1,6 +1,6 @@
 # @arcflow/ai
 
-Builds and edits [arcflow](https://github.com/0xershtein/arcflow) flows with an LLM. The model only ever sees the steps you registered, and whatever it returns is validated against them — issues go back to the model until the flow is valid.
+Builds and edits [arcflow](https://github.com/arcsig-labs/arcflow) flows with an LLM. The model only ever sees the steps you registered, and whatever it returns is validated against them — issues go back to the model until the flow is valid.
 
 ```ts
 import { createRegistry } from '@arcflow/core';

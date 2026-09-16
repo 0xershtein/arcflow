@@ -35,7 +35,7 @@
 				<a href="{base}{section.href}" class:is-on={current === section.href}>{section.label}</a>
 			{/each}
 		</nav>
-		<a class="github" href="https://github.com/0xershtein/arcflow">GitHub</a>
+		<a class="github" href="https://github.com/arcsig-labs/arcflow">GitHub</a>
 	</header>
 
 	<main>
@@ -44,7 +44,7 @@
 
 	<footer>
 		<span>MIT licensed. Built with <a href="https://svelte.dev">Svelte</a> and <a href="https://svelteflow.dev">Svelte Flow</a>.</span>
-		<a href="https://github.com/0xershtein/arcflow">Source</a>
+		<a href="https://github.com/arcsig-labs/arcflow">Source</a>
 	</footer>
 </div>
 

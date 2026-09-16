@@ -85,4 +85,4 @@ Exports `lightColors`, `darkColors`, `defaultLabels` and `defaultUi` so you can 
 
 Svelte apps can import the component instead: `import { FlowEditor } from '@arcflow/editor/svelte'`.
 
-See the [repository README](https://github.com/0xershtein/arcflow#readme) for the full option reference.
+See the [repository README](https://github.com/arcsig-labs/arcflow#readme) for the full option reference.
