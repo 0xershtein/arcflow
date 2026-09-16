@@ -1,4 +1,4 @@
-import { createEngine, hasErrors, toManifest, type Flow, type Registry, type RunState, type Services } from '@arcflow/core';
+import { applyPatch, createEngine, hasErrors, toManifest, type Flow, type PatchOp, type Registry, type RunState, type Services } from '@arcflow/core';
 import type { ToolDefinition, ToolOutcome } from './protocol.js';
 
 /** Where flows are stored and run. Without one, only the catalog and validation tools work. */
@@ -80,6 +80,43 @@ export const tools: Tool[] = [
 			return {
 				text: parsed.issues.length ? `${parsed.ok ? 'Valid, with warnings' : 'Not valid yet'}:\n${issueLines(parsed.issues)}` : 'Valid. Every step is connected and configured.',
 				data: { ok: parsed.ok, issues: parsed.issues, flow: parsed.flow }
+			};
+		}
+	},
+	{
+		name: 'patch_flow',
+		description:
+			'Changes part of a flow without rewriting it. Operations: set and remove take the same path a validation issue reports (nodes[1].config.url, or nodes[fetch].config.url by id); addNode, removeNode, connect and disconnect handle the wiring. All or nothing — if one operation fails, nothing is applied. Returns the patched flow and what validation says about it.',
+		inputSchema: object(
+			{
+				flow: FLOW_ARG,
+				operations: {
+					type: 'array',
+					description:
+						'In order. { "op": "set", "path": "nodes[fetch].config.url", "value": "https://…" } · { "op": "remove", "path": … } · { "op": "addNode", "node": { "id", "kind", "config" }, "after": "<step id>", "port": "out" } · { "op": "removeNode", "id": … } · { "op": "connect", "from", "to", "port" } · { "op": "disconnect", "from", "to", "port" }',
+					items: { type: 'object' }
+				}
+			},
+			['flow', 'operations']
+		),
+		run(args, context) {
+			const parsed = asFlow(args.flow, context);
+			if (!parsed.flow) return { text: `Not a flow:\n${issueLines(parsed.issues)}`, isError: true };
+			if (!Array.isArray(args.operations) || args.operations.length === 0) {
+				return { text: 'Give at least one operation.', isError: true };
+			}
+			const result = applyPatch(parsed.flow, args.operations as PatchOp[]);
+			if (!result.applied) {
+				const lines = result.failures.map((failure) => `- operation ${failure.index} (${failure.op.op}): ${failure.message}`).join('\n');
+				return { text: `Nothing was applied:\n${lines}`, data: { applied: false, failures: result.failures }, isError: true };
+			}
+			const issues = context.registry.validate(result.flow);
+			const ok = !hasErrors(issues);
+			return {
+				text: `Applied ${args.operations.length} operation${args.operations.length === 1 ? '' : 's'}. ${
+					issues.length ? `${ok ? 'Valid, with warnings' : 'Not valid yet'}:\n${issueLines(issues)}` : 'The flow is valid.'
+				}`,
+				data: { applied: true, ok, issues, flow: result.flow }
 			};
 		}
 	},

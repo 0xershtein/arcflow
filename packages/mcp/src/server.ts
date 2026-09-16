@@ -43,7 +43,7 @@ export function createMcpServer(options: McpServerOptions) {
 					capabilities: { tools: { listChanged: false } },
 					serverInfo: info,
 					instructions:
-						'Build automation flows for arcflow. Call list_steps first: it is the only source of step kinds, settings and outputs. Check a flow with validate_flow, try it with test_flow, then save_flow and run_flow.'
+						'Build automation flows for arcflow. Call list_steps first: it is the only source of step kinds, settings and outputs. Check a flow with validate_flow; when it reports a problem, fix that one path with patch_flow rather than rewriting the flow. Try it with test_flow, then save_flow and run_flow.'
 				});
 
 			// Notifications carry no id and get no answer.

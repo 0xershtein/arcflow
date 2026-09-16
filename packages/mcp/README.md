@@ -19,6 +19,7 @@ Your own steps come along with `--steps ./my-steps.js` (a module exporting a pac
 | `list_steps` | Every step: kind, settings, outputs, what it does. The only source of truth — nothing else exists |
 | `validate_flow` | Checks a flow and returns problems with their JSON paths |
 | `test_flow` | Runs it in simulate mode: no requests are sent, every step reports what it would do |
+| `patch_flow` | Changes part of a flow instead of rewriting it — `set` and `remove` take the path an issue reported, `addNode`, `removeNode`, `connect` and `disconnect` do the wiring. All or nothing |
 | `list_flows`, `get_flow` | What is saved on the server |
 | `save_flow` | Creates a flow or saves a new version; `active: true` lets webhooks and schedules fire it |
 | `run_flow` | Runs a saved flow, live or simulated |

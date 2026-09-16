@@ -78,7 +78,7 @@ describe('tools without a server', () => {
 	const server = createMcpServer({ registry });
 
 	it('offers only the tools that work without one', () => {
-		expect(server.tools).toEqual(['list_steps', 'validate_flow', 'test_flow']);
+		expect(server.tools).toEqual(['list_steps', 'validate_flow', 'patch_flow', 'test_flow']);
 	});
 
 	it('lists steps and filters them', async () => {

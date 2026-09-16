@@ -253,7 +253,7 @@ Point an agent at your steps and let it build flows:
 claude mcp add arcflow -- npx -y @arcflow/mcp --url http://127.0.0.1:8787
 ```
 
-It gets `list_steps`, `validate_flow`, `test_flow` (a simulated run, nothing sent), `save_flow`, `run_flow` and `get_run` — see [`@arcflow/mcp`](./packages/mcp). In your own code, [`@arcflow/ai`](./packages/ai) does the same through `generateFlow` / `editFlow`, and with `ANTHROPIC_API_KEY` set the server offers `/api/ai/*` so the editor's prompt bar works without a key in the browser.
+It gets `list_steps`, `validate_flow`, `test_flow` (a simulated run, nothing sent), `patch_flow` (change one field at the path an issue reported, rather than rewriting the flow), `save_flow`, `run_flow` and `get_run` — see [`@arcflow/mcp`](./packages/mcp). In your own code, [`@arcflow/ai`](./packages/ai) does the same through `generateFlow` / `editFlow`, and with `ANTHROPIC_API_KEY` set the server offers `/api/ai/*` so the editor's prompt bar works without a key in the browser.
 
 The pieces underneath are plain data:
 

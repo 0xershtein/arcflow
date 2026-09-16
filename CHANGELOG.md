@@ -11,6 +11,7 @@ The first release: build a flow in code, JSON, a canvas or a prompt, then run it
 - Step definitions with `defineNode` and the `f.*` config schema (string, text, number, boolean, enum, list, json, credential), typed end to end: config, ports and `ctx` follow the definition.
 - Flow format as plain JSON, with `normalizeFlow`, `registry.parse()` and `validateFlow` reporting issues with stable codes and JSON paths.
 - Engine with branching, joins (`any` / `all`), loops with concurrency, sub-flows, retries, timeouts, `wait` / `resume`, credential resolution, dead-branch elimination and `onCheckpoint` for persistence.
+- `applyPatch(flow, ops)`: change part of a flow at the path validation reported, or by node id, with structural operations for wiring. All or nothing, so a half-applied edit never reaches the canvas.
 - Expressions — `{{ path ?? fallback | filter: args }}` over vars, steps, input, trigger, run, `$item`, `$index` — evaluated without `eval`.
 - `FlowBuilder` for typed flows in code, automatic layout, `toJSONSchema()` and `describe()` for LLM tooling, and `toManifest()` / `registryFromManifest()` to send a catalog to a browser.
 
@@ -48,4 +49,4 @@ The first release: build a flow in code, JSON, a canvas or a prompt, then run it
 
 ### `@arcflow/mcp`
 
-- MCP server over stdio with `list_steps`, `validate_flow`, `test_flow`, `list_flows`, `get_flow`, `save_flow`, `run_flow` and `get_run`, so agents can build and run flows.
+- MCP server over stdio with `list_steps`, `validate_flow`, `test_flow`, `patch_flow`, `list_flows`, `get_flow`, `save_flow`, `run_flow` and `get_run`, so agents can build, repair and run flows.

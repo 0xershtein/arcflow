@@ -28,6 +28,24 @@ const run = await createEngine(registry).start(flow.build());
 console.log(run.steps.greet.output); // { text: 'Hello, arcflow' }
 ```
 
+## Patching a flow
+
+`applyPatch(flow, ops)` changes part of a flow and returns a new one, leaving the original alone. It is
+all or nothing: if any operation fails, the flow comes back untouched and every failure is listed with the
+index of the operation that caused it.
+
+```ts
+import { applyPatch } from '@arcflow/core';
+
+const issue = registry.validate(flow).find((entry) => entry.code === 'required');
+// error required @ nodes[1].config.url
+const { flow: fixed, applied } = applyPatch(flow, [{ op: 'set', path: issue.path, value: 'https://example.com' }]);
+```
+
+`set` and `remove` take the same paths validation reports; a node can also be addressed by id
+(`nodes[fetch].config.url`), which survives reordering. `addNode` (with an optional `after` and `port` to
+wire it), `removeNode` (which takes its connections with it), `connect` and `disconnect` handle structure.
+
 ## Options
 
 `createEngine(registry, options)`:

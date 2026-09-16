@@ -7,6 +7,7 @@ export * from './expressions.js';
 export * from './layout.js';
 export * from './builder.js';
 export * from './registry.js';
+export * from './patch.js';
 export * from './validate.js';
 export * from './engine.js';
 export * from './json-schema.js';
