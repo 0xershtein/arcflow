@@ -57,6 +57,8 @@
 		font-family: var(--mono);
 		font-size: 13px;
 		line-height: 1.6;
+		/* The snippets are written with tabs; eight columns each is a wall of whitespace. */
+		tab-size: 2;
 		color: var(--text-soft);
 	}
 </style>

@@ -2,54 +2,8 @@
 	import { base } from '$app/paths';
 	import Code from '$lib/Code.svelte';
 	import Demo from '$lib/Demo.svelte';
-
-	const mount = `import { createEditor } from '@arcflow/editor';
-
-const editor = createEditor('#editor', {
-	steps,                       // a registry, or packs / step definitions
-	flow,                        // flow JSON (optional)
-	theme: 'auto',               // or { mode, colors, radius, nodeWidth, … }
-	ui: { minimap: true },
-	labels: { testRun: 'Dry run' },
-	onChange: (flow) => save(flow)
-});`;
-
-	const svelte = `<script lang="ts">
-	import { FlowEditor } from '@arcflow/editor/svelte';
-<\/script>
-
-<FlowEditor steps={registry} {flow} onChange={save} />`;
-
-	const react = `import { useEffect, useRef } from 'react';
-import { createEditor, type EditorInstance } from '@arcflow/editor';
-
-export function Flow({ steps, flow, onChange }) {
-	const host = useRef<HTMLDivElement>(null);
-	const editor = useRef<EditorInstance | null>(null);
-
-	// Created once: recreating it would throw away the canvas, the selection and the undo history.
-	useEffect(() => {
-		editor.current = createEditor(host.current!, { steps, flow, onChange });
-		return () => editor.current?.destroy();
-	}, []);
-
-	return <div ref={host} style={{ height: '100dvh' }} />;
-}`;
-
-	const vue = `<script setup lang="ts">
-import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
-import { createEditor, type EditorInstance } from '@arcflow/editor';
-
-const host = useTemplateRef<HTMLDivElement>('host');
-let editor: EditorInstance | undefined;
-
-onMounted(() => (editor = createEditor(host.value!, { steps, flow })));
-onBeforeUnmount(() => editor?.destroy());
-<\/script>
-
-<template>
-	<div ref="host" style="height: 100dvh" />
-</template>`;
+	import Tabs from '$lib/Tabs.svelte';
+	import { mounting } from '$lib/frameworks';
 
 	const theme = `createEditor('#editor', {
 	steps,
@@ -89,15 +43,12 @@ createEditor('#editor', {
 	the palette, the forms and the validation all come from the registry you pass.
 </p>
 
-<Code code={mount} />
-<p>The container needs a height; the editor fills it. In a Svelte app, import the component instead:</p>
-<Code code={svelte} language="svelte" />
+<Tabs tabs={mounting} />
 <p>
-	In React or Vue, create it once and push later changes through <code>setOptions</code> or <code>setFlow</code>. Svelte is an optional peer dependency — only
-	the <code>/svelte</code> entry needs it installed, the default entry has it compiled in.
+	The container needs a height; the editor fills it. Svelte is an optional peer dependency — only the <code>/svelte</code> entry needs it installed, because
+	the default entry has Svelte compiled in. Create the editor once and push later changes through <code>setOptions</code>: recreating it costs the canvas, the
+	selection and the undo history. <code>steps</code> is the one option fixed for the life of an instance.
 </p>
-<Code code={react} language="tsx" />
-<Code code={vue} language="vue" />
 
 <h2>Try it read-only</h2>
 <p>The same editor with the palette and inspector hidden — what an embedded, view-only flow looks like.</p>

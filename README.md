@@ -272,43 +272,76 @@ The editor's **JSON** panel does the same by hand: paste a generated flow, apply
 ## In a framework
 
 The default entry is a plain ES module with Svelte compiled into it, so React, Vue, Angular and
-plain HTML all use the same `createEditor(element, options)`. Svelte is an optional peer: only the
-`/svelte` entry needs it installed.
+plain HTML all mount the editor the same way: `createEditor(element, options)`. Svelte is an
+optional peer dependency — only the `/svelte` entry needs it installed.
 
-Create the editor once and push later changes through `setOptions` or `setFlow` — recreating it on
-every render throws away the canvas, the selection and the undo history.
+Two rules make a wrapper behave:
+
+- **Create it once** and push later changes through `setOptions` or `setFlow`. Recreating the
+  editor throws away the canvas, the selection and the undo history.
+- **Keep `flow` referentially stable.** A different object means a different flow, so a new one
+  on every render reloads the canvas over whatever the person was editing. `steps` is fixed for
+  the life of an instance.
 
 **React**
 
 ```tsx
 import { useEffect, useRef } from 'react';
-import { createEditor, type EditorInstance } from '@arcflow/editor';
+import { createEditor, type EditorInstance, type EditorOptions } from '@arcflow/editor';
 
-export function Flow({ steps, flow, onChange }) {
+export function FlowEditor({ steps, className, ...options }: EditorOptions & { className?: string }) {
 	const host = useRef<HTMLDivElement>(null);
 	const editor = useRef<EditorInstance | null>(null);
 
+	// Mounted once. Development mounts effects twice, so the cleanup has to destroy the
+	// instance rather than leave a second canvas behind.
 	useEffect(() => {
-		editor.current = createEditor(host.current!, { steps, flow, onChange });
-		return () => editor.current?.destroy();
-	}, []);
+		const instance = createEditor(host.current!, { steps, ...options });
+		editor.current = instance;
+		return () => {
+			instance.destroy();
+			editor.current = null;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [steps]);
 
-	return <div ref={host} style={{ height: '100dvh' }} />;
+	// Theme, labels, readonly, callbacks and the flow can all change while it runs.
+	useEffect(() => {
+		editor.current?.setOptions(options);
+	});
+
+	return <div ref={host} className={className} style={{ height: '100dvh' }} />;
 }
+
+// A new flow object means a new flow, so hold it still:
+//   const flow = useMemo(() => createPayrollFlow(), []);
 ```
 
 **Vue**
 
 ```vue
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
-import { createEditor, type EditorInstance } from '@arcflow/editor';
+import { onBeforeUnmount, onMounted, useTemplateRef, watchEffect } from 'vue';
+import { createEditor, type EditorInstance, type EditorOptions } from '@arcflow/editor';
 
-const props = defineProps<{ steps: unknown; flow?: unknown }>();
+const props = defineProps<{ steps: EditorOptions['steps']; flow?: EditorOptions['flow']; readonly?: boolean }>();
+const emit = defineEmits<{ change: [unknown] }>();
+
 const host = useTemplateRef<HTMLDivElement>('host');
 let editor: EditorInstance | undefined;
 
-onMounted(() => (editor = createEditor(host.value!, { steps: props.steps, flow: props.flow })));
+onMounted(() => {
+	editor = createEditor(host.value!, {
+		steps: props.steps,
+		flow: props.flow,
+		readonly: props.readonly,
+		onChange: (flow) => emit('change', flow)
+	});
+});
+
+// Reactive props are pushed in; the steps are fixed for the life of the editor.
+watchEffect(() => editor?.setOptions({ flow: props.flow, readonly: props.readonly }));
+
 onBeforeUnmount(() => editor?.destroy());
 </script>
 
@@ -322,11 +355,31 @@ onBeforeUnmount(() => editor?.destroy());
 ```svelte
 <script lang="ts">
 	import { FlowEditor } from '@arcflow/editor/svelte';
+	import { standardRegistry } from '@arcflow/nodes';
+
+	let { flow, save }: { flow?: unknown; save: (next: unknown) => void } = $props();
 </script>
 
 <div style="height: 100dvh">
-	<FlowEditor {steps} {flow} theme="dark" onChange={save} />
+	<FlowEditor steps={standardRegistry} {flow} theme="auto" onChange={save} />
 </div>
+```
+
+**No framework**
+
+```html
+<div id="editor" style="height: 100dvh"></div>
+
+<script type="module">
+	import { createEditor } from '@arcflow/editor';
+	import { standardSteps } from '@arcflow/nodes';
+
+	const editor = createEditor('#editor', {
+		steps: [standardSteps],
+		theme: 'auto',
+		onChange: (flow) => localStorage.setItem('flow', JSON.stringify(flow))
+	});
+</script>
 ```
 
 ## Development

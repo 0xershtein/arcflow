@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import Code from '$lib/Code.svelte';
+	import Tabs from '$lib/Tabs.svelte';
+	import { mounting } from '$lib/frameworks';
 
 	const install = `npm install @arcflow/core @arcflow/nodes`;
 
@@ -31,15 +33,6 @@ console.log(result.status, result.steps);`;
 
 	const editor = `npm install @arcflow/editor`;
 
-	const editorCode = `import { createEditor } from '@arcflow/editor';
-import { createRegistry } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
-
-createEditor('#editor', {
-	steps: createRegistry([standardSteps]),
-	flow: json,
-	onChange: (flow) => save(flow)
-});`;
 
 	const server = `ARCFLOW_SECRET="a long random string" npx arcflow dev`;
 </script>
@@ -66,7 +59,7 @@ createEditor('#editor', {
 
 <h2>4. Put it on a canvas</h2>
 <Code code={editor} language="sh" />
-<Code code={editorCode} />
+<Tabs tabs={mounting} />
 <p>
 	The container needs a height; the editor fills it. Everything it produces is the same flow JSON you just built in code — see <a href="{base}/editor">Editor</a>.
 </p>
