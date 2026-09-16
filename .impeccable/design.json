@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-16T00:00:00Z",
+  "title": "Design System: arcflow docs",
+  "extensions": {
+    "colorMeta": {
+      "indigo": { "role": "primary", "displayName": "Indigo", "canonical": "#4f46e5", "darkCounterpart": "indigo-dark", "tonalRamp": ["#1e1b4b", "#2c2775", "#3730a3", "#4338ca", "#4f46e5", "#6366f1", "#818cf8", "#c7d2fe"] },
+      "indigo-dark": { "role": "primary", "displayName": "Indigo (dark theme)", "canonical": "#818cf8", "tonalRamp": ["#1e1b4b", "#2c2775", "#3730a3", "#4338ca", "#4f46e5", "#6366f1", "#818cf8", "#c7d2fe"] },
+      "indigo-ink": { "role": "primary", "displayName": "Indigo Ink", "canonical": "#ffffff", "note": "Foreground on the accent. Light theme: white on #4f46e5 = 6.29:1. Dark theme uses #0f0f11 because white on #818cf8 measures 2.98:1 while near-black measures 6.42:1." },
+      "indigo-ink-dark": { "role": "primary", "displayName": "Indigo Ink (dark theme)", "canonical": "#0f0f11", "note": "6.42:1 on #818cf8." },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#ffffff", "tonalRamp": ["#09090b", "#0f0f11", "#18181b", "#27272a", "#3f3f46", "#71717a", "#d4d4d8", "#ffffff"] },
+      "paper-raised": { "role": "neutral", "displayName": "Paper Raised", "canonical": "#fafafa", "tonalRamp": ["#09090b", "#141417", "#18181b", "#27272a", "#3f3f46", "#a1a1aa", "#e4e4e7", "#fafafa"] },
+      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "#e4e4e7", "darkCounterpart": "hairline-dark", "tonalRamp": ["#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7"] },
+      "hairline-strong": { "role": "neutral", "displayName": "Hairline Strong", "canonical": "#d4d4d8", "darkCounterpart": "hairline-strong-dark", "tonalRamp": ["#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#f4f4f5"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#18181b", "darkCounterpart": "ink-dark", "tonalRamp": ["#09090b", "#18181b", "#27272a", "#3f3f46", "#71717a", "#a1a1aa", "#d4d4d8", "#fafafa"] },
+      "ink-soft": { "role": "neutral", "displayName": "Ink Soft", "canonical": "#3f3f46", "darkCounterpart": "ink-soft-dark", "tonalRamp": ["#09090b", "#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8"] },
+      "ink-muted": { "role": "neutral", "displayName": "Ink Muted", "canonical": "#71717a", "darkCounterpart": "ink-muted-dark", "tonalRamp": ["#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#f4f4f5"] },
+      "surface-dark": { "role": "neutral", "displayName": "Surface (dark theme)", "canonical": "#18181b" },
+      "paper-dark": { "role": "neutral", "displayName": "Paper (dark theme)", "canonical": "#0f0f11" },
+      "paper-raised-dark": { "role": "neutral", "displayName": "Paper Raised (dark theme)", "canonical": "#141417" },
+      "mark-ground": { "role": "neutral", "displayName": "Mark Ground", "canonical": "#18181b", "note": "Only the rounded square behind the brand mark. Dark theme: #09090b." }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The landing headline only; text-wrap: balance, max 26ch." },
+      "headline": { "displayName": "Headline", "purpose": "The h1 on every documentation page." },
+      "title": { "displayName": "Title", "purpose": "Section headings (h2). Also the source of the sidebar's in-page navigation; scroll-margin-top 78px clears the sticky header." },
+      "subtitle": { "displayName": "Subtitle", "purpose": "Sub-sections (h3); 15px inside artifact panels." },
+      "lede": { "displayName": "Lede", "purpose": "The single paragraph under the display headline; max 62ch." },
+      "body": { "displayName": "Body", "purpose": "All prose; capped at 70ch via .measure." },
+      "label": { "displayName": "Label", "purpose": "Navigation, buttons, tabs, table cells, status aside." },
+      "caption": { "displayName": "Caption", "purpose": "Footer, sidebar sub-entries, notes under transcripts." },
+      "mono": { "displayName": "Mono", "purpose": "Code blocks only; real code, JSON, commands, transcripts. tab-size 2." },
+      "mono-panel": { "displayName": "Mono Panel", "purpose": "Code inside the narrower artifact panels." },
+      "data": { "displayName": "Data", "purpose": "Numbers that stack: status rows, tables, time. Tabular numerals." }
+    },
+    "shadows": [],
+    "surfaceEffects": [
+      { "name": "header-veil", "value": "background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px)", "purpose": "The only translucency in the system. Content passing under the sticky header is felt, not hidden." },
+      { "name": "code-fade", "value": "108px x 46px; linear-gradient(to right, transparent, var(--code-bg) 58%)", "purpose": "The only gradient in the system, and it is functional: dissolves a long code line before it reaches the copy button. Reads --code-bg so it follows the block's ground." },
+      { "name": "hairline-grid", "value": "display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden", "purpose": "Artifact-panel seams drawn by the grid gap rather than per-panel borders, so every seam is exactly 1px and shared." },
+      { "name": "selection", "value": "background: color-mix(in srgb, var(--accent) 24%, transparent)", "purpose": "Browser selection themed from the palette." },
+      { "name": "focus-ring", "value": "outline: 2px solid var(--accent); outline-offset: 2px", "purpose": "Global focus-visible treatment in both themes." },
+      { "name": "scrollbar", "value": "scrollbar-color: var(--line-strong) transparent", "purpose": "Scrollbars belong to the palette too." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "The only easing curve in the system." },
+      { "name": "duration-control", "value": "150ms", "purpose": "Small controls: the code-block copy button." },
+      { "name": "duration-button", "value": "180ms", "purpose": "Buttons; background-color and border-color only." },
+      { "name": "connector-draw", "value": "1s cubic-bezier(0.16, 1, 0.3, 1) both; stroke-dasharray: 1 with pathLength=\"1\"", "purpose": "The one authored animation: the bracket connector draws itself once. Removed entirely under prefers-reduced-motion: reduce, leaving the line drawn." },
+      { "name": "smooth-scroll", "value": "html { scroll-behavior: smooth } inside @media (prefers-reduced-motion: no-preference)", "purpose": "Sidebar jumps glide only when motion is welcome." }
+    ],
+    "breakpoints": [
+      { "name": "sidebar", "value": "960px", "note": "Sidebar collapses; navigation returns to the header." },
+      { "name": "stack", "value": "900px", "note": "Hero stacks (32px gap); artifact panels go single column and the connector becomes one 1px stem; sections drop to 40px padding." },
+      { "name": "compact", "value": "720px", "note": "Header padding tightens to 10px 16px; the header GitHub link is hidden." }
+    ],
+    "containers": [
+      { "name": "docs-shell", "value": "max-width: 1140px; grid-template-columns: 232px minmax(0, 1fr); gap: 24px" },
+      { "name": "landing-shell", "value": "max-width: 1180px; single column; main padding-top 36px; no sidebar" },
+      { "name": "prose-column", "value": "max-width: 860px; padding: 44px 24px 80px" },
+      { "name": "hero-grid", "value": "grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px" }
+    ],
+    "constraints": [
+      { "name": "unbranded-packages", "body": "The site may have taste; the editor it embeds must not inherit it. The editor themes itself through its own --fb-* tokens and theme=\"auto\". No site token, font or accent crosses the editor frame's border." },
+      { "name": "no-implied-release", "body": "0.1.0 is unreleased and nothing is published to npm. No surface may imply publication, and no users, customers, testimonials, benchmarks or download counts may be invented." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one filled action per view; on the landing it is Quick start.",
+      "html": "<a class=\"ds-btn ds-btn-primary\" href=\"#\">Quick start</a>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; height: 42px; padding: 0 20px; border: 1px solid var(--line-strong, #d4d4d8); border-radius: 9px; font-family: var(--font, ui-sans-serif, system-ui, sans-serif); font-size: 15px; font-weight: 550; color: var(--text, #18181b); text-decoration: none; transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-primary { background: var(--accent, #4f46e5); border-color: var(--accent, #4f46e5); color: var(--accent-ink, #ffffff); } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent, #4f46e5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "The secondary action beside the primary one; hairline-strong border, fills on hover.",
+      "html": "<a class=\"ds-btn ds-btn-ghost\" href=\"#\">GitHub</a>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; height: 42px; padding: 0 20px; border: 1px solid var(--line-strong, #d4d4d8); border-radius: 9px; background: transparent; font-family: var(--font, ui-sans-serif, system-ui, sans-serif); font-size: 15px; font-weight: 550; color: var(--text, #18181b); text-decoration: none; transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-ghost:hover { background: var(--surface-2, #fafafa); } .ds-btn-ghost:focus-visible { outline: 2px solid var(--accent, #4f46e5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Code Block",
+      "kind": "custom",
+      "refersTo": "code-block",
+      "description": "Every artifact on the site: a hairline figure with a pinned copy button and a functional right-edge fade keyed to --code-bg.",
+      "html": "<figure class=\"ds-code\"><button class=\"ds-code-copy\" aria-label=\"Copy code\">Copy</button><pre><code>npm install @arcflow/core @arcflow/editor</code></pre></figure>",
+      "css": ".ds-code { position: relative; margin: 0 0 24px; border: 1px solid var(--line, #e4e4e7); border-radius: 10px; background: var(--code-bg, var(--surface-2, #fafafa)); overflow: hidden; } .ds-code::after { content: ''; position: absolute; top: 0; right: 0; width: 108px; height: 46px; background: linear-gradient(to right, transparent, var(--code-bg, var(--surface-2, #fafafa)) 58%); pointer-events: none; } .ds-code-copy { position: absolute; top: 8px; right: 8px; z-index: 1; padding: 4px 10px; border: 1px solid var(--line-strong, #d4d4d8); border-radius: 6px; background: var(--bg, #ffffff); color: var(--text-soft, #3f3f46); font-family: var(--font, ui-sans-serif, system-ui, sans-serif); font-size: 12px; font-weight: 500; cursor: pointer; transition: color 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1); } .ds-code-copy:hover { color: var(--text, #18181b); background: var(--surface-2, #fafafa); } .ds-code-copy:focus-visible { outline: 2px solid var(--accent, #4f46e5); outline-offset: 2px; } .ds-code pre { margin: 0; padding: 16px 18px; overflow-x: auto; font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace); font-size: 13px; line-height: 1.6; tab-size: 2; color: var(--text-soft, #3f3f46); }"
+    },
+    {
+      "name": "Framework Tabs",
+      "kind": "chip",
+      "refersTo": "tab",
+      "description": "The framework switcher above a code block; the selected tab is the only one with a border and a ground.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\" aria-label=\"Framework\"><button role=\"tab\" class=\"ds-tab ds-tab-on\" aria-selected=\"true\">React</button><button role=\"tab\" class=\"ds-tab\" aria-selected=\"false\">Vue</button><button role=\"tab\" class=\"ds-tab\" aria-selected=\"false\">Svelte</button><button role=\"tab\" class=\"ds-tab\" aria-selected=\"false\">HTML</button></div>",
+      "css": ".ds-tabs { display: flex; gap: 2px; margin-bottom: 8px; } .ds-tab { padding: 6px 14px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-muted, #71717a); font-family: var(--font, ui-sans-serif, system-ui, sans-serif); font-size: 14px; cursor: pointer; } .ds-tab:hover { color: var(--text, #18181b); background: var(--surface-2, #fafafa); } .ds-tab-on { border-color: var(--line, #e4e4e7); background: var(--surface-2, #fafafa); color: var(--text, #18181b); font-weight: 600; } .ds-tab:focus-visible { outline: 2px solid var(--accent, #4f46e5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Documentation Nav",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Page links with the current page's own sections nested behind a hairline; the section being read takes the accent as its text colour.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Documentation\"><a class=\"ds-nav-page\" href=\"#\">Quick start</a><a class=\"ds-nav-page ds-nav-on\" href=\"#\">Editor</a><ul class=\"ds-nav-toc\"><li><a href=\"#\">Embedding</a></li><li><a class=\"ds-nav-here\" href=\"#\">Theming</a></li><li><a href=\"#\">Shortcuts</a></li></ul><a class=\"ds-nav-page\" href=\"#\">Server</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 2px; font-family: var(--font, ui-sans-serif, system-ui, sans-serif); } .ds-nav-page { padding: 6px 10px; border-radius: 7px; font-size: 14px; color: var(--text-muted, #71717a); text-decoration: none; } .ds-nav-page:hover { color: var(--text, #18181b); background: var(--surface-2, #fafafa); } .ds-nav-on { color: var(--text, #18181b); font-weight: 600; } .ds-nav-toc { margin: 2px 0 8px; padding: 0 0 0 11px; list-style: none; border-left: 1px solid var(--line, #e4e4e7); } .ds-nav-toc li { margin: 0; } .ds-nav-toc a { display: block; padding: 4px 8px; border-radius: 6px; font-size: 13.5px; line-height: 1.4; color: var(--text-muted, #71717a); text-decoration: none; } .ds-nav-toc a:hover { color: var(--text, #18181b); background: var(--surface-2, #fafafa); } .ds-nav-here { color: var(--accent, #4f46e5); }"
+    },
+    {
+      "name": "Status Aside",
+      "kind": "card",
+      "refersTo": "status-aside",
+      "description": "The honest half of the hero: the unreleased version, what works today, and a hairline-ruled fact list in tabular numerals.",
+      "html": "<aside class=\"ds-status\" aria-label=\"Project status\"><p class=\"ds-status-now\"><span class=\"ds-status-dot\" aria-hidden=\"true\"></span>0.1.0, unreleased</p><p>Nothing is on npm until the first tag, so that command is the intended path and not a working one today.</p><dl><div><dt>License</dt><dd>MIT</dd></div><div><dt>Tests</dt><dd>230, across 22 files</dd></div><div><dt>Dependencies</dt><dd>none in the engine</dd></div></dl></aside>",
+      "css": ".ds-status { padding: 22px 22px 6px; border: 1px solid var(--line, #e4e4e7); border-radius: 12px; background: var(--surface-2, #fafafa); font-family: var(--font, ui-sans-serif, system-ui, sans-serif); font-size: 14px; color: var(--text-soft, #3f3f46); } .ds-status p { margin: 0 0 12px; font-size: 14px; line-height: 1.5; } .ds-status-now { display: flex; align-items: center; gap: 9px; font-weight: 600; color: var(--text, #18181b); font-variant-numeric: tabular-nums; } .ds-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent, #4f46e5); flex: none; } .ds-status dl { margin: 0; border-top: 1px solid var(--line, #e4e4e7); } .ds-status dl div { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--line, #e4e4e7); } .ds-status dt { color: var(--text-muted, #71717a); } .ds-status dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Artifact Panel Grid",
+      "kind": "card",
+      "refersTo": "artifact-panel",
+      "description": "The four things one definition yields, seamed by a 1px grid gap over a hairline ground; collapses to one column below 900px.",
+      "html": "<div class=\"ds-panels\"><article><h3>The types</h3><p>Inside <code>run</code>, the config is the definition.</p></article><article><h3>The validation</h3><p>A stable code and a JSON path.</p></article><article><h3>The form</h3><p>The canvas builds the inspector from the same fields.</p></article><article><h3>The catalog</h3><p>A model reads this instead of guessing.</p></article></div>",
+      "css": ".ds-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line, #e4e4e7); border: 1px solid var(--line, #e4e4e7); border-radius: 12px; overflow: hidden; font-family: var(--font, ui-sans-serif, system-ui, sans-serif); } .ds-panels article { padding: 22px; background: var(--bg, #ffffff); } .ds-panels h3 { margin: 0 0 6px; font-size: 15px; color: var(--text, #18181b); } .ds-panels p { margin: 0; max-width: 46ch; font-size: 14px; line-height: 1.5; color: var(--text-soft, #3f3f46); } .ds-panels code { font-family: var(--mono, ui-monospace, Menlo, monospace); font-size: 0.92em; padding: 1px 5px; border-radius: 5px; background: var(--surface-2, #fafafa); border: 1px solid var(--line, #e4e4e7); color: var(--text, #18181b); } @media (max-width: 900px) { .ds-panels { grid-template-columns: minmax(0, 1fr); } }"
+    },
+    {
+      "name": "Editor Frame",
+      "kind": "custom",
+      "refersTo": "demo-frame",
+      "description": "The frame around the live editor. This is the only thing the site contributes; inside it the editor themes itself through its own --fb-* tokens.",
+      "html": "<div class=\"ds-demo\"><p class=\"ds-demo-placeholder\">Loading the editor…</p></div>",
+      "css": ".ds-demo { height: 560px; margin: 0 0 28px; border: 1px solid var(--line-strong, #d4d4d8); border-radius: 12px; overflow: hidden; background: var(--surface-2, #fafafa); } .ds-demo-placeholder { display: grid; place-items: center; height: 100%; margin: 0; font-family: var(--font, ui-sans-serif, system-ui, sans-serif); color: var(--text-muted, #71717a); font-size: 14px; }"
+    },
+    {
+      "name": "Bracket Connector",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The one authored figure: the definition reaching down into the two columns of artifacts it yields. Two feet, hairline-strong, drawn once.",
+      "html": "<svg class=\"ds-fan\" viewBox=\"0 0 1200 40\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><path d=\"M600 0v16H300v24M600 16h300v24\" pathLength=\"1\" vector-effect=\"non-scaling-stroke\" /></svg>",
+      "css": ".ds-fan { display: block; width: 100%; height: 40px; fill: none; stroke: var(--line-strong, #d4d4d8); stroke-width: 1; } .ds-fan path { stroke-dasharray: 1; animation: ds-reach 1s cubic-bezier(0.16, 1, 0.3, 1) both; } @keyframes ds-reach { from { stroke-dashoffset: 1; } } @media (prefers-reduced-motion: reduce) { .ds-fan path { animation: none; stroke-dasharray: none; } } @media (max-width: 900px) { .ds-fan { height: 24px; background: linear-gradient(var(--line-strong, #d4d4d8), var(--line-strong, #d4d4d8)) center / 1px 100% no-repeat; } .ds-fan path { display: none; } }"
+    },
+    {
+      "name": "Package Table",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Hairline-ruled rows, tabular numerals, no zebra striping and no outer border.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Package</th><th>What it is</th></tr></thead><tbody><tr><td><code>@arcflow/core</code></td><td>The engine. No dependencies.</td></tr><tr><td><code>@arcflow/editor</code></td><td>The canvas. One ES module, framework-free.</td></tr></tbody></table>",
+      "css": ".ds-table { width: 100%; margin: 0 0 24px; border-collapse: collapse; font-family: var(--font, ui-sans-serif, system-ui, sans-serif); font-size: 14px; font-variant-numeric: tabular-nums; } .ds-table th { text-align: left; font-weight: 600; } .ds-table th, .ds-table td { padding: 9px 12px; border-bottom: 1px solid var(--line, #e4e4e7); vertical-align: top; color: var(--text-soft, #3f3f46); } .ds-table code { font-family: var(--mono, ui-monospace, Menlo, monospace); font-size: 0.92em; padding: 1px 5px; border-radius: 5px; background: var(--surface-2, #fafafa); border: 1px solid var(--line, #e4e4e7); color: var(--text, #18181b); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Ruled Notebook",
+    "overview": "The site is a sheet of paper with rules drawn on it. Sections are separated by a single hairline and nothing else — no cards floating over a tinted page, no shadows, no gradients except the one functional fade that keeps a long code line from sliding under the copy button. Everything that carries weight on this site is an artifact: a real defineNode, a real validation issue, a real catalog entry, a real editor running in the page. The system's job is to frame those without competing with them.\n\nDensity is documentation density, not marketing density: 16px body at 1.6, hairlines at every seam, a 232px sidebar that lists the current page's own headings, and one accent colour that appears only on two things — what is live (the current section, the primary action, the status dot) and what is wrong. The palette is a neutral zinc ramp in both themes, so the mono blocks and the embedded editor read as the loudest things on screen, which is the point.\n\nThe site chooses light or dark from the reader's system and yields to a data-theme attribute either way, because the editor it embeds already answers to data-theme. The two themes are not inversions of each other: the accent lightens (#4f46e5 → #818cf8) and its text colour flips from white to near-black, because white on the dark accent measures 2.98:1 and near-black measures 6.42:1.",
+    "keyCharacteristics": [
+      "Ruled bands: every top-level section opens with one 1px hairline, and that is the only division.",
+      "Zero shadows. Depth is hairline, tone, and one blurred sticky header.",
+      "One indigo accent, reserved for live state, the primary action, and error-adjacent emphasis.",
+      "System sans for prose, mono for every artifact; no third face.",
+      "Tabular numerals wherever numbers are compared (status list, tables, time).",
+      "Both themes are first-class and overridable by data-theme; neither is a filter of the other."
+    ],
+    "rules": [
+      { "name": "The Two Jobs Rule", "body": "The accent marks what is live or what is wrong, and nothing else. If a colour is being used to make an element feel important rather than to report its state, it is the wrong colour.", "section": "colors" },
+      { "name": "The Paired Ink Rule", "body": "Never put a raw white on the accent. Foreground on accent is always indigo-ink, which changes value per theme; that pairing is the reason the token exists.", "section": "colors" },
+      { "name": "The Two Themes, Not One Rule", "body": "Dark mode is authored, not derived. A new token needs a value in both blocks and in the data-theme=\"dark\" override; no filter or inversion substitutes for it.", "section": "colors" },
+      { "name": "The Mono Means Machine Rule", "body": "Monospace is only ever real code, real JSON, a real command or a real transcript. Mono is never used for emphasis, for labels, or for atmosphere.", "section": "typography" },
+      { "name": "The Measure Rule", "body": "Prose is capped: 70ch for body (.measure), 62ch for the lede, 46ch inside an artifact panel, 26ch for the display headline. A paragraph that runs the full 860px column is a bug.", "section": "typography" },
+      { "name": "The Page Lists Itself Rule", "body": "The sidebar is derived from the rendered headings, never from a hand-kept list beside the page. Content and navigation cannot drift.", "section": "layout" },
+      { "name": "The Flat Sheet Rule", "body": "No box-shadow anywhere, in either theme. If an element needs to separate from its ground, it gets a hairline or a tonal step — never a lift.", "section": "elevation" },
+      { "name": "The One Gradient Rule", "body": "The single gradient in the system is functional: the 108x46px fade at the top-right of a code block, painted from --code-bg so it dissolves a long line before it reaches the copy button. A block placed on a different surface sets --code-bg and the fade follows. Gradients are not available for decoration.", "section": "elevation" },
+      { "name": "The Radius Follows Size Rule", "body": "A control under 32px tall takes 6-7px; a button takes 9px; a block of code takes 10px; anything that contains a whole artifact takes 12px. Nothing on the site is a pill and nothing is a square.", "section": "shapes" },
+      { "name": "The Host's Border Rule", "body": "The embedded editor is unbranded. The site's styling stops at the frame; the editor is themed only through its own --fb-* tokens. If a site token leaks inside that border, it is a bug in the site, not a theme.", "section": "components" },
+      { "name": "The Colour-Only Motion Rule", "body": "Transitions animate colour. Motion that moves a thing is reserved for the one connector that draws once, and that one yields to reduced motion.", "section": "components" }
+    ],
+    "dos": [
+      "Do separate sections with exactly one 1px solid var(--line) rule and 56px of vertical air (40px below 900px).",
+      "Do give every new colour a value in all three token blocks: :root, the prefers-color-scheme: dark block, and the [data-theme='dark'] override.",
+      "Do use indigo-ink for anything sitting on the accent; white on the dark accent measures 2.98:1.",
+      "Do put real artifacts in mono — actual definitions, actual issues, actual commands, actual transcripts — and keep the measured numbers traceable to this repository.",
+      "Do cap prose: 70ch body, 62ch lede, 46ch in a panel, 26ch display.",
+      "Do set --code-bg when a code block sits on a surface other than paper-raised, so the copy fade matches its ground.",
+      "Do derive in-page navigation from the rendered h2 elements rather than a parallel list.",
+      "Do theme the browser's own surfaces — selection, focus ring, scrollbar, caret — from the same palette, and use tabular numerals wherever numbers stack.",
+      "Do keep every claim about the packages inside what is true today: 0.1.0 is unreleased, nothing is on npm, and the working path is clone + pnpm install + pnpm dev."
+    ],
+    "donts": [
+      "Don't add a box-shadow. The system has none; use a hairline or a tonal step.",
+      "Don't add a decorative gradient. The only gradient is the functional code-block fade.",
+      "Don't let any site styling cross into the embedded editor. It themes itself through --fb-*; the packages stay unbranded.",
+      "Don't imply the packages are published, and don't invent users, customers, testimonials, benchmarks or download counts. None exist.",
+      "Don't introduce a third typeface, and don't use mono for emphasis, labels or atmosphere.",
+      "Don't use the accent for decoration — it means live or wrong, nothing else.",
+      "Don't animate position, scale or opacity on scroll or hover; transitions carry colour only.",
+      "Don't hide or soften the status aside, and don't restyle it as a warning banner.",
+      "Don't put the sidebar on the landing; below 960px navigation belongs in the header."
+    ]
+  }
+}
