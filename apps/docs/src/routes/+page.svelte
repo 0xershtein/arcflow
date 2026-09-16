@@ -8,8 +8,9 @@
 
 	/** The definition the four panels below are produced from — nothing here is illustrative. */
 	const definition = `import { defineNode, f } from '@arcflow/core';
+import { postMessage } from './slack.js';
 
-export const post = defineNode({
+export const slackPost = defineNode({
 	kind: 'slack.post',
 	title: 'Post to Slack',
 	description: 'Posts a message to a channel and outputs its timestamp.',
@@ -19,25 +20,28 @@ export const post = defineNode({
 		urgent: f.boolean({ default: false, label: 'Ping the channel' })
 	},
 	outputs: [{ id: 'out' }, { id: 'error', label: 'Error' }],
-	run: async (ctx) => ({ output: { ts: await post(ctx.config.channel, ctx.config.text) } })
+	run: async (ctx) => ({ output: { ts: await postMessage(ctx.config) } })
 });`;
 
 	const types = `ctx.config.channel; // string
 ctx.config.urgent;  // boolean
-ctx.config.chanel;  // ✗ Property 'chanel' does not exist`;
+ctx.config.chanel;
+// error TS2551: Property 'chanel' does not exist on type
+// '{ channel: string; text: string; urgent: boolean; }'. Did you mean 'channel'?`;
 
 	const validation = `{
 	"level": "error",
 	"code": "required",
 	"path": "nodes[1].config.channel",
 	"message": "Post to Slack: Channel is required.",
-	"nodeId": "tell"
+	"nodeId": "notify"
 }`;
 
 	const form = `{
 	"channel": { "kind": "string", "label": "Channel", "placeholder": "#treasury" },
-	"text":    { "kind": "string", "multiline": true, "label": "Message" },
-	"urgent":  { "kind": "boolean", "default": false, "label": "Ping the channel" }
+	"text": { "kind": "string", "multiline": true, "label": "Message",
+	          "placeholder": "Payroll of {{ input.amount }} USDC is ready" },
+	"urgent": { "kind": "boolean", "default": false, "label": "Ping the channel" }
 }`;
 
 	const catalog = `### \`slack.post\` — Post to Slack
@@ -106,7 +110,7 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 	</div>
 
 	<svg class="fan" viewBox="0 0 1200 40" preserveAspectRatio="none" aria-hidden="true">
-		<path d="M600 0v16H300v24M600 16h300v24" vector-effect="non-scaling-stroke" />
+		<path d="M600 0v16H300v24M600 16h300v24" pathLength="1" vector-effect="non-scaling-stroke" />
 	</svg>
 
 	<div class="outputs">
@@ -126,7 +130,7 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 		This is the editor itself, running in this page — not a screenshot. Drag a step in, connect it, press <strong>Test run</strong>: every step reports what
 		it would do and nothing is sent. Whatever you build here is the same JSON the engine runs.
 	</p>
-	<Demo flow={createDemoFlow()} ui={{ inspector: false }} />
+	<Demo flow={createDemoFlow()} />
 </section>
 
 <section class="agents">
@@ -139,7 +143,7 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 	<p class="measure">A session recorded from this repository, start to finish:</p>
 	<Code code={session} language="sh" />
 	<p class="measure caption">
-		Every failure carries the path that caused it, which is what lets a model repair its own output instead of starting over. <a href="{base}/ai"
+		Every validation issue carries the path that caused it, which is what lets a model repair its own output instead of starting over. <a href="{base}/ai"
 			>AI and agents</a
 		> has the generate, edit and repair loop.
 	</p>
@@ -148,13 +152,13 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 <section class="box">
 	<h2>What is in the box</h2>
 	<table>
-		<thead><tr><th>Package</th><th></th></tr></thead>
+		<thead><tr><th>Package</th><th>What it is</th></tr></thead>
 		<tbody>
 			<tr><td><code>@arcflow/core</code></td><td>The engine: steps, flows, validation, expressions, branching, loops, waits, sub-flows. No dependencies.</td></tr>
 			<tr><td><code>@arcflow/nodes</code></td><td>Thirteen standard steps: triggers, HTTP, sandboxed JavaScript, set fields, if, switch, merge, loop, wait, run flow.</td></tr>
 			<tr><td><code>@arcflow/editor</code></td><td>The canvas. One ES module with styles included, framework-free, 17 colour tokens, 129 replaceable strings.</td></tr>
 			<tr><td><code>@arcflow/server</code></td><td>Webhooks, schedules, restart-safe timers, run history, encrypted credentials, live events.</td></tr>
-			<tr><td><code>@arcflow/ai</code></td><td>Build and change flows with a model, validated and repaired until they hold.</td></tr>
+			<tr><td><code>@arcflow/ai</code></td><td>Build and change flows with a model: every attempt is validated, and the issues go back for repair for a set number of tries.</td></tr>
 			<tr><td><code>@arcflow/mcp</code></td><td>An MCP server, so agents list steps, write flows, check them and run them.</td></tr>
 		</tbody>
 	</table>
@@ -229,7 +233,7 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 	.btn.primary {
 		background: var(--accent);
 		border-color: var(--accent);
-		color: #fff;
+		color: var(--accent-ink);
 	}
 
 	.btn.primary:hover {
@@ -270,11 +274,6 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 		border-radius: 50%;
 		background: var(--accent);
 		flex: none;
-	}
-
-	.status :global(.code) {
-		margin-bottom: 16px;
-		--code-bg: var(--bg);
 	}
 
 	.status dl {
@@ -346,10 +345,8 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 	}
 
 	.fan path {
-		animation: reach 1s cubic-bezier(0.16, 1, 0.3, 1) both;
 		stroke-dasharray: 1;
-		stroke-dashoffset: 0;
-		pathLength: 1;
+		animation: reach 1s cubic-bezier(0.16, 1, 0.3, 1) both;
 	}
 
 	@keyframes reach {
@@ -359,8 +356,9 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.fan {
+		.fan path {
 			animation: none;
+			stroke-dasharray: none;
 		}
 	}
 

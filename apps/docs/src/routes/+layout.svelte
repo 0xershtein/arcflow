@@ -139,6 +139,7 @@
 		--text-soft: #3f3f46;
 		--text-muted: #71717a;
 		--accent: #4f46e5;
+		--accent-ink: #ffffff;
 		--brand-bg: #18181b;
 		--mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 		--font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -158,6 +159,7 @@
 			--text-soft: #d4d4d8;
 			--text-muted: #a1a1aa;
 			--accent: #818cf8;
+			--accent-ink: #0f0f11;
 			--brand-bg: #09090b;
 			color-scheme: dark;
 		}
@@ -173,6 +175,7 @@
 			--text-soft: #d4d4d8;
 			--text-muted: #a1a1aa;
 			--accent: #818cf8;
+			--accent-ink: #0f0f11;
 			--brand-bg: #09090b;
 			color-scheme: dark;
 	}
@@ -183,8 +186,13 @@
 		box-sizing: border-box;
 	}
 
+	@media (prefers-reduced-motion: no-preference) {
+		:global(html) {
+			scroll-behavior: smooth;
+		}
+	}
+
 	:global(html) {
-		scroll-behavior: smooth;
 		/* The parts nobody draws: they ship with browser defaults that belong to no palette. */
 		scrollbar-color: var(--line-strong) transparent;
 	}
@@ -196,7 +204,6 @@
 	:global(:focus-visible) {
 		outline: 2px solid var(--accent);
 		outline-offset: 2px;
-		border-radius: 3px;
 	}
 
 	:global(a) {

@@ -36,7 +36,6 @@
 		border-radius: 12px;
 		overflow: hidden;
 		background: var(--surface-2);
-		box-shadow: 0 18px 50px rgb(0 0 0 / 0.08);
 	}
 
 	.placeholder {
