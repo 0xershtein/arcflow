@@ -101,7 +101,7 @@
 		<a class="github" href="https://github.com/arcsig-labs/arcflow">GitHub</a>
 	</header>
 
-	<div class="body">
+	<div class="body" class:is-landing={current === '/'}>
 		<aside>
 			<nav class="pages" aria-label="Documentation">
 				{#each sections as section (section.href)}
@@ -145,8 +145,10 @@
 		color-scheme: light;
 	}
 
+	/* Dark by default where the reader's system asks for it, and overridable either way:
+	   the editor already answers to data-theme, so the site does too. */
 	@media (prefers-color-scheme: dark) {
-		:global(:root) {
+		:global(:root:not([data-theme='light'])) {
 			--bg: #0f0f11;
 			--surface: #18181b;
 			--surface-2: #141417;
@@ -161,8 +163,50 @@
 		}
 	}
 
+	:global(:root[data-theme='dark']) {
+			--bg: #0f0f11;
+			--surface: #18181b;
+			--surface-2: #141417;
+			--line: #27272a;
+			--line-strong: #3f3f46;
+			--text: #fafafa;
+			--text-soft: #d4d4d8;
+			--text-muted: #a1a1aa;
+			--accent: #818cf8;
+			--brand-bg: #09090b;
+			color-scheme: dark;
+	}
+
+	:global(*),
+	:global(*::before),
+	:global(*::after) {
+		box-sizing: border-box;
+	}
+
 	:global(html) {
 		scroll-behavior: smooth;
+		/* The parts nobody draws: they ship with browser defaults that belong to no palette. */
+		scrollbar-color: var(--line-strong) transparent;
+	}
+
+	:global(::selection) {
+		background: color-mix(in srgb, var(--accent) 24%, transparent);
+	}
+
+	:global(:focus-visible) {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+		border-radius: 3px;
+	}
+
+	:global(a) {
+		text-underline-offset: 3px;
+		text-decoration-thickness: from-font;
+	}
+
+	:global(table),
+	:global(time) {
+		font-variant-numeric: tabular-nums;
 	}
 
 	:global(body) {
@@ -282,6 +326,10 @@
 		overflow-x: auto;
 	}
 
+	.shell:has(.is-landing) .top-nav {
+		display: flex;
+	}
+
 	nav a {
 		padding: 6px 10px;
 		border-radius: 7px;
@@ -310,6 +358,21 @@
 
 	.github:hover {
 		color: var(--text);
+	}
+
+	/* The landing has no sidebar: it is a page to read once, not to navigate. */
+	.body.is-landing {
+		grid-template-columns: minmax(0, 1fr);
+		max-width: 1180px;
+	}
+
+	.body.is-landing aside {
+		display: none;
+	}
+
+	.body.is-landing main {
+		max-width: 100%;
+		padding-top: 36px;
 	}
 
 	/* Sidebar beside the text, both centred together so the text stays where it was. */
