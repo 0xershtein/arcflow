@@ -52,6 +52,8 @@
 	});
 
 	const def = $derived<AnyNodeDefinition | undefined>(node ? editor.registry.get(node.data.kind) : undefined);
+	/** A sub-flow step can be opened, when there is a server to load the called flow from. */
+	const opensSubflow = $derived(Boolean(node && def?.subflow && editor.backend && editor.onOpenSubflow));
 	const category = $derived(
 		def?.trigger ? labels.trigger : (editor.registry.categories as { id: string; label: string }[]).find((c) => c.id === (def?.category ?? 'other'))?.label
 	);
@@ -267,6 +269,12 @@
 						{/if}
 					{/if}
 				</details>
+			{/if}
+
+			{#if opensSubflow}
+				<button class="fb-btn fb-self-start" onclick={() => editor.onOpenSubflow?.(node.id)}>
+					<Icon name="layers" size={14} />{labels.openSubflow}
+				</button>
 			{/if}
 
 			{#if !readonly}

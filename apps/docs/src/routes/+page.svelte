@@ -93,7 +93,7 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 		</p>
 		<dl>
 			<div><dt>License</dt><dd>MIT</dd></div>
-			<div><dt>Tests</dt><dd>230, across 22 files</dd></div>
+			<div><dt>Tests</dt><dd>248, across 24 files</dd></div>
 			<div><dt>Dependencies</dt><dd>none in the engine</dd></div>
 		</dl>
 	</aside>
@@ -137,7 +137,7 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 	<h2>Built to be driven by a model</h2>
 	<p class="measure">
 		The catalog, the validator and the simulated run are the same three things an agent needs. Add arcflow to a coding agent and it has them over MCP —
-		three tools on its own, eight against a running server.
+		four tools on its own, nine against a running server.
 	</p>
 	<Code code={mcp} language="sh" />
 	<p class="measure">A session recorded from this repository, start to finish:</p>

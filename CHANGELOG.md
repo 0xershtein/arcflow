@@ -25,6 +25,7 @@ The first release: build a flow in code, JSON, a canvas or a prompt, then run it
 - Framework-free canvas: `createEditor(el, options)` with styles injected, plus a Svelte entry.
 - Inspector with settings, input and output per step and loop iteration, drag-to-map values, `{{` autocomplete from real run data and live previews.
 - Editing: undo/redo, copy/cut/paste as flow JSON, duplicate, multi-select, `+` on connections, drop-a-connection-to-add, sticky notes.
+- Sub-flow navigation: a step type that declares `subflow` gets a button opening the flow it calls, and a band above the canvas leads back out. Unsaved changes stop the move instead of being lost to it.
 - Server mode: flow list, Save, Activate, credential picker, execution history, live runs over SSE.
 - Prompt bar: build or change a flow with AI, then Keep or Discard; Fix problems and Explain.
 - Three step shapes through `ui.node`: the default `card`, an n8n-style `tile` of icon with the name underneath, and a one-row `compact`.
@@ -44,7 +45,7 @@ The first release: build a flow in code, JSON, a canvas or a prompt, then run it
 
 ### Documentation
 
-- Reference for every option the packages take: the editor's fourteen, its seventeen colour tokens and 129 labels, and the engine, run, layout, sandbox, server, model and MCP options in each package's README.
+- Reference for every option the packages take: the editor's fourteen, its seventeen colour tokens and 135 labels, and the engine, run, layout, sandbox, server, model and MCP options in each package's README.
 - Docs site with a sidebar that lists each page's sections, mounting examples for HTML, React, Vue and Svelte behind one tab strip, and a live editor that switches step shape as you read about it.
 
 ### `@arcflow/mcp`

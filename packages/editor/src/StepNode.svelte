@@ -20,6 +20,8 @@
 			: ((editor.registry.categories as { id: string; label: string }[]).find((c) => c.id === (def?.category ?? 'other'))?.label ?? '')
 	);
 	const run = $derived(editor.runStatus[id]);
+	/** Sub-flow steps can be opened, when the editor has a server to load the called flow from. */
+	const opens = $derived(Boolean(def?.subflow && editor.backend && editor.onOpenSubflow));
 	const hasError = $derived((editor.issuesByNode[id] ?? []).some((issue) => issue.level === 'error'));
 	const title = $derived(data.label || def?.title || data.kind);
 	const summary = $derived.by(() => {
@@ -73,6 +75,20 @@
 				{@render state()}
 			</div>
 			{#if shape === 'card'}{@render identity()}{/if}
+		{/if}
+
+		{#if opens}
+			<button
+				class="fb-node-open"
+				title={labels.openSubflow}
+				aria-label={labels.openSubflow}
+				onclick={(event) => {
+					event.stopPropagation();
+					editor.onOpenSubflow?.(id);
+				}}
+			>
+				<Icon name="layers" size={13} />
+			</button>
 		{/if}
 
 		{#if labeledPorts}

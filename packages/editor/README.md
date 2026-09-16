@@ -85,4 +85,8 @@ Exports `lightColors`, `darkColors`, `defaultLabels` and `defaultUi` so you can 
 
 Svelte apps can import the component instead: `import { FlowEditor } from '@arcflow/editor/svelte'`.
 
+Steps whose type declares `subflow` (the standard `flow.call` does) carry a button that opens the flow they call, with a
+band above the canvas leading back out. It needs a `backend` to load the other flow, and unsaved changes stop the move
+rather than being lost to it.
+
 See the [repository README](https://github.com/arcsig-labs/arcflow#readme) for the full option reference.

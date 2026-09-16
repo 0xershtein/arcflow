@@ -124,6 +124,11 @@ export interface NodeDefinition<K extends string = string, S extends Shape = Sha
 	 * has delivered or been skipped (`all`). A flow node's own `join` overrides this.
 	 */
 	join?: 'any' | 'all';
+	/**
+	 * Steps that run another flow. `field` names the config field holding the flow's id, which lets an
+	 * editor open the called flow; the engine still learns about the call from `{ call }` at run time.
+	 */
+	subflow?: { field: string };
 	outputs: readonly Port<O>[];
 	config: S;
 	/** Require one of these kinds somewhere upstream (e.g. an approval before a transfer). */

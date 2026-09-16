@@ -15,6 +15,7 @@ export interface StepManifest {
 	trigger?: boolean;
 	loop?: boolean;
 	join?: 'any' | 'all';
+	subflow?: { field: string };
 	outputs: Port[];
 	config: Shape;
 	requires?: { upstream: string[]; message: string };
@@ -49,6 +50,7 @@ export function toManifest(registry: Registry<AnyNodeDefinition>): RegistryManif
 			...(def.trigger ? { trigger: true } : {}),
 			...(def.loop ? { loop: true } : {}),
 			...(def.join ? { join: def.join } : {}),
+			...(def.subflow ? { subflow: clone(def.subflow) } : {}),
 			outputs: clone([...def.outputs]),
 			config: clone(def.config),
 			...(def.requires ? { requires: clone({ upstream: [...def.requires.upstream], message: def.requires.message }) } : {}),
@@ -99,6 +101,7 @@ export function registryFromManifest(input: unknown): Registry<AnyNodeDefinition
 			...(step.trigger === true ? { trigger: true } : {}),
 			...(step.loop === true ? { loop: true } : {}),
 			...(step.join === 'all' || step.join === 'any' ? { join: step.join } : {}),
+			...(isObject(step.subflow) && typeof step.subflow.field === 'string' ? { subflow: { field: step.subflow.field } } : {}),
 			outputs: outputs.length ? outputs : [{ id: 'out' }],
 			config: readShape(step.config),
 			...(isObject(step.requires) && Array.isArray(step.requires.upstream)

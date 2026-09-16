@@ -115,6 +115,8 @@
 	let viewingRunId = $state<string | null>(null);
 	/** The flow as it is on the server, to tell edited from saved. */
 	let savedJson = $state('');
+	/** Flows opened on the way into sub-flows, so there is a way back out. */
+	let trail = $state<{ id: string; name: string }[]>([]);
 	let stopWatching: (() => void) | null = null;
 
 	let aiBusy = $state(false);
@@ -456,10 +458,10 @@
 		closeLog();
 	}
 
-	async function openServerFlow(id: string) {
-		if (!backend) return;
+	async function openServerFlow(id: string): Promise<boolean> {
+		if (!backend) return false;
 		const result = await withServer(() => backend.getFlow(id));
-		if (!result) return;
+		if (!result) return false;
 		stopViewingRun();
 		await load(result.record.flow);
 		const { flow: _flow, ...summary } = result.record;
@@ -470,10 +472,51 @@
 		syncHistory();
 		serverRuns = [];
 		refreshRuns();
+		return true;
 	}
+
+	/** The id a sub-flow step calls, when its type says which field holds one. */
+	function subflowTarget(nodeId: string): string | null {
+		const node = steps.find((step) => step.id === nodeId);
+		const field = node && registry.get(node.data.kind)?.subflow?.field;
+		if (!node || !field) return null;
+		const value = (node.data.config as Record<string, unknown>)[field];
+		return typeof value === 'string' && value.trim() ? value.trim() : '';
+	}
+
+	/**
+	 * Opens the flow a sub-flow step calls and remembers where we came from. Editing stops
+	 * at the door: unsaved work would be lost by the load, so it asks for a save instead.
+	 */
+	async function openSubflow(nodeId: string) {
+		const id = subflowTarget(nodeId);
+		if (id === null) return;
+		if (!id) return flash(labels.subflowEmpty);
+		if (!backend) return flash(labels.subflowNeedsServer);
+		if (dirty) return flash(labels.subflowSaveFirst);
+		const from = serverFlow ? { id: serverFlow.id, name: meta.name || labels.untitled } : null;
+		if (!serverFlows.some((flow) => flow.id === id)) {
+			await withServer(() => backend.listFlows()).then((list) => (list ? (serverFlows = list) : null));
+		}
+		if (!serverFlows.some((flow) => flow.id === id)) return flash(format(labels.subflowMissing, { id }));
+		const opened = await openServerFlow(id);
+		if (opened && from) trail = [...trail, from];
+	}
+
+	/** Walks back out to a flow on the trail, dropping everything opened after it. */
+	async function leaveSubflow(index: number) {
+		const target = trail[index];
+		if (!target) return;
+		if (dirty) return flash(labels.subflowSaveFirst);
+		const opened = await openServerFlow(target.id);
+		if (opened) trail = trail.slice(0, index);
+	}
+
+	editor.onOpenSubflow = openSubflow;
 
 	async function newServerFlow() {
 		stopViewingRun();
+		trail = [];
 		serverFlow = null;
 		serverRuns = [];
 		savedJson = '';
@@ -1268,6 +1311,17 @@
 		{/if}
 
 		<div class="fb-stage">
+			{#if trail.length}
+				<nav class="fb-trail" aria-label={labels.flows}>
+					<button class="fb-back" onclick={() => leaveSubflow(trail.length - 1)}>
+						<Icon name="arrowLeft" size={14} />{format(labels.backTo, { name: trail[trail.length - 1].name })}
+					</button>
+					{#each trail.slice(0, -1).reverse() as step, index (step.id)}
+						<button class="fb-trail-up" onclick={() => leaveSubflow(trail.length - 2 - index)}>{step.name}</button>
+					{/each}
+				</nav>
+			{/if}
+
 			<div
 				class="fb-canvas"
 				bind:this={canvasEl}

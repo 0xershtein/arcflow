@@ -42,6 +42,12 @@ const page = (title: string) => `<!doctype html>
 export interface EditorUiOptions {
 	/** Browser tab title. */
 	title?: string;
+	/**
+	 * Re-read the editor bundle on every request instead of keeping the first read.
+	 * `arcflow dev` turns this on, so rebuilding the editor beside the server only
+	 * needs a page reload.
+	 */
+	reload?: boolean;
 }
 
 /** Returns a handler that answers `/` and `/arcflow.js`, and `undefined` for anything else. */
@@ -49,19 +55,20 @@ export function createEditorUi(options: EditorUiOptions = {}) {
 	const title = options.title ?? 'arcflow';
 	let bundle: Promise<{ code: string; map?: string }> | null = null;
 
-	const load = () =>
-		(bundle ??= (async () => {
-			const require = createRequire(import.meta.url);
-			let file: string;
-			try {
-				file = require.resolve('@arcflow/editor/app');
-			} catch {
-				throw new Error('The editor is not installed here. Add it with: npm install @arcflow/editor');
-			}
-			const code = await readFile(file, 'utf8');
-			const map = await readFile(join(dirname(file), 'app.js.map'), 'utf8').catch(() => undefined);
-			return { code, map };
-		})());
+	const read = async () => {
+		const require = createRequire(import.meta.url);
+		let file: string;
+		try {
+			file = require.resolve('@arcflow/editor/app');
+		} catch {
+			throw new Error('The editor is not installed here. Add it with: npm install @arcflow/editor');
+		}
+		const code = await readFile(file, 'utf8');
+		const map = await readFile(join(dirname(file), 'app.js.map'), 'utf8').catch(() => undefined);
+		return { code, map };
+	};
+
+	const load = () => (options.reload ? read() : (bundle ??= read()));
 
 	return async function serveEditor(request: Request): Promise<Response | undefined> {
 		const { pathname } = new URL(request.url);

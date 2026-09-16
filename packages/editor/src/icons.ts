@@ -21,6 +21,7 @@ export const icons = {
 	repeat: '<path d="m17 4 3 3-3 3"/><path d="M4 11V9a2 2 0 0 1 2-2h14M7 20l-3-3 3-3"/><path d="M20 13v2a2 2 0 0 1-2 2H4"/>',
 	layers: '<path d="m12 4 8 4-8 4-8-4z"/><path d="m4 12 8 4 8-4M4 16l8 4 8-4"/>',
 	chevron: '<path d="m9 6 6 6-6 6"/>',
+	arrowLeft: '<path d="M19 12H5"/><path d="m11 6-6 6 6 6"/>',
 	undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
 	redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
 	note: '<path d="M5 4h14v10l-6 6H5z"/><path d="M13 20v-6h6"/>',

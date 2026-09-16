@@ -188,7 +188,7 @@ All colors map to `--fb-*` CSS variables on `.fb-root`, so CSS overrides work as
 
 ### Text
 
-Every string the editor can show is in `labels` — 129 of them, from button captions to the
+Every string the editor can show is in `labels` — 135 of them, from button captions to the
 empty-canvas hint to validation wording. Pass the ones you want to change; the rest keep their
 defaults. `{name}` and `{count}` placeholders are filled in at render time.
 

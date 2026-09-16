@@ -40,6 +40,8 @@ export class EditorState {
 	credentialsOff = $state(false);
 	/** Asks the workspace to store a new credential of this type; resolves with its id. */
 	onCreateCredential: ((type: string, name: string, value: unknown) => Promise<string | null>) | null = null;
+	/** Opens the flow a sub-flow step calls. Set by the workspace; needs a backend to load it. */
+	onOpenSubflow: ((nodeId: string) => void) | null = null;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	constructor(registry: Registry<any>, labels: Labels, ui: ResolvedUi, readonly: boolean) {

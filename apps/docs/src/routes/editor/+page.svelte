@@ -60,6 +60,10 @@ createEditor('#editor', {
 	<li>Drag a connection into empty space (or click an output) to add a connected step.</li>
 	<li>Copy, cut and paste selections as flow JSON — pasting also accepts <code>{'{ nodes, edges }'}</code> from a model, with ids and <code>{'{{ steps.… }}'}</code> references rewritten.</li>
 	<li>Undo and redo, duplicate, multi-select with a box or Shift-click, sticky notes.</li>
+	<li>
+		A step that runs another flow opens it: the canvas swaps to the called flow and a band above it leads back out. Needs a
+		<code>backend</code>, and unsaved changes stop the move rather than being lost to it.
+	</li>
 </ul>
 <table>
 	<thead><tr><th>Shortcut</th><th></th></tr></thead>
@@ -122,7 +126,7 @@ createEditor('#editor', {
 
 <h2>Text</h2>
 <p>
-	Every string the editor can show is in <code>labels</code> — 129 of them, from button captions to the empty-canvas hint to validation wording. Pass the ones
+	Every string the editor can show is in <code>labels</code> — 135 of them, from button captions to the empty-canvas hint to validation wording. Pass the ones
 	you want to change and the rest keep their defaults; <code>{'{name}'}</code> and <code>{'{count}'}</code> placeholders are filled in at render time.
 </p>
 <Code code={labelsCode} />

@@ -70,7 +70,7 @@ const server = await createServer({
 	...(ai ? { ai } : {})
 });
 // In dev mode the editor is served from the same origin, so the browser needs no CORS and no build step.
-const editorUi = command === 'dev' ? createEditorUi() : undefined;
+const editorUi = command === 'dev' ? createEditorUi({ reload: true }) : undefined;
 const served = editorUi
 	? { ...server, fetch: async (request: Request) => (await editorUi(request)) ?? server.fetch(request) }
 	: server;

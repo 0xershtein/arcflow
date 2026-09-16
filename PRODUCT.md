@@ -38,10 +38,10 @@ Measured in this repository, 2026-09-16:
 - **Catalog:** 39 entries, 7 042 characters from `registry.describe()`; 20 KB of JSON Schema from `registry.toJSONSchema()`; 13 standard steps in `@arcflow/nodes`.
 - **Engine:** branching, joins (`any` / `all`), loops with concurrency, sub-flows, retries, timeouts, `wait` / `resume`, credentials, dead-branch elimination, expressions without `eval`.
 - **Validation:** `registry.parse()` never throws; each issue carries a level, a stable code and a JSON path (`error required @ nodes[1].config.url`).
-- **Editor:** 14 options, 9 theme options, 13 UI toggles, 17 colour tokens, 129 replaceable strings, 3 step shapes (`card`, `tile`, `compact`).
-- **Agents:** MCP over stdio exposes 3 tools standalone (`list_steps`, `validate_flow`, `test_flow`) and 8 against a running server.
+- **Editor:** 14 options, 9 theme options, 13 UI toggles, 17 colour tokens, 135 replaceable strings, 3 step shapes (`card`, `tile`, `compact`).
+- **Agents:** MCP over stdio exposes 4 tools standalone (`list_steps`, `validate_flow`, `patch_flow`, `test_flow`) and 9 against a running server. `applyPatch` acts on the same JSON path an issue reports.
 - **Code step** runs in a fresh QuickJS sandbox per step: no network, no filesystem, 1 s CPU and 32 MB heap by default.
-- **Test suite:** 230 tests, 22 files, and `pnpm check` across every package and app.
+- **Test suite:** 248 tests, 24 files, and `pnpm check` across every package and app.
 
 Undecided or not yet true, and not to be implied anywhere:
 

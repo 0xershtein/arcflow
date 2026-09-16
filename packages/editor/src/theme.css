@@ -548,6 +548,91 @@
 	color: var(--fb-text-soft);
 }
 
+/*
+ * The way back out of a sub-flow. It sits on the canvas rather than in the toolbar,
+ * which has no room for it: at a normal width the toolbar clipped the name to "M…".
+ */
+/* A band, not an overlay: floating over the canvas covered the first step. */
+.fb-trail {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	padding: 8px 14px;
+	border-bottom: 1px solid var(--fb-line);
+	background: var(--fb-bg);
+}
+
+.fb-trail-up {
+	padding: 4px 8px;
+	border: 0;
+	border-radius: var(--fb-radius-sm);
+	background: transparent;
+	color: var(--fb-text-muted);
+	font: inherit;
+	font-size: 12.5px;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.fb-trail-up:hover {
+	background: var(--fb-surface-2);
+	color: var(--fb-text);
+}
+
+.fb-back {
+	max-width: 280px;
+	height: 30px;
+	padding: 0 12px 0 10px;
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	border: 1px solid var(--fb-line-strong);
+	border-radius: 999px;
+	background: var(--fb-surface);
+	color: var(--fb-text-soft);
+	font: inherit;
+	font-size: 13px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+	transition: color 0.15s, border-color 0.15s;
+}
+
+.fb-back:hover {
+	color: var(--fb-text);
+	border-color: var(--fb-text-muted);
+}
+
+/* Opens the flow this step calls. Quiet until the step is hovered or the button is focused. */
+.fb-node-open {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	width: 22px;
+	height: 22px;
+	display: grid;
+	place-items: center;
+	border: 1px solid var(--fb-line);
+	border-radius: var(--fb-radius-sm);
+	background: var(--fb-surface-2);
+	color: var(--fb-text-muted);
+	opacity: 0;
+	cursor: pointer;
+	transition: opacity 0.15s, color 0.15s;
+}
+
+.fb-node:hover .fb-node-open,
+.fb-node-open:focus-visible {
+	opacity: 1;
+}
+
+.fb-node-open:hover {
+	color: var(--fb-accent);
+}
+
 /* ---------- Step shapes (`ui.node`) ---------- */
 
 /* Tile: a square of icon with the name underneath, the way n8n draws a node. */

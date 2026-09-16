@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine, registryFromManifest, toManifest } from '../src/index.js';
+import { createEngine, createRegistry, defineNode, f, registryFromManifest, toManifest } from '../src/index.js';
 import { paymentFlow, registry } from './fixtures.js';
 
 /** What a browser receives: the manifest as JSON text. */
@@ -14,6 +14,26 @@ describe('step manifest', () => {
 		expect(approve.config.threshold).toMatchObject({ kind: 'number', default: 1 });
 		expect(manifest.categories).toEqual([...registry.categories]);
 		expect(JSON.parse(JSON.stringify(manifest))).toEqual(manifest); // plain JSON, no functions
+	});
+
+	it('carries the sub-flow marker, so a browser knows which step opens another flow', () => {
+		const caller = defineNode({
+			kind: 'test.call',
+			title: 'Run flow',
+			description: 'Runs another flow.',
+			subflow: { field: 'flow' },
+			outputs: [{ id: 'out' }],
+			config: { flow: f.string() },
+			run: (ctx) => ({ call: { flow: ctx.config.flow } })
+		});
+		const withCaller = createRegistry([...registry.nodes, caller]);
+		const manifest = toManifest(withCaller);
+		expect(manifest.steps.find((step) => step.kind === 'test.call')?.subflow).toEqual({ field: 'flow' });
+
+		const remote = registryFromManifest(JSON.parse(JSON.stringify(manifest)));
+		const rebuilt = (kind: string) => remote.nodes.find((node) => node.kind === kind);
+		expect(rebuilt('test.call')?.subflow).toEqual({ field: 'flow' });
+		expect(rebuilt('test.approve')?.subflow).toBeUndefined();
 	});
 
 	it('rebuilds a registry that parses and validates the same way', () => {

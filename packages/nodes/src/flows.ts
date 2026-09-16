@@ -7,6 +7,7 @@ export const callFlow = defineNode({
 		"Runs another flow and continues with its result. Waits while that flow waits. The engine loads flows by id from its flows source.",
 	category: 'flow',
 	icon: 'layers',
+	subflow: { field: 'flow' },
 	outputs: [{ id: 'out' }, { id: 'error', label: 'Error' }],
 	config: {
 		flow: f.string({ label: 'Flow id', placeholder: 'send-invoice', mono: true }),
