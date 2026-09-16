@@ -84,6 +84,8 @@
 	const edgeTypes = { flow: InsertEdge };
 	const BACKGROUND = { dots: BackgroundVariant.Dots, lines: BackgroundVariant.Lines, cross: BackgroundVariant.Cross } as const;
 	const HISTORY_LIMIT = 100;
+	/** Shared so the fit on mount, the fit on init and the fit after a load all agree. */
+	const FIT = { padding: 0.1, minZoom: 0.15, maxZoom: 1 } as const;
 	const GAP = 60;
 
 	const editor = getEditor();
@@ -227,7 +229,7 @@
 		const result = apply(input);
 		if (result.loaded) {
 			await tick();
-			fitView({ padding: 0.1, maxZoom: 1, duration: 300 });
+			fitView({ ...FIT, duration: 300 });
 		}
 		return result;
 	}
@@ -1284,7 +1286,7 @@
 					{isValidConnection}
 					colorMode={themeMode}
 					fitView
-					fitViewOptions={{ padding: 0.1, minZoom: 0.15 }}
+					fitViewOptions={FIT}
 					minZoom={0.15}
 					maxZoom={1.6}
 					connectionRadius={34}
@@ -1292,6 +1294,7 @@
 					nodesConnectable={!readonly}
 					deleteKey={readonly ? null : ['Backspace', 'Delete']}
 					defaultEdgeOptions={{ type: 'flow' }}
+					oninit={() => void fitView(FIT)}
 					onconnectend={onConnectEnd}
 					onselectionchange={({ nodes: picked }) => {
 						selectedCount = picked.length;
