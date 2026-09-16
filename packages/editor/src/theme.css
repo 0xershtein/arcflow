@@ -409,40 +409,49 @@
 
 /* ---------- Nodes ---------- */
 
+/*
+ * A step is a wrapper that carries its state and a box that is what you see. The two
+ * are separate so a shape can put the step's name outside the box — see `ui.node`.
+ */
 .fb-node {
 	position: relative;
 	width: var(--fb-node-width);
+	transition: opacity 0.2s;
+}
+
+.fb-node-box {
+	position: relative;
 	padding: 12px 14px 14px;
 	background: var(--fb-surface);
 	border: 1px solid var(--fb-line-strong);
 	border-radius: var(--fb-radius);
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-	transition: border-color 0.15s, box-shadow 0.2s, opacity 0.2s;
+	transition: border-color 0.15s, box-shadow 0.2s;
 }
 
-.fb-node:hover {
+.fb-node:hover .fb-node-box {
 	border-color: var(--fb-text-muted);
 }
 
-.fb-node.has-error {
+.fb-node.has-error .fb-node-box {
 	border-color: color-mix(in srgb, var(--fb-danger) 55%, transparent);
 }
 
-.fb-node.selected {
+.fb-node.selected .fb-node-box {
 	border-color: var(--fb-accent);
 	box-shadow: 0 0 0 4px var(--fb-accent-soft);
 }
 
-.fb-node[data-run='running'] {
+.fb-node[data-run='running'] .fb-node-box {
 	border-color: var(--fb-accent);
 	box-shadow: 0 0 0 4px var(--fb-accent-soft), 0 0 32px var(--fb-accent-soft);
 }
 
-.fb-node[data-run='success'] {
+.fb-node[data-run='success'] .fb-node-box {
 	border-color: color-mix(in srgb, var(--fb-accent) 60%, transparent);
 }
 
-.fb-node[data-run='error'] {
+.fb-node[data-run='error'] .fb-node-box {
 	border-color: var(--fb-danger);
 	box-shadow: 0 0 0 4px var(--fb-danger-soft);
 }
@@ -537,6 +546,109 @@
 	padding: 0 16px;
 	font-size: 12px;
 	color: var(--fb-text-soft);
+}
+
+/* ---------- Step shapes (`ui.node`) ---------- */
+
+/* Tile: a square of icon with the name underneath, the way n8n draws a node. */
+.fb-node[data-shape='tile'] {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 9px;
+}
+
+.fb-node[data-shape='tile'] .fb-node-box {
+	width: 78px;
+	height: 78px;
+	padding: 0;
+	display: grid;
+	place-items: center;
+	border-radius: calc(var(--fb-radius) * 1.6);
+}
+
+.fb-node[data-shape='tile'] .fb-node-icon {
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	border: 0;
+	border-radius: inherit;
+}
+
+/* Nothing to report: no badge, so the corner stays clean. */
+.fb-node[data-shape='tile'] .fb-node-state:not(:has(*)) {
+	display: none;
+}
+
+/* Run state rides on the corner of the square rather than taking a row of its own. */
+.fb-node[data-shape='tile'] .fb-node-state {
+	position: absolute;
+	top: -7px;
+	right: -7px;
+	margin: 0;
+	padding: 3px;
+	border-radius: 50%;
+	background: var(--fb-surface);
+	box-shadow: 0 0 0 1px var(--fb-line-strong);
+}
+
+.fb-node[data-shape='tile'] .fb-node-caption {
+	width: var(--fb-node-width);
+	text-align: center;
+}
+
+.fb-node[data-shape='tile'] .fb-node-title {
+	margin-top: 0;
+}
+
+/* Port labels move outside the square, since there is no room inside it. */
+.fb-node[data-shape='tile'] .fb-node-ports {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 100%;
+	margin: 0;
+	padding: 0;
+	border-top: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	/*
+	 * An absolute box at `left: 100%` has no room left to shrink into, so without an
+	 * explicit width it collapses and clips the labels.
+	 */
+	width: max-content;
+	max-width: var(--fb-node-width);
+}
+
+.fb-node[data-shape='tile'] .fb-port-row {
+	height: 24px;
+	/* Clear of the handle's hit area, whose dot is opaque and would sit on the label. */
+	padding: 0 0 0 23px;
+	justify-content: flex-start;
+	white-space: nowrap;
+}
+
+/* Centred on the square's edge: `left: 0` alone would offset it by half its own width. */
+.fb-root .fb-node[data-shape='tile'] .fb-port-row .svelte-flow__handle.fb-handle {
+	right: auto;
+	left: 0;
+	transform: translate(-50%, -50%);
+}
+
+/* Compact: one row, icon and name, nothing else. */
+.fb-node[data-shape='compact'] .fb-node-box {
+	padding: 9px 12px;
+}
+
+.fb-node[data-shape='compact'] .fb-node-title {
+	flex: 1;
+	min-width: 0;
+	margin-top: 0;
+	font-size: 14px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 /*

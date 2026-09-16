@@ -93,7 +93,7 @@ Everything that goes in or comes out is JSON-serializable, so it can be stored, 
 | `steps` | `Registry` or `(Pack \| NodeDefinition)[]` | Step types the user can place. |
 | `flow` | `Flow` or JSON string | Flow to show. Changing it reloads the canvas. Positions are optional. |
 | `theme` | `'light' \| 'dark' \| 'auto'` or `ThemeOptions` | `mode`, `colors`, `light`, `dark`, `fontFamily`, `monoFontFamily`, `fontSize`, `radius`, `nodeWidth`. |
-| `ui` | `UiOptions` | `toolbar`, `palette`, `inspector`, `testRun`, `json`, `importExport`, `controls`, `minimap`, `background`. |
+| `ui` | `UiOptions` | `toolbar`, `palette`, `inspector`, `testRun`, `json`, `importExport`, `controls`, `minimap`, `background`, `node`. |
 | `labels` | `Partial<Labels>` | Replace or translate any interface text. |
 | `readonly` | `boolean` | View only. |
 | `storageKey` | `string` | Autosave to `localStorage`. |
@@ -155,12 +155,23 @@ createEditor(el, {
 		fontFamily: 'Inter, system-ui, sans-serif',
 		radius: 4
 	},
-	ui: { palette: false, minimap: true, background: 'lines' },
+	ui: { palette: false, minimap: true, background: 'lines', node: 'tile' },
 	labels: { testRun: 'Çalıştır', searchSteps: 'Adım ara' }
 });
 ```
 
 All colors map to `--fb-*` CSS variables on `.fb-root`, so CSS overrides work as well. The defaults are a neutral gray palette with system fonts.
+
+### Step shapes
+
+`ui.node` picks how a step is drawn. The three shapes read the same flow and keep the
+same handles, so switching is safe on a flow that already has positions.
+
+| | |
+| --- | --- |
+| `card` | Default. A full card: category, name, what the step will do, and any port labels inside it. |
+| `tile` | A square of icon with the name and summary underneath, and port labels beside the square. Closest to n8n. |
+| `compact` | One row — icon and name only. Fits a lot of steps on screen. |
 
 ## Running flows (headless)
 

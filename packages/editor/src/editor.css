@@ -1,6 +1,6 @@
 /* Config forms, the JSON panel and extra run states. */
 
-.fb-node[data-run='waiting'] {
+.fb-node[data-run='waiting'] .fb-node-box {
 	border-color: var(--fb-accent);
 	border-style: dashed;
 }

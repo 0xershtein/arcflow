@@ -7,6 +7,7 @@
 	let mode = $state<ThemeMode>('auto');
 	let accent = $state('#4f46e5');
 	let radius = $state(10);
+	let node = $state<'card' | 'tile' | 'compact'>('card');
 	let palette = $state(true);
 	let inspector = $state(true);
 	let readonly = $state(false);
@@ -61,6 +62,14 @@
 		</label>
 		<label>Accent <input type="color" bind:value={accent} /></label>
 		<label>Radius <input type="range" min="0" max="16" bind:value={radius} /></label>
+		<label>
+			Steps
+			<select bind:value={node}>
+				<option value="card">card</option>
+				<option value="tile">tile</option>
+				<option value="compact">compact</option>
+			</select>
+		</label>
 		<label><input type="checkbox" bind:checked={palette} /> Palette</label>
 		<label><input type="checkbox" bind:checked={inspector} /> Inspector</label>
 		<label><input type="checkbox" bind:checked={readonly} /> Read only</label>
@@ -75,7 +84,7 @@
 			{readonly}
 			storageKey="arcflow:playground"
 			theme={{ mode, radius, colors: { accent, accentSoft: `${accent}22` } }}
-			ui={{ palette, inspector, minimap: false }}
+			ui={{ palette, inspector, minimap: false, node }}
 			labels={turkish ? tr : undefined}
 			onChange={(next) => (lastFlow = `${next.nodes.length} steps at ${new Date().toLocaleTimeString()}`)}
 			onValidate={(issues) => (problems = issues.filter((issue) => issue.level === 'error').length)}

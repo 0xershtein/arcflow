@@ -122,6 +122,12 @@ export interface UiOptions {
 	controls?: boolean;
 	minimap?: boolean;
 	background?: 'dots' | 'lines' | 'cross' | 'none';
+	/**
+	 * How a step is drawn. `card` is a full card with its category and summary,
+	 * `tile` is a square of icon with the name underneath, `compact` is a single row.
+	 * Default `card`.
+	 */
+	node?: 'card' | 'tile' | 'compact';
 }
 
 export type ResolvedUi = Required<UiOptions>;
@@ -138,7 +144,8 @@ export const defaultUi: ResolvedUi = {
 	ai: true,
 	controls: true,
 	minimap: false,
-	background: 'dots'
+	background: 'dots',
+	node: 'card'
 };
 
 /** Every piece of interface text. `{name}` placeholders are filled in at render time. */

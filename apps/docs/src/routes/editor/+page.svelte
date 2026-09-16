@@ -29,6 +29,10 @@ const editor = createEditor('#editor', {
 	}
 });`;
 
+	const shapes = ['card', 'tile', 'compact'] as const;
+	let shape = $state<(typeof shapes)[number]>('card');
+	const shapeCode = $derived(`createEditor('#editor', { steps, ui: { node: '${shape}' } });`);
+
 	const server = `import { createEditor, createHttpBackend } from '@arcflow/editor';
 
 createEditor('#editor', {
@@ -76,6 +80,19 @@ createEditor('#editor', {
 	field to insert the expression for it, or type <code>{'{{'}</code> in a field to pick from what actually ran, with a live preview underneath.
 </p>
 
+<h2>Step shapes</h2>
+<p>
+	<code>ui.node</code> picks how a step is drawn. All three read the same flow and keep the same handles, so switching is safe on a flow that already has
+	positions. Try them on the flow below.
+</p>
+<div class="shapes" role="group" aria-label="Step shape">
+	{#each shapes as option}
+		<button class:on={shape === option} onclick={() => (shape = option)}>{option}</button>
+	{/each}
+</div>
+<Demo height="420px" ui={{ node: shape, palette: false, inspector: false }} />
+<Code code={shapeCode} />
+
 <h2>Theming</h2>
 <p>Every colour is a CSS variable, set from the <code>theme</code> option or overridden in your own stylesheet. Every string is in <code>labels</code>.</p>
 <Code code={theme} />
@@ -87,3 +104,36 @@ createEditor('#editor', {
 </p>
 <Code code={server} />
 <p>See <a href="{base}/server">Server</a> for the API behind it, and <a href="{base}/ai">AI and agents</a> for the prompt bar.</p>
+
+<style>
+	.shapes {
+		display: flex;
+		gap: 4px;
+		margin: 0 0 14px;
+		padding: 4px;
+		width: fit-content;
+		border: 1px solid var(--line);
+		border-radius: 10px;
+	}
+
+	.shapes button {
+		height: 32px;
+		padding: 0 14px;
+		border: 0;
+		border-radius: 7px;
+		background: transparent;
+		color: var(--text-muted);
+		font: inherit;
+		font-size: 14px;
+		cursor: pointer;
+	}
+
+	.shapes button:hover {
+		color: var(--text);
+	}
+
+	.shapes button.on {
+		background: var(--surface-2);
+		color: var(--text);
+	}
+</style>
