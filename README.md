@@ -93,11 +93,13 @@ Everything that goes in or comes out is JSON-serializable, so it can be stored, 
 | `steps` | `Registry` or `(Pack \| NodeDefinition)[]` | Step types the user can place. |
 | `flow` | `Flow` or JSON string | Flow to show. Changing it reloads the canvas. Positions are optional. |
 | `theme` | `'light' \| 'dark' \| 'auto'` or `ThemeOptions` | `mode`, `colors`, `light`, `dark`, `fontFamily`, `monoFontFamily`, `fontSize`, `radius`, `nodeWidth`. |
-| `ui` | `UiOptions` | `toolbar`, `palette`, `inspector`, `testRun`, `json`, `importExport`, `controls`, `minimap`, `background`, `node`. |
+| `ui` | `UiOptions` | `toolbar`, `palette`, `inspector`, `testRun`, `json`, `importExport`, `flows`, `executions`, `ai`, `controls`, `minimap`, `background`, `node`. |
 | `labels` | `Partial<Labels>` | Replace or translate any interface text. |
 | `readonly` | `boolean` | View only. |
 | `storageKey` | `string` | Autosave to `localStorage`. |
 | `services` | `Services` | Passed to steps during Test run (always `simulate` mode). |
+| `runStepDelay` | `number` | Pause between steps during Test run, so a run is watchable. Default `450`ms. |
+| `backend` | `Backend` | Connects to a flow server: open and save flows, activate them, pick credentials, run for real, browse past runs. See [Run flows on a server](#run-flows-on-a-server). |
 
 **Out**
 
@@ -161,6 +163,40 @@ createEditor(el, {
 ```
 
 All colors map to `--fb-*` CSS variables on `.fb-root`, so CSS overrides work as well. The defaults are a neutral gray palette with system fonts.
+
+`colors` applies to both modes; `light` and `dark` override the same names for one mode only. The seventeen names:
+
+| Token | Paints |
+| --- | --- |
+| `background` | The canvas, and the panels behind everything else. |
+| `surface` | Cards, inputs, menus, the run log. |
+| `surfaceHover` | Those same surfaces when hovered or active. |
+| `surfaceActive` | Steps in the minimap. |
+| `border` | Hairlines between rows and panels. |
+| `borderStrong` | Outlines of cards, inputs and buttons. |
+| `text` | Ordinary text. |
+| `textSoft` | Secondary text: summaries, values, port labels. |
+| `textMuted` | Labels, hints, timestamps, the category above a step's name. |
+| `accent` | Selection, focus rings, step icons, running edges, run state. |
+| `accentSoft` | The translucent ring and glow behind `accent`. |
+| `primary` | The main button — Test run, Apply. |
+| `primaryText` | Text on that button. |
+| `danger` | Errors: text, borders, icons. |
+| `dangerSoft` | The background behind an error. |
+| `edge` | Connection lines. |
+| `grid` | The canvas dot or line pattern. |
+
+### Text
+
+Every string the editor can show is in `labels` — 129 of them, from button captions to the
+empty-canvas hint to validation wording. Pass the ones you want to change; the rest keep their
+defaults. `{name}` and `{count}` placeholders are filled in at render time.
+
+```ts
+import { defaultLabels } from '@arcflow/editor';
+
+Object.keys(defaultLabels); // every string, with its default
+```
 
 ### Step shapes
 

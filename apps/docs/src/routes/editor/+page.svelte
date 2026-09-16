@@ -33,6 +33,15 @@ const editor = createEditor('#editor', {
 	let shape = $state<(typeof shapes)[number]>('card');
 	const shapeCode = $derived(`createEditor('#editor', { steps, ui: { node: '${shape}' } });`);
 
+	const labelsCode = `import { defaultLabels } from '@arcflow/editor';
+
+Object.keys(defaultLabels); // every string, with its default
+
+createEditor('#editor', {
+	steps,
+	labels: { testRun: 'Çalıştır', searchSteps: 'Adım ara', emptyTitle: 'Bir tetikleyiciyle başla' }
+});`;
+
 	const server = `import { createEditor, createHttpBackend } from '@arcflow/editor';
 
 createEditor('#editor', {
@@ -94,8 +103,41 @@ createEditor('#editor', {
 <Code code={shapeCode} />
 
 <h2>Theming</h2>
-<p>Every colour is a CSS variable, set from the <code>theme</code> option or overridden in your own stylesheet. Every string is in <code>labels</code>.</p>
+<p>Every colour is a CSS variable, set from the <code>theme</code> option or overridden in your own stylesheet.</p>
 <Code code={theme} />
+<p>
+	<code>colors</code> applies to both modes; <code>light</code> and <code>dark</code> override the same names for one mode only. Seventeen names cover the
+	whole editor:
+</p>
+<table>
+	<thead><tr><th>Token</th><th>Paints</th></tr></thead>
+	<tbody>
+		<tr><td><code>background</code></td><td>The canvas, and the panels behind everything else.</td></tr>
+		<tr><td><code>surface</code></td><td>Cards, inputs, menus, the run log.</td></tr>
+		<tr><td><code>surfaceHover</code></td><td>Those same surfaces when hovered or active.</td></tr>
+		<tr><td><code>surfaceActive</code></td><td>Steps in the minimap.</td></tr>
+		<tr><td><code>border</code></td><td>Hairlines between rows and panels.</td></tr>
+		<tr><td><code>borderStrong</code></td><td>Outlines of cards, inputs and buttons.</td></tr>
+		<tr><td><code>text</code></td><td>Ordinary text.</td></tr>
+		<tr><td><code>textSoft</code></td><td>Secondary text: summaries, values, port labels.</td></tr>
+		<tr><td><code>textMuted</code></td><td>Labels, hints, timestamps, the category above a step's name.</td></tr>
+		<tr><td><code>accent</code></td><td>Selection, focus rings, step icons, running edges, run state.</td></tr>
+		<tr><td><code>accentSoft</code></td><td>The translucent ring and glow behind <code>accent</code>.</td></tr>
+		<tr><td><code>primary</code></td><td>The main button — Test run, Apply.</td></tr>
+		<tr><td><code>primaryText</code></td><td>Text on that button.</td></tr>
+		<tr><td><code>danger</code></td><td>Errors: text, borders, icons.</td></tr>
+		<tr><td><code>dangerSoft</code></td><td>The background behind an error.</td></tr>
+		<tr><td><code>edge</code></td><td>Connection lines.</td></tr>
+		<tr><td><code>grid</code></td><td>The canvas dot or line pattern.</td></tr>
+	</tbody>
+</table>
+
+<h2>Text</h2>
+<p>
+	Every string the editor can show is in <code>labels</code> — 129 of them, from button captions to the empty-canvas hint to validation wording. Pass the ones
+	you want to change and the rest keep their defaults; <code>{'{name}'}</code> and <code>{'{count}'}</code> placeholders are filled in at render time.
+</p>
+<Code code={labelsCode} />
 
 <h2>Server mode</h2>
 <p>
