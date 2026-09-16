@@ -15,6 +15,69 @@
 
 	// The site can be served under a base path (a GitHub project page), so compare without it.
 	const current = $derived((page.url.pathname.slice(base.length) || '/').replace(/(.)\/$/, '$1'));
+
+	const slug = (text: string) =>
+		text
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-|-$/g, '');
+
+	let toc = $state<{ id: string; text: string }[]>([]);
+	let here = $state<string | null>(null);
+
+	/**
+	 * The sections come from the page's own headings rather than a list kept beside it,
+	 * so adding a section to a page adds it to the sidebar. Ids are set here too, which
+	 * is what makes every section linkable.
+	 */
+	$effect(() => {
+		current;
+		let headings: HTMLHeadingElement[] = [];
+		let timer: ReturnType<typeof setTimeout> | null = null;
+
+		/**
+		 * The section being read is the last heading that has passed the top of the
+		 * window. Asking which heading is on screen instead leaves the mark behind
+		 * whenever a long section fills the whole viewport.
+		 */
+		const mark = () => {
+			// The last section can never reach the top of the window, so the foot of the
+			// page counts as being in it.
+			if (headings.length && innerHeight + scrollY >= document.documentElement.scrollHeight - 2) {
+				here = headings[headings.length - 1].id;
+				return;
+			}
+			let seen = headings[0]?.id ?? null;
+			for (const heading of headings) {
+				if (heading.getBoundingClientRect().top > 90) break;
+				seen = heading.id;
+			}
+			here = seen;
+		};
+
+		const onScroll = () => {
+			if (timer) return;
+			timer = setTimeout(() => {
+				timer = null;
+				mark();
+			}, 80);
+		};
+
+		// The page's markup is already in the DOM by the time an effect runs, so this
+		// reads it directly rather than waiting for a frame that a background tab never paints.
+		headings = [...document.querySelectorAll<HTMLHeadingElement>('main h2')];
+		for (const heading of headings) heading.id ||= slug(heading.textContent ?? '');
+		toc = headings.map((heading) => ({ id: heading.id, text: heading.textContent?.trim() ?? '' }));
+		mark();
+
+		addEventListener('scroll', onScroll, { passive: true });
+		addEventListener('resize', onScroll, { passive: true });
+		return () => {
+			if (timer) clearTimeout(timer);
+			removeEventListener('scroll', onScroll);
+			removeEventListener('resize', onScroll);
+		};
+	});
 </script>
 
 <div class="shell">
@@ -30,7 +93,7 @@
 			</svg>
 			arcflow
 		</a>
-		<nav>
+		<nav class="top-nav">
 			{#each sections as section (section.href)}
 				<a href="{base}{section.href}" class:is-on={current === section.href}>{section.label}</a>
 			{/each}
@@ -38,9 +101,26 @@
 		<a class="github" href="https://github.com/arcsig-labs/arcflow">GitHub</a>
 	</header>
 
-	<main>
-		{@render children()}
-	</main>
+	<div class="body">
+		<aside>
+			<nav class="pages" aria-label="Documentation">
+				{#each sections as section (section.href)}
+					<a class="page" href="{base}{section.href}" class:is-on={current === section.href}>{section.label}</a>
+					{#if current === section.href && toc.length > 1}
+						<ul>
+							{#each toc as entry (entry.id)}
+								<li><a href="#{entry.id}" class:is-here={here === entry.id}>{entry.text}</a></li>
+							{/each}
+						</ul>
+					{/if}
+				{/each}
+			</nav>
+		</aside>
+
+		<main>
+			{@render children()}
+		</main>
+	</div>
 
 	<footer>
 		<span>MIT licensed. Built with <a href="https://svelte.dev">Svelte</a> and <a href="https://svelteflow.dev">Svelte Flow</a>.</span>
@@ -105,6 +185,8 @@
 		margin: 48px 0 12px;
 		font-size: 22px;
 		letter-spacing: -0.02em;
+		/* Clear of the sticky header when a sidebar link jumps here. */
+		scroll-margin-top: 78px;
 	}
 
 	:global(h3) {
@@ -193,8 +275,8 @@
 		letter-spacing: -0.02em;
 	}
 
-	nav {
-		display: flex;
+	.top-nav {
+		display: none;
 		gap: 4px;
 		flex: 1;
 		overflow-x: auto;
@@ -220,6 +302,7 @@
 	}
 
 	.github {
+		margin-left: auto;
 		font-size: 14px;
 		color: var(--text-muted);
 		text-decoration: none;
@@ -229,12 +312,84 @@
 		color: var(--text);
 	}
 
-	main {
+	/* Sidebar beside the text, both centred together so the text stays where it was. */
+	.body {
 		flex: 1;
 		width: 100%;
-		max-width: 860px;
+		max-width: 1140px;
 		margin: 0 auto;
-		padding: 48px 24px 80px;
+		display: grid;
+		grid-template-columns: 232px minmax(0, 1fr);
+		gap: 24px;
+	}
+
+	aside {
+		padding: 44px 0 80px 20px;
+	}
+
+	.pages {
+		position: sticky;
+		top: 72px;
+		max-height: calc(100vh - 96px);
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding-right: 8px;
+	}
+
+	.pages .page {
+		padding: 6px 10px;
+		border-radius: 7px;
+		font-size: 14px;
+		color: var(--text-muted);
+		text-decoration: none;
+	}
+
+	.pages .page:hover {
+		color: var(--text);
+		background: var(--surface-2);
+	}
+
+	.pages .page.is-on {
+		color: var(--text);
+		font-weight: 600;
+	}
+
+	.pages ul {
+		margin: 2px 0 8px;
+		padding: 0 0 0 11px;
+		list-style: none;
+		border-left: 1px solid var(--line);
+	}
+
+	.pages li {
+		margin: 0;
+	}
+
+	.pages li a {
+		display: block;
+		padding: 4px 8px;
+		border-radius: 6px;
+		font-size: 13.5px;
+		line-height: 1.4;
+		color: var(--text-muted);
+		text-decoration: none;
+	}
+
+	.pages li a:hover {
+		color: var(--text);
+		background: var(--surface-2);
+	}
+
+	.pages li a.is-here {
+		color: var(--accent);
+	}
+
+	main {
+		min-width: 0;
+		max-width: 860px;
+		padding: 44px 24px 80px;
 	}
 
 	footer {
@@ -246,6 +401,25 @@
 		border-top: 1px solid var(--line);
 		font-size: 13px;
 		color: var(--text-muted);
+	}
+
+	/* Too narrow for a column of its own: navigation goes back into the header. */
+	@media (max-width: 960px) {
+		.body {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		aside {
+			display: none;
+		}
+
+		.top-nav {
+			display: flex;
+		}
+
+		main {
+			margin: 0 auto;
+		}
 	}
 
 	@media (max-width: 720px) {
