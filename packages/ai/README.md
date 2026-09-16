@@ -83,3 +83,16 @@ npm install @anthropic-ai/sdk
 | `maxRepairs` | Extra tries after the first (default 2) |
 | `onAttempt` | Called after every reply, to stream progress |
 | `signal` | Cancels the run |
+| `model` | The adapter to ask. Required |
+| `maxTokens` | Cap on the reply, when the adapter honours one |
+
+`anthropicModel(options)`:
+
+| | |
+| --- | --- |
+| `apiKey` | Defaults to `ANTHROPIC_API_KEY` from the environment |
+| `model` | Default `claude-opus-5` |
+| `maxTokens` | Default 16000 |
+| `effort` | How hard the model thinks: `low` … `max`. The model's own default when unset |
+| `baseURL` | For a gateway or a proxy in front of the API |
+| `client` | An Anthropic client you already have — anything with `messages.create` |

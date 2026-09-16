@@ -28,4 +28,35 @@ const run = await createEngine(registry).start(flow.build());
 console.log(run.steps.greet.output); // { text: 'Hello, arcflow' }
 ```
 
+## Options
+
+`createEngine(registry, options)`:
+
+| | |
+| --- | --- |
+| `services` | Your own services, handed to every step as `ctx.services`. |
+| `flows` | Where sub-flows come from. Required by steps that return `{ call }`. |
+| `mode` | `live` (default) or `simulate`, which lets steps skip anything that leaves the process. |
+| `maxOutputBytes` | Fail a step whose output is bigger than this, measured as JSON. Off by default. |
+| `maxDepth` | How deep sub-flows may call sub-flows. Default 10. |
+| `now` | Clock, for tests and for `$now` in expressions. |
+| `createRunId` | Run id generator, when you want your own ids. |
+
+`engine.start(flow, options)`:
+
+| | |
+| --- | --- |
+| `trigger` | Trigger to start from. Defaults to every enabled trigger. |
+| `payload` | Trigger payload, readable as `input` and `{{ trigger }}`. |
+| `vars` | Run variables, readable as `{{ vars.name }}`. |
+| `mode`, `signal`, `stepDelayMs`, `onEvent` | Per-run overrides of the mode, cancellation, a pause between steps, and the event stream. |
+
+`layoutFlow(flow, registry, options)` positions nodes left to right:
+
+| | |
+| --- | --- |
+| `columnGap` / `rowGap` | Distance between columns and rows. |
+| `force` | Re-position every node, not only the ones without a position. |
+| `portIndex` | Order of an output port on its node, so `true` lands above `false`. |
+
 See the [repository README](https://github.com/arcsig-labs/arcflow#readme) for the full guide.

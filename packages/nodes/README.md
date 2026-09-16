@@ -34,3 +34,16 @@ const run = await createEngine(registry, { services: { credentials } }).start(fl
 | `flow.call` | out, error | Runs another flow from the engine's `flows` source |
 
 `runSandboxed(code, { globals, timeoutMs, memoryLimitBytes, onLog })` and `evaluateCondition(left, operator, right)` are exported for use in your own steps.
+
+## The Code sandbox
+
+`code.javascript` runs in a fresh [QuickJS](https://bellard.org/quickjs/) instance per step, with
+no network, no filesystem and no host globals. `runSandbox` takes the same limits if you use it
+directly:
+
+| | |
+| --- | --- |
+| `timeoutMs` | CPU time limit. Default 1000 ms. |
+| `memoryLimitBytes` | Heap limit. Default 32 MB. |
+| `globals` | Values exposed to the code as variables. Must be JSON-serializable. |
+| `onLog` | Called with each `console.log` line, which is what the editor shows under Logs. |

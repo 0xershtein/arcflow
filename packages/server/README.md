@@ -35,6 +35,26 @@ await serveNode(server, { port: 8787 });
 // or mount server.fetch in any Fetch-API runtime and call server.start() once
 ```
 
+### Options
+
+| | |
+| --- | --- |
+| `registry` | Step types flows may use. Required. |
+| `storage` | Defaults to memory. `SqliteStorage` from `@arcflow/server/node` keeps data across restarts. |
+| `secret` | Encrypts stored credentials, at least 16 characters. Without it the credential endpoints are off. |
+| `services` | Your own services for custom steps. `credentials` and `http` come from the server. |
+| `apiKey` | Requires `Authorization: Bearer <apiKey>` on `/api/*`. Webhooks stay open, by design. |
+| `cors` | Origins allowed to reach `/api/*` from a browser. One origin or a list. |
+| `webhookTimeoutMs` | How long a webhook that waits for a result holds the connection before answering 202. Default 30 000. |
+| `schedulerIntervalMs` | How often cron triggers and timers are checked. Default 1000. |
+| `ai` | Flow generation behind `/api/ai/*`, e.g. `createFlowAi({ registry })`. Off when absent. |
+| `engine` | `maxOutputBytes` and `maxDepth` for every run. |
+| `now` | Clock, for tests. |
+| `onError` | Called with anything thrown outside a request — a scheduler tick, a background run. |
+
+`serveNode(server, { port, hostname })` binds a Node server; `hostname` defaults to every
+interface, so pass `'127.0.0.1'` to keep it local.
+
 ## HTTP API
 
 | | |

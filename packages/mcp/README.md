@@ -42,3 +42,6 @@ await server.serve(process.stdin, process.stdout);
 ```
 
 `handle(message)` answers a single JSON-RPC message if you have your own transport, and `FlowStore` is a five-method interface — implement it to keep flows in your own database instead of an arcflow server.
+
+`createMcpServer` also takes `name` and `version`, which are what an MCP client shows during
+initialize; both default to this package's own name and version.

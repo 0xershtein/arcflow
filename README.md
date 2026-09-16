@@ -269,7 +269,55 @@ editor.setFlow(result.flow);
 
 The editor's **JSON** panel does the same by hand: paste a generated flow, apply, and copy the catalog or schema for your prompts. [AGENTS.md](./AGENTS.md) documents the repository and the issue codes for coding agents.
 
-## Svelte
+## In a framework
+
+The default entry is a plain ES module with Svelte compiled into it, so React, Vue, Angular and
+plain HTML all use the same `createEditor(element, options)`. Svelte is an optional peer: only the
+`/svelte` entry needs it installed.
+
+Create the editor once and push later changes through `setOptions` or `setFlow` — recreating it on
+every render throws away the canvas, the selection and the undo history.
+
+**React**
+
+```tsx
+import { useEffect, useRef } from 'react';
+import { createEditor, type EditorInstance } from '@arcflow/editor';
+
+export function Flow({ steps, flow, onChange }) {
+	const host = useRef<HTMLDivElement>(null);
+	const editor = useRef<EditorInstance | null>(null);
+
+	useEffect(() => {
+		editor.current = createEditor(host.current!, { steps, flow, onChange });
+		return () => editor.current?.destroy();
+	}, []);
+
+	return <div ref={host} style={{ height: '100dvh' }} />;
+}
+```
+
+**Vue**
+
+```vue
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
+import { createEditor, type EditorInstance } from '@arcflow/editor';
+
+const props = defineProps<{ steps: unknown; flow?: unknown }>();
+const host = useTemplateRef<HTMLDivElement>('host');
+let editor: EditorInstance | undefined;
+
+onMounted(() => (editor = createEditor(host.value!, { steps: props.steps, flow: props.flow })));
+onBeforeUnmount(() => editor?.destroy());
+</script>
+
+<template>
+	<div ref="host" style="height: 100dvh" />
+</template>
+```
+
+**Svelte**
 
 ```svelte
 <script lang="ts">
