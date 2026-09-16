@@ -30,6 +30,7 @@ packages/core/src          dependency-free engine
   layout.ts                auto-layout for flows without positions
   expressions.ts           {{ path ?? fallback | filter: args }} with FILTERS (no eval)
   engine.ts                createEngine → start / resume; scopes, joins, loops, credentials, RunState, RunEvent
+  patch.ts                 applyPatch: set / remove by the path validation reports, addNode / removeNode / connect / disconnect
   json-schema.ts, describe.ts
 packages/editor/src        the editor (Svelte 5 inside, framework-free outside)
   index.ts                 public entry: createEditor + option types (bundled by vite, core external)
@@ -117,5 +118,6 @@ docs/roadmap.md            milestones M1–M6
 | `check_failed` | cross-field rule; read the message |
 | `disconnected`, `unreachable`, `unknown_reference`, `unknown_key` | warnings; the flow still runs |
 
-4. Run with `createEngine(registry, { services }).start(flow)`; use `mode: 'simulate'` for side-effect-free runs. Resume a `waiting` run with `engine.resume(flow, state, { nodeId: key, data })` or `{ nodeId: key, port }`.
-5. In a browser, `createEditor(el, { steps, flow })` shows it; `editor.getFlow()` returns the edited JSON.
+4. Fix one field rather than the document: `applyPatch(flow, [{ op: 'set', path: issue.path, value }])` takes the path the issue reported (`nodes[fetch].config.url` works too). `addNode` / `removeNode` / `connect` / `disconnect` handle wiring. All or nothing — a failed operation returns the flow untouched with the index that failed.
+5. Run with `createEngine(registry, { services }).start(flow)`; use `mode: 'simulate'` for side-effect-free runs. Resume a `waiting` run with `engine.resume(flow, state, { nodeId: key, data })` or `{ nodeId: key, port }`.
+6. In a browser, `createEditor(el, { steps, flow })` shows it; `editor.getFlow()` returns the edited JSON.
