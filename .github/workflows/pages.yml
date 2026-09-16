@@ -13,6 +13,11 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # `enablement` below turns Pages on through the API, which needs this.
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -26,7 +31,11 @@ jobs:
       # under /<repo> on a project page, or in any subfolder. Set BASE_PATH to pin it.
       - name: Build the site
         run: pnpm --filter docs build
+      # Turns Pages on for the repository on the first run, so a fresh fork — or a
+      # repository moved to another org — does not need the setting flipped by hand.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/docs/build

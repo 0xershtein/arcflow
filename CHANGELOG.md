@@ -26,7 +26,9 @@ The first release: build a flow in code, JSON, a canvas or a prompt, then run it
 - Editing: undo/redo, copy/cut/paste as flow JSON, duplicate, multi-select, `+` on connections, drop-a-connection-to-add, sticky notes.
 - Server mode: flow list, Save, Activate, credential picker, execution history, live runs over SSE.
 - Prompt bar: build or change a flow with AI, then Keep or Discard; Fix problems and Explain.
-- Theming through `--fb-*` variables, every string replaceable through `labels`.
+- Three step shapes through `ui.node`: the default `card`, an n8n-style `tile` of icon with the name underneath, and a one-row `compact`.
+- Theming through `--fb-*` variables — seventeen colour tokens, documented one by one — and every string replaceable through `labels`.
+- The run log is docked under the canvas rather than floating over it, so a run never hides the steps it is running, and it follows the newest event unless the reader has scrolled up.
 
 ### `@arcflow/server`
 
@@ -38,6 +40,11 @@ The first release: build a flow in code, JSON, a canvas or a prompt, then run it
 
 - `generateFlow` and `editFlow` with a repair loop: the model gets the step catalog, its JSON is validated, and the issues go back with their paths.
 - `explainFlow` for a plain-language description, `diffFlows` for accept/reject, and a `ModelAdapter` interface with `anthropicModel()` for Claude.
+
+### Documentation
+
+- Reference for every option the packages take: the editor's fourteen, its seventeen colour tokens and 129 labels, and the engine, run, layout, sandbox, server, model and MCP options in each package's README.
+- Docs site with a sidebar that lists each page's sections, mounting examples for HTML, React, Vue and Svelte behind one tab strip, and a live editor that switches step shape as you read about it.
 
 ### `@arcflow/mcp`
 
