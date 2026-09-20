@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Issue } from '@arcflow/core';
+import { afterEach, vi } from 'vitest';
 import { defineNode, f } from '@arcflow/core';
-import { defaultUi, resolveLabels, resolveToolbar, resolveUi } from '../src/options.js';
+import { defaultUi, isCompactToolbar, resolveLabels, resolveToolbar, resolveUi } from '../src/options.js';
 import { formatDuration, runHeader, statusText, statusTitle, stepSummary, summarize, withLocalTimes } from '../src/summary.js';
 
 const labels = resolveLabels();
@@ -82,6 +83,20 @@ describe('toolbar parts', () => {
 		expect(Object.keys(toolbar || {})).toEqual(parts);
 	});
 
+	it('shrinks to a strip once only the badge and the icons are left', () => {
+		// A host header plus a full row costs twice the height; this is the rule that avoids it.
+		const onlyIcons = { name: false, json: false, importExport: false, flows: false, executions: false, run: false, testRun: false };
+		expect(isCompactToolbar(resolveToolbar(onlyIcons))).toBe(true);
+		expect(isCompactToolbar(resolveToolbar({ ...onlyIcons, status: false, undo: false, note: false }))).toBe(true);
+
+		// Anything that carries a labelled button keeps the full row.
+		expect(isCompactToolbar(resolveToolbar({ ...onlyIcons, json: true }))).toBe(false);
+		expect(isCompactToolbar(resolveToolbar({ ...onlyIcons, testRun: true }))).toBe(false);
+		expect(isCompactToolbar(resolveToolbar({ name: false }))).toBe(false);
+		expect(isCompactToolbar(resolveToolbar(true))).toBe(false);
+		expect(isCompactToolbar(resolveToolbar(false))).toBe(false);
+	});
+
 	it('is part of the resolved ui, and leaves the other options alone', () => {
 		const ui = resolveUi({ toolbar: { name: false }, palette: false });
 		expect(ui.toolbar).toMatchObject({ name: false, undo: true });
@@ -109,6 +124,24 @@ describe('step summaries', () => {
 		expect(stepSummary(schedule, { cron: '@daily' }, { 'other.kind': () => 'nope' })).toBe('@daily');
 	});
 
+	it('hands the step over, for wording that depends on which one it is', () => {
+		const node = { id: 'nightly', kind: 'test.schedule', label: 'Nightly digest', config: { cron: '@daily' } };
+		const seen: unknown[] = [];
+		const text = stepSummary(
+			schedule,
+			node.config,
+			{
+				'test.schedule': (config, def, given) => {
+					seen.push([config, def.title, given]);
+					return `${given.label ?? def.title} — ${config.cron}`;
+				}
+			},
+			node
+		);
+		expect(text).toBe('Nightly digest — @daily');
+		expect(seen).toEqual([[node.config, 'Schedule', node]]);
+	});
+
 	it('falls back rather than breaking the canvas', () => {
 		const boom = () => {
 			throw new Error('half-written config');
@@ -117,6 +150,33 @@ describe('step summaries', () => {
 		expect(stepSummary({ ...schedule, summary: boom }, {}, { 'test.schedule': boom })).toBe('Runs on a schedule.');
 		// An override that returns nothing usable is no override at all.
 		expect(stepSummary(schedule, { cron: '@daily' }, { 'test.schedule': () => '' })).toBe('@daily');
+	});
+});
+
+describe('a summary that throws', () => {
+	const broken = defineNode({
+		kind: 'test.broken',
+		title: 'Broken',
+		description: 'Its own summary is fine.',
+		config: {},
+		summary: () => 'the definition speaks',
+		run: () => ({})
+	});
+	const boom = () => {
+		throw new Error('half-written config');
+	};
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it('is reported once per kind while developing, and never twice', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		expect(stepSummary(broken, {}, { 'test.broken': boom })).toBe('the definition speaks');
+		expect(stepSummary(broken, {}, { 'test.broken': boom })).toBe('the definition speaks');
+		expect(stepSummary(broken, {}, { 'test.broken': boom })).toBe('the definition speaks');
+		expect(warn).toHaveBeenCalledTimes(1);
+		expect(String(warn.mock.calls[0][0])).toContain('test.broken');
 	});
 });
 

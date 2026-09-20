@@ -2,7 +2,8 @@
  * Plain helpers behind what the toolbar, the problems panel and the run log say.
  * They are framework-free on purpose: the components read them, and the tests read them too.
  */
-import type { AnyNodeDefinition, Issue } from '@arcflow/core';
+import type { AnyNodeDefinition, FlowNode, Issue } from '@arcflow/core';
+import { isDev } from './dev.js';
 import { format, type EditorOptions, type Labels } from './options.js';
 
 export type FlowStatus = 'empty' | 'errors' | 'notes' | 'ready';
@@ -89,23 +90,31 @@ export function runHeader(mode: RunKind, labels: Labels, ran: number | null = nu
 	return { title: labels.runTitle, note, live: false };
 }
 
+/** Kinds whose override has already been reported, so one broken summary is not one warning per frame. */
+const reportedSummaries = new Set<string>();
+
 /**
  * What a step says it will do: the host's override for that kind, else the definition's own summary,
  * else its description. A summary is written by someone else and runs on half-finished config, so a
- * throw from one falls back rather than taking the canvas with it.
+ * throw from one falls back rather than taking the canvas with it — and says so once, while
+ * developing, because a summary that silently never appears is hard to go looking for.
  */
 export function stepSummary(
 	def: AnyNodeDefinition,
 	config: Record<string, unknown>,
-	overrides?: EditorOptions['summaries']
+	overrides?: EditorOptions['summaries'],
+	node?: FlowNode
 ): string {
 	const override = overrides?.[def.kind];
 	if (override) {
 		try {
-			const text = override(config, def);
+			const text = override(config, def, node ?? { id: def.kind, kind: def.kind, config });
 			if (typeof text === 'string' && text) return text;
-		} catch {
-			// a host's summary is not worth a broken canvas
+		} catch (error) {
+			if (isDev && !reportedSummaries.has(def.kind)) {
+				reportedSummaries.add(def.kind);
+				console.warn(`[arcflow] The summary for "${def.kind}" threw, so the step's own wording is used instead:`, error);
+			}
 		}
 	}
 	try {

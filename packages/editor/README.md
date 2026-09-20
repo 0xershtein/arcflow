@@ -89,16 +89,20 @@ import '@arcflow/editor/styles.css';
 - **Your own header.** `ui.toolbar` takes `true`, `false`, or the parts to keep: `name`, `status`,
   `undo`, `note`, `json`, `importExport`, `flows`, `executions`, `run`, `testRun`. Parts with a `ui`
   option of their own show when both are on. Hiding a control never disables what it did — `run()`,
-  `undo()`, `redo()` and `setFlow()` stay available for your buttons to call.
+  `undo()`, `redo()` and `setFlow()` stay available for your buttons to call. With `name` off and none
+  of the labelled buttons left, the toolbar shrinks from 56px to a 40px strip.
 - **Run variables.** `vars` is merged into every run the editor starts, over the flow's own `vars`,
   over the registry's `sampleVars`, and is never written into the flow you save.
-- **Step summaries.** `summaries: { 'trigger.schedule': (config, def) => 'Every weekday at 09:00' }`
-  replaces what a step says it will do on the canvas, per kind. The definition's own `summary` stays
-  the fallback, and a summary that throws falls back to it rather than breaking the canvas.
+- **Step summaries.** `summaries: { 'trigger.schedule': (config, def, node) => 'Every weekday at 09:00' }`
+  replaces what a step says it will do on the canvas, per kind; `node` is that step as flow JSON, for
+  wording that depends on `node.id` or `node.label`. The definition's own `summary` stays the fallback,
+  and a summary that throws falls back to it rather than breaking the canvas — a development build
+  reports it once per kind so it can be found.
 - **Hints.** The empty-canvas hints follow the interface they mention (`ui.palette`, `ui.json`,
   `ui.importExport`), and any label set to an empty string is dropped rather than rendered blank.
 - **Attribution.** Svelte Flow's corner link is that library's licence condition and stays;
-  `ui.attribution` moves it to another corner.
+  `ui.attribution` moves it to another corner and `--fb-attribution-offset` (default `8px`) sets its
+  distance from the edge.
 
 ## Editing
 

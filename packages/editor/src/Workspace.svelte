@@ -48,7 +48,7 @@
 		type CanvasNode,
 		type StepData
 	} from './convert.js';
-	import { format, type ResolvedToolbar } from './options.js';
+	import { format, isCompactToolbar, type ResolvedToolbar } from './options.js';
 	import { runHeader, statusText, summarize, withLocalTimes, type RunKind } from './summary.js';
 
 	interface Props {
@@ -244,6 +244,8 @@
 		testRun: false
 	};
 	const bar = $derived(ui.toolbar || NO_TOOLBAR);
+	/** Nothing left but the badge and a couple of icons: a strip rather than a row. */
+	const compactBar = $derived(isCompactToolbar(ui.toolbar));
 
 	const showPanel = $derived(ui.inspector || panel === 'json');
 	const showPalette = $derived(ui.palette && !readonly);
@@ -1503,9 +1505,17 @@
 	{/if}
 {/snippet}
 
-<div class="fb-root" class:no-toolbar={!ui.toolbar} data-layout={layout} data-theme={themeMode} style={themeStyle} bind:this={rootEl}>
+<div
+	class="fb-root"
+	class:no-toolbar={!ui.toolbar}
+	class:compact-toolbar={compactBar}
+	data-layout={layout}
+	data-theme={themeMode}
+	style={themeStyle}
+	bind:this={rootEl}
+>
 	{#if ui.toolbar}
-		<header class="fb-topbar">
+		<header class="fb-topbar" class:is-compact={compactBar}>
 			<!-- With `toolbar: { name: false }` the brand snippet stands where the name field would be. -->
 			{#if brand}
 				<div class="fb-brand">{@render brand()}</div>

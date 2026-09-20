@@ -3,6 +3,7 @@ import {
 	createRegistry,
 	type AnyNodeDefinition,
 	type Flow,
+	type FlowNode,
 	type Issue,
 	type Pack,
 	type Registry,
@@ -136,6 +137,17 @@ export interface ToolbarOptions {
 }
 
 export type ResolvedToolbar = Required<ToolbarOptions>;
+
+/** The parts that bring a labelled button with them, and so a full-height row. */
+const WIDE_PARTS = ['name', 'json', 'importExport', 'flows', 'executions', 'run', 'testRun'] as const;
+
+/**
+ * A toolbar left with nothing but the badge and a couple of icons does not need a full row, so it
+ * shrinks to a strip: no name field and none of the parts above. `status`, `undo` and `note` are
+ * what may remain.
+ */
+export const isCompactToolbar = (toolbar: false | ResolvedToolbar): boolean =>
+	toolbar !== false && WIDE_PARTS.every((part) => !toolbar[part]);
 
 export interface UiOptions {
 	/** Top bar with the flow name, status and actions: `true`, `false`, or the parts to keep. */
@@ -395,11 +407,15 @@ export interface EditorOptions {
 	vars?: Record<string, unknown>;
 	/**
 	 * Replace what a step says it will do, by kind. The definition's own `summary` is the fallback,
-	 * so only the kinds you name change.
+	 * so only the kinds you name change. The step itself comes along, for wording that depends on
+	 * which one it is rather than only on its settings.
 	 *
-	 *   summaries: { 'trigger.schedule': (config) => `Every weekday at ${config.hour}` }
+	 *   summaries: {
+	 *     'trigger.schedule': (config) => `Every weekday at ${config.hour}`,
+	 *     'action.transfer': (config, def, node) => `${node.label ?? def.title} → ${config.to}`
+	 *   }
 	 */
-	summaries?: Record<string, (config: Record<string, unknown>, def: AnyNodeDefinition) => string>;
+	summaries?: Record<string, (config: Record<string, unknown>, def: AnyNodeDefinition, node: FlowNode) => string>;
 	/** Pause between steps during Test run, in ms. Default 450. */
 	runStepDelay?: number;
 	/** Called with the flow JSON after every change (debounced). */

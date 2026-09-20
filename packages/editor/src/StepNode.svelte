@@ -3,7 +3,7 @@
 	import Icon from './Icon.svelte';
 	import { DEFAULT_ICON } from './icons.js';
 	import { getEditor } from './context.svelte.js';
-	import type { CanvasNode } from './convert.js';
+	import { toFlowNode, type CanvasNode } from './convert.js';
 	import { format } from './options.js';
 	import { stepSummary, withLocalTimes } from './summary.js';
 
@@ -27,7 +27,11 @@
 	const hasError = $derived((editor.issuesByNode[id] ?? []).some((issue) => issue.level === 'error'));
 	const title = $derived(data.label || def?.title || data.kind);
 	// The host can replace what a step says it will do, per kind; the definition's summary is the fallback.
-	const summary = $derived(def ? stepSummary(def, data.config, editor.summaries) : format(labels.unknownStep, { kind: data.kind }));
+	const summary = $derived(
+		def
+			? stepSummary(def, data.config, editor.summaries, toFlowNode({ id, type: 'step', position: { x: 0, y: 0 }, data }))
+			: format(labels.unknownStep, { kind: data.kind })
+	);
 </script>
 
 {#snippet state()}

@@ -81,6 +81,20 @@ export function toCanvas(flow: Flow, registry: Registry<any>): { nodes: CanvasIt
 }
 
 /** Svelte Flow nodes and edges → flow JSON. */
+/** One canvas step as it appears in the flow JSON. */
+export function toFlowNode(node: CanvasNode): FlowNode {
+	return {
+		id: node.id,
+		kind: node.data.kind,
+		...(node.data.label ? { label: node.data.label } : {}),
+		config: node.data.config,
+		position: { x: Math.round(node.position.x), y: Math.round(node.position.y) },
+		...(node.data.disabled ? { disabled: true } : {}),
+		...(node.data.join ? { join: node.data.join } : {}),
+		...(node.data.notes ? { notes: node.data.notes } : {})
+	};
+}
+
 export function fromCanvas(meta: Pick<Flow, 'name' | 'description' | 'vars'>, nodes: CanvasItem[], edges: CanvasEdge[]): Flow {
 	const annotations = nodes.filter(isNote).map(
 		(note): FlowAnnotation => ({
@@ -96,18 +110,7 @@ export function fromCanvas(meta: Pick<Flow, 'name' | 'description' | 'vars'>, no
 		name: meta.name,
 		...(meta.description ? { description: meta.description } : {}),
 		...(meta.vars ? { vars: meta.vars } : {}),
-		nodes: nodes.filter(isStep).map(
-			(node): FlowNode => ({
-				id: node.id,
-				kind: node.data.kind,
-				...(node.data.label ? { label: node.data.label } : {}),
-				config: node.data.config,
-				position: { x: Math.round(node.position.x), y: Math.round(node.position.y) },
-				...(node.data.disabled ? { disabled: true } : {}),
-				...(node.data.join ? { join: node.data.join } : {}),
-				...(node.data.notes ? { notes: node.data.notes } : {})
-			})
-		),
+		nodes: nodes.filter(isStep).map(toFlowNode),
 		edges: edges.map((edge) => {
 			const port = edge.sourceHandle ?? 'out';
 			return { id: edgeId(edge.source, port, edge.target), from: edge.source, port, to: edge.target };

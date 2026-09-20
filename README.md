@@ -100,7 +100,7 @@ Everything that goes in or comes out is JSON-serializable, so it can be stored, 
 | `storageKey` | `string` | Autosave to `localStorage`. |
 | `services` | `Services` | Passed to steps during a Test run here (always `simulate` mode). |
 | `vars` | `Record<string, unknown>` | Run variables for the editor's runs, readable as `{{ vars.name }}`. Merged in when a run starts and never written into the flow — see [Run variables](#run-variables). |
-| `summaries` | `Record<string, (config, def) => string>` | Replace what a step says it will do on the canvas, by kind. |
+| `summaries` | `Record<string, (config, def, node) => string>` | Replace what a step says it will do on the canvas, by kind. `node` is the step as flow JSON, so wording can key on `node.id` or `node.label`. A summary that throws is ignored (and reported once per kind in a development build). |
 | `runStepDelay` | `number` | Pause between steps during Test run, so a run is watchable. Default `450`ms. |
 | `backend` | `Backend` | Connects to a flow server: open and save flows, activate them, pick credentials, run for real, browse past runs. See [Run flows on a server](#run-flows-on-a-server). |
 
@@ -162,6 +162,17 @@ createEditor(el, {
 of its own (`json`, `importExport`, `flows`, `executions`, `testRun`) shows when both are on. Hiding a part
 hides the control, not the behaviour — `editor.run()`, `editor.undo()` and `setFlow()` keep working, so a
 host's own buttons can call them.
+
+**The toolbar shrinks when there is little left in it.** Once `name` is off and none of `json`,
+`importExport`, `flows`, `executions`, `run` or `testRun` are on — that is, only the status badge, undo/redo
+and Note can remain — the row becomes a 40px strip instead of 56px, with the same colours and smaller
+controls, so a host header plus the strip is not two headers' worth of height:
+
+```ts
+ui: { toolbar: { name: false, json: false, importExport: false, flows: false, executions: false, run: false, testRun: false } }
+```
+
+Keeping any one of those parts keeps the full row, since a labelled button needs it.
 
 ### Run variables
 
@@ -493,7 +504,15 @@ The canvas carries a small "Svelte Flow" link in its corner. It belongs to
 [Svelte Flow](https://svelteflow.dev), the canvas library underneath, and showing it is a condition of
 using that library for free — so arcflow has no option to hide it. `ui.attribution` moves it
 (`'top-left'`, `'top-center'`, `'top-right'`, `'bottom-left'`, `'bottom-center'`, `'bottom-right'`;
-default `'bottom-right'`) when it lands on something of yours. Removing it is what a
+default `'bottom-right'`) when it lands on something of yours, and the CSS variable
+`--fb-attribution-offset` (default `8px`) sets how far it sits from the canvas edge:
+
+```css
+.fb-root { --fb-attribution-offset: 14px; }
+```
+
+The mark also stays above the canvas overlays, and the run log is docked under the canvas rather than
+over it, so neither covers it. Removing it is what a
 [Svelte Flow Pro](https://svelteflow.dev/remove-attribution) subscription allows.
 
 ## Development

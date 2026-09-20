@@ -28,6 +28,8 @@
 	--fb-radius: 10px;
 	--fb-radius-sm: 7px;
 	--fb-node-width: 240px;
+	/* Keeps Svelte Flow's attribution clear of the canvas edge and of anything docked beside it. */
+	--fb-attribution-offset: 8px;
 
 	position: relative;
 	display: grid;
@@ -52,6 +54,11 @@
 
 .fb-root.no-toolbar {
 	grid-template-rows: minmax(0, 1fr);
+}
+
+/* A toolbar with only the badge and a couple of icons left costs a strip, not a row. */
+.fb-root.compact-toolbar {
+	grid-template-rows: 40px minmax(0, 1fr);
 }
 
 .fb-root *,
@@ -98,6 +105,12 @@
 	--xy-selection-background-color: color-mix(in srgb, var(--fb-accent) 8%, transparent);
 	--xy-selection-border: 1px dashed color-mix(in srgb, var(--fb-accent) 55%, transparent);
 	--xy-attribution-background-color: transparent;
+}
+
+.fb-root .svelte-flow__attribution {
+	/* Svelte Flow's mark stays; it only moves out of the corner and above whatever is docked there. */
+	margin: var(--fb-attribution-offset);
+	z-index: 4;
 }
 
 .fb-root .svelte-flow__attribution a {
@@ -316,6 +329,34 @@
 
 .fb-spacer {
 	flex: 1;
+}
+
+/* ---------- Compact toolbar ---------- */
+
+.fb-topbar.is-compact {
+	gap: 6px;
+	padding: 0 8px 0 10px;
+}
+
+.fb-topbar.is-compact .fb-status {
+	height: 22px;
+	padding: 0 8px;
+	font-size: 11.5px;
+}
+
+.fb-topbar.is-compact .fb-icon-btn {
+	width: 26px;
+	height: 26px;
+}
+
+.fb-topbar.is-compact .fb-btn {
+	height: 28px;
+	padding: 0 9px;
+	font-size: 12.5px;
+}
+
+.fb-topbar.is-compact .fb-brand {
+	font-size: 13px;
 }
 
 .fb-body {
