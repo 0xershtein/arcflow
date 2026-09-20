@@ -4,7 +4,7 @@
 	"description": "Embeddable n8n-style flow editor. Framework-free: mount it anywhere, feed it flow JSON, get flow JSON back.",
 	"license": "MIT",
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": true,
 	"exports": {
 		".": {
 			"types": "./dist/svelte/index.d.ts",
@@ -15,6 +15,7 @@
 			"svelte": "./src/svelte.ts",
 			"default": "./src/svelte.ts"
 		},
+		"./styles.css": "./src/styles.css",
 		"./app": {
 			"types": "./dist/svelte/app.d.ts",
 			"default": "./dist/app.js"
@@ -32,6 +33,7 @@
 				"svelte": "./dist/svelte/svelte.js",
 				"default": "./dist/svelte/svelte.js"
 			},
+			"./styles.css": "./dist/svelte/styles.css",
 			"./app": {
 				"types": "./dist/svelte/app.d.ts",
 				"default": "./dist/app.js"

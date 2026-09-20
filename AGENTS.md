@@ -96,6 +96,7 @@ docs/roadmap.md            milestones M1–M6
 - Every interface string lives in `defaultLabels`; every color in `ThemeColors` and `--fb-*`. No hard-coded colors in components or CSS.
 - New field kinds must work in types, `parseField`, `fieldSchema`, `describe` and `FieldInput`.
 - Money-moving or otherwise non-idempotent steps must not set `retry`.
+- `@arcflow/editor` keeps `"sideEffects": true`. The `/svelte` entry styles itself through bare CSS imports, and under Vite 8 / rolldown a side-effect-free package drops them before the CSS is ever resolved — a clean build with no styles and no warning. No CSS-targeting glob prevents that (it is the importer that is judged, not the stylesheet); only the whole package or the entry module itself can be marked. `@arcflow/editor/styles.css` exists for hosts that strip side-effect imports anyway.
 
 ## Using the library from code
 

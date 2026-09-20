@@ -1,0 +1,8 @@
+/*
+ * Every stylesheet the editor needs, in one file.
+ * The `@arcflow/editor/svelte` entry already imports these; import this instead
+ * when your bundler drops side-effect-only imports.
+ */
+@import '@xyflow/svelte/dist/style.css';
+@import './theme.css';
+@import './editor.css';
