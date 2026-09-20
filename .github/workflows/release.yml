@@ -7,6 +7,10 @@ on:
 
 jobs:
   publish:
+    # The repository is mirrored to a personal account with the same tags, and only
+    # the canonical repository holds the npm token — provenance would reject the
+    # mirror anyway, since package.json points at arcsig-labs/arcflow.
+    if: github.repository == 'arcsig-labs/arcflow'
     runs-on: ubuntu-latest
     permissions:
       contents: read

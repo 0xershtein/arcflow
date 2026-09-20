@@ -12,6 +12,8 @@ concurrency:
 
 jobs:
   build:
+    # Only the canonical repository publishes the site; the mirror just runs CI.
+    if: github.repository == 'arcsig-labs/arcflow'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,8 +33,10 @@ jobs:
       # under /<repo> on a project page, or in any subfolder. Set BASE_PATH to pin it.
       - name: Build the site
         run: pnpm --filter docs build
-      # Turns Pages on for the repository on the first run, so a fresh fork — or a
-      # repository moved to another org — does not need the setting flipped by hand.
+      # Tries to turn Pages on for the repository on the first run. The default
+      # token can only do that when it is allowed to administer the repository;
+      # otherwise this step fails and Pages has to be enabled once by hand
+      # (Settings → Pages → Source: GitHub Actions), see docs/release.md.
       - uses: actions/configure-pages@v5
         with:
           enablement: true

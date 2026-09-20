@@ -395,10 +395,13 @@ pnpm build
 
 ## Roadmap
 
-- Undo / redo, multi-select, copy and paste
-- Joins that wait for parallel branches
+Version 0.1.0 covers the engine, the standard steps, the server, the editor and the AI tooling; [`docs/roadmap.md`](./docs/roadmap.md) records what each milestone set out to do and what shipped. After 1.0:
+
 - Custom node renderers per step kind
-- MCP server exposing `describe`, `parse` and `run`
+- A Postgres storage adapter for `@arcflow/server`
+- Model adapters beyond Anthropic in `@arcflow/ai`
+
+Releases follow [`docs/release.md`](./docs/release.md).
 
 ## License
 
