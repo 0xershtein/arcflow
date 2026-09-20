@@ -36,6 +36,7 @@
 	import ServerBar from './ServerBar.svelte';
 	import { BackendError, type ServerFlowSummary, type ServerRunSummary } from './backend.js';
 	import { DRAG_TYPE, getEditor, type StepRunStatus } from './context.svelte.js';
+	import { isDev } from './dev.js';
 	import {
 		NOTE_SIZE,
 		canvasEdge,
@@ -47,7 +48,7 @@
 		type CanvasNode,
 		type StepData
 	} from './convert.js';
-	import { format } from './options.js';
+	import { format, type ResolvedToolbar } from './options.js';
 	import { runHeader, statusText, summarize, withLocalTimes, type RunKind } from './summary.js';
 
 	interface Props {
@@ -103,8 +104,18 @@
 	 */
 	const afterLayout = async () => {
 		await tick();
-		if (typeof requestAnimationFrame !== 'function') return;
-		await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+		// One frame to lay out. A hidden tab never paints and would never give us that frame, so the
+		// request is raced with a timer: the work still happens, just without waiting to be seen.
+		await new Promise((resolve) => {
+			let settled = false;
+			const finish = () => {
+				if (settled) return;
+				settled = true;
+				resolve(null);
+			};
+			if (typeof requestAnimationFrame === 'function') requestAnimationFrame(finish);
+			setTimeout(finish, 150);
+		});
 		// Svelte Flow reads its own size from a resize observer, which lands a beat after that frame.
 		await new Promise((resolve) => setTimeout(resolve, 120));
 	};
@@ -219,6 +230,21 @@
 		return found;
 	});
 
+	/** No toolbar means none of its parts; reading them stays the same either way. */
+	const NO_TOOLBAR: ResolvedToolbar = {
+		name: false,
+		status: false,
+		undo: false,
+		note: false,
+		json: false,
+		importExport: false,
+		flows: false,
+		executions: false,
+		run: false,
+		testRun: false
+	};
+	const bar = $derived(ui.toolbar || NO_TOOLBAR);
+
 	const showPanel = $derived(ui.inspector || panel === 'json');
 	const showPalette = $derived(ui.palette && !readonly);
 	const columns = $derived(
@@ -227,8 +253,54 @@
 			: [showPalette ? '264px' : '', 'minmax(0, 1fr)', showPanel ? (panel === 'json' ? '420px' : '320px') : ''].filter(Boolean).join(' ')
 	);
 
+	/**
+	 * Steps of a finished simulation that had no test mode, and so did the real thing. `null` while a
+	 * run is going, for a live run, or when nothing has run yet — then the header stays general.
+	 */
+	const reallyRan = $derived.by(() => {
+		if (running || runKind === 'live') return null;
+		const done = Object.entries(editor.runStatus).filter(([, state]) => state.status !== 'skipped');
+		if (!done.length) return null;
+		return done.filter(([id]) => {
+			const node = steps.find((step) => step.id === id);
+			const def: AnyNodeDefinition | undefined = node && registry.get(node.data.kind);
+			return Boolean(def) && !def!.simulate;
+		}).length;
+	});
+
 	/** Test run needs code for the steps: either they are here, or the server that has them runs it. */
 	const canTestRun = $derived(ui.testRun && (!remoteSteps || Boolean(backend)));
+
+	/**
+	 * A root whose height comes from its content grows with the palette instead of filling its box,
+	 * and the canvas ends up below the fold with nothing to show for it. Nothing can be done about it
+	 * from in here — the host owns that element — so say it once, and only while developing.
+	 */
+	let warnedAboutHeight = false;
+	$effect(() => {
+		if (!isDev || warnedAboutHeight || !rootEl) return;
+		const element = rootEl;
+		void afterLayout().then(() => {
+			const height = element.getBoundingClientRect().height;
+			/*
+			 * `contain: size` lays the element out as if it were empty. A height that survives that came
+			 * from the box the host gave it; one that collapses came from the step list inside it. The
+			 * probe is put back before the browser paints, so nothing moves on screen.
+			 */
+			const contain = element.style.contain;
+			element.style.contain = 'size';
+			const given = element.getBoundingClientRect().height;
+			element.style.contain = contain;
+			if (given > 1 && Math.abs(height - given) < 2) return;
+
+			warnedAboutHeight = true;
+			console.warn(
+				`[arcflow] The editor is ${Math.round(height)}px tall because of what is inside it, not because of the box it was given, ` +
+					'so the canvas can end up out of view. Give its element a definite height: height: 100% inside a sized parent, ' +
+					'a px height, or flex: 1 with min-height: 0 inside a flex or grid column.'
+			);
+		});
+	});
 
 	// The editor sizes itself to its container, which is not always the window: watch the element.
 	$effect(() => {
@@ -729,7 +801,9 @@
 		runKind = mode === 'live' ? 'live' : 'test-server';
 		pinLog();
 		running = true;
-		const started = await withServer(() => backend.startRun(flow.id, { mode }));
+		const started = await withServer(() =>
+			backend.startRun(flow.id, { mode, ...(Object.keys(editor.vars).length ? { vars: editor.vars } : {}) })
+		);
 		if (!started) {
 			running = false;
 			return;
@@ -1290,6 +1364,8 @@
 		try {
 			editor.lastRun = await createEngine(registry, { services }).start(current, {
 				mode: 'simulate',
+				// Over the flow's own vars, which are over the registry's sample values.
+				...(Object.keys(editor.vars).length ? { vars: editor.vars } : {}),
 				stepDelayMs: runStepDelay,
 				signal: controller.signal,
 				onEvent: (event) => {
@@ -1382,21 +1458,23 @@
 	"More" menu when there is not, so a narrow editor hides nothing — it only folds it away.
 -->
 {#snippet extras(menu: boolean)}
-	{#if !readonly}
+	{#if !readonly && bar.undo}
 		<button class={menu ? 'fb-menu-item' : 'fb-icon-btn'} onclick={() => choose(undo)} disabled={!canUndo} aria-label={labels.undo} title="{labels.undo} (⌘Z)">
 			<Icon name="undo" size={menu ? 15 : 16} />{#if menu}<span>{labels.undo}</span>{/if}
 		</button>
 		<button class={menu ? 'fb-menu-item' : 'fb-icon-btn'} onclick={() => choose(redo)} disabled={!canRedo} aria-label={labels.redo} title="{labels.redo} (⇧⌘Z)">
 			<Icon name="redo" size={menu ? 15 : 16} />{#if menu}<span>{labels.redo}</span>{/if}
 		</button>
+	{/if}
+	{#if !readonly && bar.note}
 		<button class={menu ? 'fb-menu-item' : 'fb-btn'} onclick={() => choose(addNote)}><Icon name="note" size={15} /><span>{labels.addNote}</span></button>
 	{/if}
-	{#if ui.json}
+	{#if ui.json && bar.json}
 		<button class={menu ? 'fb-menu-item' : 'fb-btn'} class:is-on={panel === 'json'} onclick={() => choose(() => (panel = panel === 'json' ? 'step' : 'json'))}>
 			{#if menu}<Icon name="panel" size={15} />{/if}<span>{labels.json}</span>
 		</button>
 	{/if}
-	{#if ui.importExport}
+	{#if ui.importExport && bar.importExport}
 		{#if !readonly}
 			<button class={menu ? 'fb-menu-item' : 'fb-btn'} onclick={() => choose(() => fileInput?.click())}>
 				<Icon name="upload" size={15} /><span>{labels.import}</span>
@@ -1404,7 +1482,7 @@
 		{/if}
 		<button class={menu ? 'fb-menu-item' : 'fb-btn'} onclick={() => choose(exportFlow)}><Icon name="download" size={15} /><span>{labels.export}</span></button>
 	{/if}
-	{#if backend && ui.executions}
+	{#if backend && ui.executions && bar.executions}
 		<button
 			class={menu ? 'fb-menu-item' : 'fb-btn'}
 			class:is-on={runsOpen}
@@ -1418,7 +1496,7 @@
 		</button>
 	{/if}
 	<!-- At the narrowest sizes the toolbar keeps one run button; the other joins the menu. -->
-	{#if menu && layout === 'tiny' && canTestRun}
+	{#if menu && layout === 'tiny' && canTestRun && bar.testRun}
 		<button class="fb-menu-item" onclick={() => choose(run)}>
 			<Icon name={running ? 'stop' : 'play'} size={15} /><span>{running ? labels.stop : labels.testRun}</span>
 		</button>
@@ -1428,18 +1506,23 @@
 <div class="fb-root" class:no-toolbar={!ui.toolbar} data-layout={layout} data-theme={themeMode} style={themeStyle} bind:this={rootEl}>
 	{#if ui.toolbar}
 		<header class="fb-topbar">
+			<!-- With `toolbar: { name: false }` the brand snippet stands where the name field would be. -->
 			{#if brand}
 				<div class="fb-brand">{@render brand()}</div>
-				<span class="fb-divider"></span>
+				{#if bar.name || bar.status}<span class="fb-divider"></span>{/if}
 			{/if}
-			<input class="fb-name" bind:value={meta.name} aria-label={labels.flowName} placeholder={labels.untitled} spellcheck="false" disabled={readonly} />
-			<span class="fb-status" data-status={problems.status}>
-				<Icon
-					name={problems.status === 'errors' ? 'alert' : problems.status === 'notes' ? 'alert' : problems.status === 'empty' ? 'plus' : 'check'}
-					size={13}
-					stroke={problems.status === 'ready' ? 2 : 1.6}
-				/>{statusText(problems, labels)}
-			</span>
+			{#if bar.name}
+				<input class="fb-name" bind:value={meta.name} aria-label={labels.flowName} placeholder={labels.untitled} spellcheck="false" disabled={readonly} />
+			{/if}
+			{#if bar.status}
+				<span class="fb-status" data-status={problems.status}>
+					<Icon
+						name={problems.status === 'errors' ? 'alert' : problems.status === 'notes' ? 'alert' : problems.status === 'empty' ? 'plus' : 'check'}
+						size={13}
+						stroke={problems.status === 'ready' ? 2 : 1.6}
+					/>{statusText(problems, labels)}
+				</span>
+			{/if}
 
 			<div class="fb-spacer"></div>
 
@@ -1462,7 +1545,7 @@
 				{@render extras(false)}
 			{/if}
 
-			{#if backend && ui.flows}
+			{#if backend && ui.flows && bar.flows}
 				<ServerBar
 					flows={serverFlows}
 					current={serverFlow}
@@ -1475,12 +1558,12 @@
 					ondelete={deleteServerFlow}
 				/>
 			{/if}
-			{#if backend && !readonly}
+			{#if backend && !readonly && bar.run}
 				<button class="fb-btn primary" onclick={runOnServer} disabled={serverBusy} title={labels.liveRun}>
 					<Icon name={running ? 'stop' : 'play'} size={13} /><span class="fb-label">{running ? labels.stop : labels.runLive}</span>
 				</button>
 			{/if}
-			{#if canTestRun && layout !== 'tiny'}
+			{#if canTestRun && bar.testRun && layout !== 'tiny'}
 				<button class="fb-btn" class:primary={!backend} onclick={run}>
 					{#if running}
 						<Icon name="stop" size={13} /><span class="fb-label">{labels.stop}</span>
@@ -1489,7 +1572,7 @@
 					{/if}
 				</button>
 			{/if}
-			{#if ui.importExport && !readonly}
+			{#if ui.importExport && bar.importExport && !readonly}
 				<input bind:this={fileInput} type="file" accept="application/json,.json" hidden onchange={importFlow} />
 			{/if}
 		</header>
@@ -1538,6 +1621,7 @@
 					nodesConnectable={!readonly}
 					deleteKey={readonly ? null : ['Backspace', 'Delete']}
 					defaultEdgeOptions={{ type: 'flow' }}
+					attributionPosition={ui.attribution}
 					oninit={() => void fitView(FIT)}
 					onconnectend={onConnectEnd}
 					onselectionchange={({ nodes: picked }) => {
@@ -1636,7 +1720,7 @@
 
 			<!-- Docked under the canvas, not over it: a run never hides the steps it is running. -->
 			{#if logOpen}
-				{@const header = runHeader(runKind, labels)}
+				{@const header = runHeader(runKind, labels, reallyRan)}
 				<section class="fb-log" class:is-live={header.live} aria-label={header.title} aria-live="polite">
 					<div class="fb-log-head">
 						<span>{header.title}</span>

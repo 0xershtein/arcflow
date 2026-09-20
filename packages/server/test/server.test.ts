@@ -190,6 +190,28 @@ describe('flow generation', () => {
 	});
 });
 
+describe('run variables', () => {
+	it('takes vars for one run without touching the saved flow', async () => {
+		const { call } = await setup();
+		const flow = build('Uses a variable', (f) => {
+			f.add('trigger.manual', {}, { id: 'start' }).to(
+				f.add('data.set', { fields: [{ name: 'limit', value: '{{ vars.limit }}' }], keepInput: false }, { id: 'set' })
+			);
+		});
+		await call('POST', '/api/flows', { id: 'vars', flow: { ...flow, vars: { limit: 'from the flow' } } });
+
+		const run = await call('POST', '/api/flows/vars/runs', { wait: true, vars: { limit: 'from the caller' } });
+		expect(run.body.run.state.steps.set.output).toEqual({ limit: 'from the caller' });
+		expect(run.body.run.state.vars.limit).toBe('from the caller');
+
+		// The flow on the server still has its own, so the next run is unaffected.
+		const saved = await call('GET', '/api/flows/vars');
+		expect(saved.body.flow.flow.vars).toEqual({ limit: 'from the flow' });
+		const plain = await call('POST', '/api/flows/vars/runs', { wait: true });
+		expect(plain.body.run.state.steps.set.output).toEqual({ limit: 'from the flow' });
+	});
+});
+
 describe('unknown routes', () => {
 	it('answers JSON under /api and /hooks, whatever the method', async () => {
 		const { call } = await setup();

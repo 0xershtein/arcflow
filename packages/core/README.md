@@ -7,6 +7,7 @@ Typed, headless flow engine with no dependencies.
 - **Validation** — `registry.parse()` never throws and returns issues with stable `code`s and JSON `path`s.
 - **Runs** — `createEngine().start()` with retries, timeouts, error ports, `{{ expressions }}`, cancellation, and `wait` / `resume()` for human approvals and delays. Run state is plain JSON.
 - **Expressions that miss** — when a required field's `{{ }}` resolves to nothing at run time, the step's error says so and where the data stopped (`… the trigger payload had no body.total`) rather than reading like a config mistake. `describeMissing(expression, scope)` produces that sentence on its own.
+- **Catalog over the wire** — `toManifest()` / `registryFromManifest()` carry everything but the code, including which steps have a `simulate` handler, so an editor can say what a test run really did.
 - **AI** — `registry.toJSONSchema()` for structured output, `registry.describe()` for prompts.
 
 ```ts
@@ -67,7 +68,7 @@ wire it), `removeNode` (which takes its connections with it), `connect` and `dis
 | --- | --- |
 | `trigger` | Trigger to start from. Defaults to every enabled trigger. |
 | `payload` | Trigger payload, readable as `input` and `{{ trigger }}`. Without one, the trigger step's own output becomes `{{ trigger }}` — so a trigger with a `sample` gives a hand-started run something to read. |
-| `vars` | Run variables, readable as `{{ vars.name }}`. |
+| `vars` | Run variables, readable as `{{ vars.name }}`. They win over the flow's own `vars`, which win over the registry's `sampleVars` (simulate mode only); the flow itself is never written to. |
 | `mode`, `signal`, `stepDelayMs`, `onEvent` | Per-run overrides of the mode, cancellation, a pause between steps, and the event stream. |
 
 `layoutFlow(flow, registry, options)` positions nodes left to right:

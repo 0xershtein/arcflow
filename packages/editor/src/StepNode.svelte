@@ -5,7 +5,7 @@
 	import { getEditor } from './context.svelte.js';
 	import type { CanvasNode } from './convert.js';
 	import { format } from './options.js';
-	import { withLocalTimes } from './summary.js';
+	import { stepSummary, withLocalTimes } from './summary.js';
 
 	let { id, data, selected }: NodeProps<CanvasNode> = $props();
 
@@ -26,14 +26,8 @@
 	const opens = $derived(Boolean(def?.subflow && editor.backend && editor.onOpenSubflow));
 	const hasError = $derived((editor.issuesByNode[id] ?? []).some((issue) => issue.level === 'error'));
 	const title = $derived(data.label || def?.title || data.kind);
-	const summary = $derived.by(() => {
-		if (!def) return format(labels.unknownStep, { kind: data.kind });
-		try {
-			return def.summary?.(data.config) ?? def.description;
-		} catch {
-			return def.description;
-		}
-	});
+	// The host can replace what a step says it will do, per kind; the definition's summary is the fallback.
+	const summary = $derived(def ? stepSummary(def, data.config, editor.summaries) : format(labels.unknownStep, { kind: data.kind }));
 </script>
 
 {#snippet state()}

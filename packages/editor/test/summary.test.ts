@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Issue } from '@arcflow/core';
-import { resolveLabels } from '../src/options.js';
-import { formatDuration, runHeader, statusText, statusTitle, summarize, withLocalTimes } from '../src/summary.js';
+import { defineNode, f } from '@arcflow/core';
+import { defaultUi, resolveLabels, resolveToolbar, resolveUi } from '../src/options.js';
+import { formatDuration, runHeader, statusText, statusTitle, stepSummary, summarize, withLocalTimes } from '../src/summary.js';
 
 const labels = resolveLabels();
 const error = (message: string): Issue => ({ level: 'error', code: 'required', path: 'nodes[0].config.to', message });
@@ -49,6 +50,73 @@ describe('run log header', () => {
 	it('does not claim nothing was sent, since steps without a test mode still run', () => {
 		expect(labels.simulated).toContain('still run');
 		expect(runHeader('live', labels).note).not.toMatch(/simulat/i);
+	});
+});
+
+describe('run log header counts', () => {
+	it('says what a finished simulation really did', () => {
+		expect(runHeader('test', labels, 0).note).toBe('Simulated — nothing was sent');
+		expect(runHeader('test', labels, 1).note).toBe('Simulated — 1 step had no test mode and really ran');
+		expect(runHeader('test-server', labels, 3).note).toBe('Simulated — 3 steps had no test mode and really ran');
+	});
+
+	it('keeps the general warning while a run is going or when it cannot count', () => {
+		expect(runHeader('test', labels).note).toBe(labels.simulated);
+		expect(runHeader('test-server', labels, null).note).toBe(labels.simulatedOnServer);
+		expect(runHeader('live', labels, 0)).toEqual({ title: 'Run', note: 'Ran on the server', live: true });
+	});
+});
+
+describe('toolbar parts', () => {
+	const parts = Object.keys(defaultUi.toolbar || {});
+
+	it('keeps every part for true, drops the toolbar for false', () => {
+		expect(resolveToolbar(true)).toEqual(defaultUi.toolbar);
+		expect(resolveToolbar(undefined)).toEqual(defaultUi.toolbar);
+		expect(resolveToolbar(false)).toBe(false);
+	});
+
+	it('keeps the parts a host does not mention', () => {
+		const toolbar = resolveToolbar({ name: false, testRun: false });
+		expect(toolbar).toMatchObject({ name: false, testRun: false, undo: true, note: true, status: true });
+		expect(Object.keys(toolbar || {})).toEqual(parts);
+	});
+
+	it('is part of the resolved ui, and leaves the other options alone', () => {
+		const ui = resolveUi({ toolbar: { name: false }, palette: false });
+		expect(ui.toolbar).toMatchObject({ name: false, undo: true });
+		expect(ui.palette).toBe(false);
+		expect(ui.inspector).toBe(true);
+		expect(resolveUi({ toolbar: false }).toolbar).toBe(false);
+		expect(resolveUi().attribution).toBe('bottom-right');
+	});
+});
+
+describe('step summaries', () => {
+	const schedule = defineNode({
+		kind: 'test.schedule',
+		title: 'Schedule',
+		description: 'Runs on a schedule.',
+		config: { cron: f.string({ default: '0 9 * * 1-5' }) },
+		summary: (config) => config.cron,
+		run: () => ({})
+	});
+
+	it('prefers the wording the host gave for that kind', () => {
+		expect(stepSummary(schedule, { cron: '0 9 * * 1-5' })).toBe('0 9 * * 1-5');
+		expect(stepSummary(schedule, { cron: '0 9 * * 1-5' }, { 'test.schedule': () => 'Every weekday at 09:00' })).toBe('Every weekday at 09:00');
+		// Another kind's override is not this step's business.
+		expect(stepSummary(schedule, { cron: '@daily' }, { 'other.kind': () => 'nope' })).toBe('@daily');
+	});
+
+	it('falls back rather than breaking the canvas', () => {
+		const boom = () => {
+			throw new Error('half-written config');
+		};
+		expect(stepSummary(schedule, { cron: '@daily' }, { 'test.schedule': boom })).toBe('@daily');
+		expect(stepSummary({ ...schedule, summary: boom }, {}, { 'test.schedule': boom })).toBe('Runs on a schedule.');
+		// An override that returns nothing usable is no override at all.
+		expect(stepSummary(schedule, { cron: '@daily' }, { 'test.schedule': () => '' })).toBe('@daily');
 	});
 });
 

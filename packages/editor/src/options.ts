@@ -107,14 +107,44 @@ export interface ThemeOptions {
 	nodeWidth?: number;
 }
 
+/**
+ * The toolbar's parts, for a host with a header of its own: `ui.toolbar` takes `true` (all of them),
+ * `false` (no toolbar at all) or this object, so losing the name field does not also lose undo.
+ * Parts that have a `ui` option of their own are shown when both are on.
+ */
+export interface ToolbarOptions {
+	/** The flow name field. Turn it off and render a `brand` snippet in its place. */
+	name?: boolean;
+	/** The problem badge — "Ready", "2 notes", "1 problem". */
+	status?: boolean;
+	/** Undo and redo. */
+	undo?: boolean;
+	/** The "Note" button. */
+	note?: boolean;
+	/** The "JSON" toggle — with `ui.json`. */
+	json?: boolean;
+	/** "Import" and "Export" — with `ui.importExport`. */
+	importExport?: boolean;
+	/** The flow list, Save and Activate — with `ui.flows` and a `backend`. */
+	flows?: boolean;
+	/** The "Executions" toggle — with `ui.executions` and a `backend`. */
+	executions?: boolean;
+	/** The "Run" button — with a `backend`. */
+	run?: boolean;
+	/** The "Test run" button — with `ui.testRun`. Hiding it does not disable `editor.run()`. */
+	testRun?: boolean;
+}
+
+export type ResolvedToolbar = Required<ToolbarOptions>;
+
 export interface UiOptions {
-	/** Top bar with the flow name, status and actions. */
-	toolbar?: boolean;
+	/** Top bar with the flow name, status and actions: `true`, `false`, or the parts to keep. */
+	toolbar?: boolean | ToolbarOptions;
 	/** Step list on the left. */
 	palette?: boolean;
 	/** Settings / problems panel on the right. */
 	inspector?: boolean;
-	/** "Test run" button. */
+	/** "Test run" button. It only hides the button; `editor.run()` still runs the flow. */
 	testRun?: boolean;
 	/** "JSON" panel for viewing and pasting flows. */
 	json?: boolean;
@@ -131,6 +161,11 @@ export interface UiOptions {
 	minimap?: boolean;
 	background?: 'dots' | 'lines' | 'cross' | 'none';
 	/**
+	 * Where Svelte Flow's attribution sits. It is that library's licence condition and cannot be
+	 * turned off here — only moved out of the way. Default `bottom-right`.
+	 */
+	attribution?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+	/**
 	 * How a step is drawn. `card` is a full card with its category and summary,
 	 * `tile` is a square of icon with the name underneath, `compact` is a single row.
 	 * Default `card`.
@@ -138,10 +173,24 @@ export interface UiOptions {
 	node?: 'card' | 'tile' | 'compact';
 }
 
-export type ResolvedUi = Required<UiOptions>;
+/** `toolbar` is resolved to its parts, or `false` when there is no toolbar. */
+export type ResolvedUi = Omit<Required<UiOptions>, 'toolbar'> & { toolbar: false | ResolvedToolbar };
+
+export const defaultToolbar: ResolvedToolbar = {
+	name: true,
+	status: true,
+	undo: true,
+	note: true,
+	json: true,
+	importExport: true,
+	flows: true,
+	executions: true,
+	run: true,
+	testRun: true
+};
 
 export const defaultUi: ResolvedUi = {
-	toolbar: true,
+	toolbar: { ...defaultToolbar },
 	palette: true,
 	inspector: true,
 	testRun: true,
@@ -153,6 +202,7 @@ export const defaultUi: ResolvedUi = {
 	controls: true,
 	minimap: false,
 	background: 'dots',
+	attribution: 'bottom-right',
 	node: 'card'
 };
 
@@ -182,6 +232,8 @@ export const defaultLabels = {
 	hintAdd: 'Click a step on the left, or drag it onto the canvas.',
 	hintConnect: 'Drag from a dot on the right of a step to connect it.',
 	hintJson: 'Open JSON to paste a flow written by code or an LLM.',
+	/** Empty by default: give it text to add a hint about Import and Export. */
+	hintImportExport: '',
 	hintDelete: 'Select a step to edit it. Backspace deletes.',
 	name: 'Name',
 	optional: 'optional',
@@ -203,6 +255,9 @@ export const defaultLabels = {
 	stopped: 'Stopped',
 	simulated: 'Simulated — steps without a test mode still run',
 	simulatedOnServer: 'Simulated on the server — steps without a test mode still run',
+	simulatedNothing: 'Simulated — nothing was sent',
+	simulatedOneRan: 'Simulated — 1 step had no test mode and really ran',
+	simulatedRan: 'Simulated — {count} steps had no test mode and really ran',
 	ranOnServer: 'Ran on the server',
 	testRunNeedsServer: 'A test run needs the server these steps come from.',
 	starting: 'Starting…',
@@ -332,6 +387,19 @@ export interface EditorOptions {
 	storageKey?: string;
 	/** Services handed to steps during Test run (which always runs in `simulate` mode). */
 	services?: Services;
+	/**
+	 * Run variables for the editor's runs, readable as `{{ vars.name }}`. They are merged in when a
+	 * run starts — over the flow's own `vars`, which are over the registry's `sampleVars` — and are
+	 * never written into the flow, so live numbers stay out of what you save.
+	 */
+	vars?: Record<string, unknown>;
+	/**
+	 * Replace what a step says it will do, by kind. The definition's own `summary` is the fallback,
+	 * so only the kinds you name change.
+	 *
+	 *   summaries: { 'trigger.schedule': (config) => `Every weekday at ${config.hour}` }
+	 */
+	summaries?: Record<string, (config: Record<string, unknown>, def: AnyNodeDefinition) => string>;
 	/** Pause between steps during Test run, in ms. Default 450. */
 	runStepDelay?: number;
 	/** Called with the flow JSON after every change (debounced). */
@@ -354,7 +422,11 @@ export function resolveRegistry(steps: EditorOptions['steps']): Registry<any> {
 const defined = <T extends object>(value: T | undefined): Partial<T> =>
 	Object.fromEntries(Object.entries(value ?? {}).filter(([, v]) => v !== undefined && v !== null)) as Partial<T>;
 
-export const resolveUi = (ui?: UiOptions): ResolvedUi => ({ ...defaultUi, ...defined(ui) });
+/** `true` / `undefined` keep every part, `false` removes the toolbar, an object picks the parts. */
+export const resolveToolbar = (toolbar: UiOptions['toolbar']): false | ResolvedToolbar =>
+	toolbar === false ? false : typeof toolbar === 'object' ? { ...defaultToolbar, ...defined(toolbar) } : { ...defaultToolbar };
+
+export const resolveUi = (ui?: UiOptions): ResolvedUi => ({ ...defaultUi, ...defined(ui), toolbar: resolveToolbar(ui?.toolbar) });
 
 export const resolveLabels = (labels?: Partial<Labels>): Labels => ({ ...defaultLabels, ...defined(labels) });
 

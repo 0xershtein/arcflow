@@ -21,6 +21,8 @@
 		readonly = false,
 		storageKey,
 		services,
+		vars,
+		summaries,
 		runStepDelay = 450,
 		onChange,
 		onValidate,
@@ -37,6 +39,8 @@
 		editor.ui = resolveUi(ui);
 		editor.readonly = readonly;
 		editor.backend = backend ?? null;
+		editor.vars = vars ?? {};
+		editor.summaries = summaries;
 	});
 
 	const darkQuery = typeof window !== 'undefined' ? window.matchMedia?.('(prefers-color-scheme: dark)') : undefined;

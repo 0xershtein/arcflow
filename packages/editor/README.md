@@ -16,7 +16,11 @@ const editor = createEditor(document.querySelector('#editor'), {
 });
 ```
 
-The container needs a height; the editor fills it. Styles are injected into the document (or the element's shadow root) once; pass `injectStyles: false` to manage CSS yourself.
+The container needs a **definite** height — one the browser resolves without measuring the content
+(`height: 100vh`, a px height, `height: 100%` in a sized parent, or `flex: 1` **plus** `min-height: 0`
+inside a flex or grid column). Without one the step list stretches the editor to its own length and the
+canvas ends up below the fold; a development build says so once in the console. Styles are injected into
+the document (or the element's shadow root) once; pass `injectStyles: false` to manage CSS yourself.
 
 ## API
 
@@ -54,7 +58,9 @@ Svelte 5 apps can mount the component instead of calling `createEditor`. It is t
 <button onclick={() => console.log(editor?.getFlow())}>Log the flow</button>
 ```
 
-`steps`, `flow`, `theme`, `ui`, `labels`, `backend`, `readonly`, `storageKey`, `services`, `runStepDelay` and the `onChange` / `onValidate` / `onSelect` / `onRun` callbacks are the `createEditor` options, passed as props. One prop is Svelte-only: `brand`, a snippet rendered on the left of the toolbar.
+`steps`, `flow`, `theme`, `ui`, `labels`, `backend`, `readonly`, `storageKey`, `services`, `vars`, `summaries`, `runStepDelay` and the `onChange` / `onValidate` / `onSelect` / `onRun` callbacks are the `createEditor` options, passed as props. One prop is Svelte-only: `brand`, a snippet rendered on the left of the toolbar — with `ui: { toolbar: { name: false } }` it stands where the flow name would be.
+
+Consuming this package **from source** (a workspace or `npm link`) means your Vite or SvelteKit build compiles its TypeScript, so an SSR build needs `ssr: { noExternal: ['@arcflow/core', '@arcflow/nodes', '@arcflow/editor', '@arcflow/server'] }`. The published tarballs ship JavaScript and need nothing.
 
 There is no bindable `flow` prop — `flow` is the flow to start from. Read the current one from `onChange`, or call `getFlow()` on the component.
 
@@ -77,6 +83,22 @@ The styles come with the import — the entry pulls in the theme, the editor CSS
 ```ts
 import '@arcflow/editor/styles.css';
 ```
+
+## Fitting into a host
+
+- **Your own header.** `ui.toolbar` takes `true`, `false`, or the parts to keep: `name`, `status`,
+  `undo`, `note`, `json`, `importExport`, `flows`, `executions`, `run`, `testRun`. Parts with a `ui`
+  option of their own show when both are on. Hiding a control never disables what it did — `run()`,
+  `undo()`, `redo()` and `setFlow()` stay available for your buttons to call.
+- **Run variables.** `vars` is merged into every run the editor starts, over the flow's own `vars`,
+  over the registry's `sampleVars`, and is never written into the flow you save.
+- **Step summaries.** `summaries: { 'trigger.schedule': (config, def) => 'Every weekday at 09:00' }`
+  replaces what a step says it will do on the canvas, per kind. The definition's own `summary` stays
+  the fallback, and a summary that throws falls back to it rather than breaking the canvas.
+- **Hints.** The empty-canvas hints follow the interface they mention (`ui.palette`, `ui.json`,
+  `ui.importExport`), and any label set to an empty string is dropped rather than rendered blank.
+- **Attribution.** Svelte Flow's corner link is that library's licence condition and stays;
+  `ui.attribution` moves it to another corner.
 
 ## Editing
 

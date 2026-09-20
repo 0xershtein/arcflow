@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { checkExpression, createEngine, createRegistry, defineNode, describeMissing, f, resolveTemplates, waitingSteps } from '../src/index.js';
+import { checkExpression, createEngine, createRegistry, defineNode, definePack, describeMissing, f, resolveTemplates, waitingSteps } from '../src/index.js';
 
 const start = defineNode({ kind: 'rt.start', title: 'Start', description: 'Starts the flow.', trigger: true, run: (ctx) => ({ output: ctx.input }) });
 
@@ -250,6 +250,54 @@ describe('LLM helpers', () => {
 	});
 });
 
+
+describe('run variables', () => {
+	/** A step that reports a variable, so precedence is visible from the outside. */
+	const limit = defineNode({
+		kind: 'rt.limit',
+		title: 'Limit',
+		description: 'Reads a variable.',
+		config: { value: f.json({ optional: true }) },
+		run: (ctx) => ({ output: { value: ctx.config.value } })
+	});
+	const varsRegistry = createRegistry([start, limit]);
+	const flow = () => {
+		const built = varsRegistry.flow('Limit');
+		built.add('rt.start', {}, { id: 's' }).to(built.add('rt.limit', { value: '{{ vars.limit }}' }, { id: 'read' }));
+		const json = built.build();
+		return { ...json, vars: { limit: 'from the flow' } };
+	};
+
+	it('puts the variables the caller passed over the ones in the flow', async () => {
+		const run = await createEngine(varsRegistry).start(flow(), { vars: { limit: 'from the caller' } });
+		expect(run.steps.read.output).toEqual({ value: 'from the caller' });
+		expect(run.vars.limit).toBe('from the caller');
+	});
+
+	it('falls back to the ones in the flow, and never writes to it', async () => {
+		const json = flow();
+		const run = await createEngine(varsRegistry).start(json);
+		expect(run.steps.read.output).toEqual({ value: 'from the flow' });
+		expect(json.vars).toEqual({ limit: 'from the flow' });
+	});
+
+	it('uses sample values only in simulate mode, under anything the caller passed', async () => {
+		const sampled = createRegistry([definePack({ id: 'rt', label: 'rt', nodes: [start, limit], sampleVars: { limit: 'sample' } })]);
+		const plain = { version: 1, name: 'Limit', nodes: [
+			{ id: 's', kind: 'rt.start', config: {} },
+			{ id: 'read', kind: 'rt.limit', config: { value: '{{ vars.limit }}' } }
+		], edges: [{ from: 's', to: 'read' }] };
+
+		const simulated = await createEngine(sampled).start(plain, { mode: 'simulate' });
+		expect(simulated.steps.read.output).toEqual({ value: 'sample' });
+
+		const live = await createEngine(sampled).start(plain);
+		expect(live.steps.read.output).toEqual({ value: undefined });
+
+		const overridden = await createEngine(sampled).start(plain, { mode: 'simulate', vars: { limit: 'from the caller' } });
+		expect(overridden.steps.read.output).toEqual({ value: 'from the caller' });
+	});
+});
 
 describe('expressions at run time', () => {
 	/** hook → total, where the amount comes out of the trigger payload. */

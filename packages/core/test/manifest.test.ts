@@ -16,6 +16,18 @@ describe('step manifest', () => {
 		expect(JSON.parse(JSON.stringify(manifest))).toEqual(manifest); // plain JSON, no functions
 	});
 
+	it('carries which steps can pretend, so an editor can say what a test run did', () => {
+		const manifest = toManifest(registry);
+		// test.approve defines a simulate handler in the fixtures; the others do not.
+		expect(manifest.steps.find((step) => step.kind === 'test.approve')?.simulate).toBe(true);
+		expect(manifest.steps.find((step) => step.kind === 'test.pay')?.simulate).toBeUndefined();
+
+		const remote = overTheWire();
+		const step = (kind: string) => remote.get(kind);
+		expect(Boolean(step('test.approve')?.simulate)).toBe(true);
+		expect(Boolean(step('test.pay')?.simulate)).toBe(false);
+	});
+
 	it('carries the sub-flow marker, so a browser knows which step opens another flow', () => {
 		const caller = defineNode({
 			kind: 'test.call',

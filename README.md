@@ -94,11 +94,13 @@ Everything that goes in or comes out is JSON-serializable, so it can be stored, 
 | `steps` | `Registry` or `(Pack \| NodeDefinition)[]` | Step types the user can place. |
 | `flow` | `Flow` or JSON string | Flow to show. Changing it reloads the canvas. Positions are optional. |
 | `theme` | `'light' \| 'dark' \| 'auto'` or `ThemeOptions` | `mode`, `colors`, `light`, `dark`, `fontFamily`, `monoFontFamily`, `fontSize`, `radius`, `nodeWidth`. |
-| `ui` | `UiOptions` | `toolbar`, `palette`, `inspector`, `testRun`, `json`, `importExport`, `flows`, `executions`, `ai`, `controls`, `minimap`, `background`, `node`. |
-| `labels` | `Partial<Labels>` | Replace or translate any interface text. |
+| `ui` | `UiOptions` | `toolbar`, `palette`, `inspector`, `testRun`, `json`, `importExport`, `flows`, `executions`, `ai`, `controls`, `minimap`, `background`, `attribution`, `node`. `toolbar` also takes the parts to keep — see [Your own header](#your-own-header). Each flag hides interface, not behaviour: with `testRun: false` the button is gone but `editor.run()` still runs the flow, and `json: false` leaves `setFlow()` alone. |
+| `labels` | `Partial<Labels>` | Replace or translate any interface text. An empty string drops the ones that are optional, such as the hints on an empty canvas. |
 | `readonly` | `boolean` | View only. |
 | `storageKey` | `string` | Autosave to `localStorage`. |
 | `services` | `Services` | Passed to steps during a Test run here (always `simulate` mode). |
+| `vars` | `Record<string, unknown>` | Run variables for the editor's runs, readable as `{{ vars.name }}`. Merged in when a run starts and never written into the flow — see [Run variables](#run-variables). |
+| `summaries` | `Record<string, (config, def) => string>` | Replace what a step says it will do on the canvas, by kind. |
 | `runStepDelay` | `number` | Pause between steps during Test run, so a run is watchable. Default `450`ms. |
 | `backend` | `Backend` | Connects to a flow server: open and save flows, activate them, pick credentials, run for real, browse past runs. See [Run flows on a server](#run-flows-on-a-server). |
 
@@ -141,6 +143,59 @@ With no server to ask, the button is hidden.
 A flow whose trigger is a webhook or a schedule has no payload when you press either button. Give the
 trigger step a **Test body** (`sample`) and both runs start from it, so `{{ trigger.body.total }}`
 resolves to something. A real request or a scheduled fire always wins over the sample.
+
+### Your own header
+
+A host with a header of its own usually wants the canvas without a second name field, and `ui.toolbar: false`
+used to take undo, Note and the problem badge with it. It also takes the parts to keep:
+
+```ts
+createEditor(el, {
+	steps,
+	// A brand snippet (Svelte) stands where the name field was.
+	ui: { toolbar: { name: false, testRun: false }, testRun: true }
+});
+```
+
+`true` and `false` still mean the whole toolbar or none of it. The parts are `name`, `status`, `undo`,
+`note`, `json`, `importExport`, `flows`, `executions`, `run` and `testRun`; a part that has a `ui` option
+of its own (`json`, `importExport`, `flows`, `executions`, `testRun`) shows when both are on. Hiding a part
+hides the control, not the behaviour — `editor.run()`, `editor.undo()` and `setFlow()` keep working, so a
+host's own buttons can call them.
+
+### Run variables
+
+Steps read `{{ vars.balance }}`. Three places set them, each one over the last:
+
+| | |
+| --- | --- |
+| `registry.sampleVars` | Stand-ins from the step pack, used in `simulate` mode only. |
+| `flow.vars` | Saved with the flow, for values that belong to it. |
+| `vars` option | The host's values for this editor's runs. Never written into the flow. |
+
+So a dashboard can hand the editor today's numbers without them ending up in the JSON it saves:
+
+```ts
+createEditor(el, { steps, vars: { balance: account.balance }, onChange: save });
+```
+
+Test runs here use them, and so do runs started on a server (`POST /api/flows/:id/runs` takes `vars`).
+
+### Height
+
+The editor fills its element, so that element needs a **definite** height — one the browser can resolve
+without measuring the content:
+
+```css
+#editor { height: 100vh; }          /* or a px height, or height: 100% inside a sized parent */
+.column { display: flex; flex-direction: column; min-height: 100vh; }
+.column #editor { flex: 1; min-height: 0; }   /* min-height: 0, or the palette grows the row */
+```
+
+A flex or grid child defaults to `min-height: auto`, so without `min-height: 0` the step list stretches
+the editor to its own length, the canvas is pushed below the fold and the fit lands on nodes nobody can
+see. In a development build the editor writes one console warning when it notices that its height came
+from its content.
 
 ### Small containers
 
@@ -217,7 +272,7 @@ All colors map to `--fb-*` CSS variables on `.fb-root`, so CSS overrides work as
 
 ### Text
 
-Every string the editor can show is in `labels` — 147 of them, from button captions to the
+Every string the editor can show is in `labels` — 151 of them, from button captions to the
 empty-canvas hint to validation wording. Pass the ones you want to change; the rest keep their
 defaults. `{name}` and `{count}` placeholders are filled in at render time.
 
@@ -305,13 +360,28 @@ The default entry is a plain ES module with Svelte compiled into it, so React, V
 plain HTML all mount the editor the same way: `createEditor(element, options)`. Svelte is an
 optional peer dependency — only the `/svelte` entry needs it installed.
 
-Two rules make a wrapper behave:
+Three rules make a wrapper behave:
 
 - **Create it once** and push later changes through `setOptions` or `setFlow`. Recreating the
   editor throws away the canvas, the selection and the undo history.
 - **Keep `flow` referentially stable.** A different object means a different flow, so a new one
   on every render reloads the canvas over whatever the person was editing. `steps` is fixed for
   the life of an instance.
+- **Give the element a definite height** — see [Height](#height). A wrapper in a flex column needs
+  `min-height: 0` as well, or the editor grows instead of filling its share.
+
+Using the packages **from source** — a workspace, `npm link`, or a monorepo that imports
+`packages/*/src` — means a Vite or SvelteKit host builds their TypeScript itself. For an SSR build,
+tell it not to externalize them:
+
+```ts
+// vite.config.ts
+export default defineConfig({
+	ssr: { noExternal: ['@arcflow/core', '@arcflow/nodes', '@arcflow/editor', '@arcflow/server'] }
+});
+```
+
+Published tarballs ship built JavaScript, so this is only for source consumers.
 
 **React**
 
@@ -416,6 +486,15 @@ with the editor and the standard steps if you just want to see it run.
 	});
 </script>
 ```
+
+## Svelte Flow attribution
+
+The canvas carries a small "Svelte Flow" link in its corner. It belongs to
+[Svelte Flow](https://svelteflow.dev), the canvas library underneath, and showing it is a condition of
+using that library for free — so arcflow has no option to hide it. `ui.attribution` moves it
+(`'top-left'`, `'top-center'`, `'top-right'`, `'bottom-left'`, `'bottom-center'`, `'bottom-right'`;
+default `'bottom-right'`) when it lands on something of yours. Removing it is what a
+[Svelte Flow Pro](https://svelteflow.dev/remove-attribution) subscription allows.
 
 ## Development
 

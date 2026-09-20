@@ -54,6 +54,8 @@ const OPTION_KEYS = [
 	'readonly',
 	'storageKey',
 	'services',
+	'vars',
+	'summaries',
 	'runStepDelay',
 	'onChange',
 	'onValidate',

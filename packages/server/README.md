@@ -64,7 +64,7 @@ interface, so pass `'127.0.0.1'` to keep it local.
 | `POST /api/flows/validate` | Parse and validate a flow without saving it |
 | `GET /api/flows`, `POST /api/flows` | List flows; create one from `{ id?, flow, active? }` |
 | `GET/PUT/DELETE /api/flows/:id` | Read (with issues), update (new version), delete |
-| `POST /api/flows/:id/runs` | Start a run: `{ payload?, mode?: "live" \| "simulate", trigger?, wait? }` |
+| `POST /api/flows/:id/runs` | Start a run: `{ payload?, mode?: "live" \| "simulate", trigger?, vars?, wait? }` — `vars` applies to that run only and leaves the saved flow alone |
 | `GET /api/runs?flowId&status&before&limit` | Run history, newest first |
 | `GET /api/runs/:id` | Full run state and result |
 | `POST /api/runs/:id/resume` | `{ nodeId, data? \| port?, output?, wait? }` — keys come from the run's waiting steps |

@@ -190,7 +190,9 @@ export function createApp(ctx: AppContext) {
 			trigger: { type: 'api' },
 			payload: body.payload,
 			mode: body.mode === 'simulate' ? 'simulate' : 'live',
-			triggerNode: typeof body.trigger === 'string' ? body.trigger : undefined
+			triggerNode: typeof body.trigger === 'string' ? body.trigger : undefined,
+			// Variables for this run only; the flow keeps the ones it was saved with.
+			...(isRecord(body.vars) ? { vars: body.vars } : {})
 		});
 		if (body.wait === true) return json({ run: await handle.finished });
 		return json({ run: runSummary(handle.run) }, 202);

@@ -1,7 +1,7 @@
 import { getContext, setContext } from 'svelte';
 import type { Issue, Registry, RunState } from '@arcflow/core';
 import type { Backend, ServerCredential } from './backend.js';
-import type { Labels, ResolvedUi } from './options.js';
+import type { EditorOptions, Labels, ResolvedUi } from './options.js';
 
 export type StepRunStatus = 'running' | 'success' | 'waiting' | 'error' | 'skipped';
 
@@ -26,6 +26,10 @@ export class EditorState {
 	labels = $state.raw<Labels>() as Labels;
 	ui = $state.raw<ResolvedUi>() as ResolvedUi;
 	readonly = $state(false);
+	/** Run variables the host set, merged in when a run starts and kept out of the flow. */
+	vars = $state.raw<Record<string, unknown>>({});
+	/** Host replacements for what a step says it will do, by kind. */
+	summaries = $state.raw<EditorOptions['summaries']>(undefined);
 	runStatus = $state<Record<string, { status: StepRunStatus; message?: string }>>({});
 	issuesByNode = $state<Record<string, Issue[]>>({});
 	/** The most recent test run, used to inspect step data, suggest expressions and preview them. */

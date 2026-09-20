@@ -14,6 +14,8 @@ export interface StepManifest {
 	icon?: string;
 	trigger?: boolean;
 	loop?: boolean;
+	/** The step has a `simulate` handler, so a test run does not make it do the real thing. */
+	simulate?: boolean;
 	join?: 'any' | 'all';
 	subflow?: { field: string };
 	outputs: Port[];
@@ -35,7 +37,10 @@ export const MANIFEST_VERSION = 1;
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-/** The registry as JSON. `summary`, `check`, `run` and `simulate` are code and stay behind. */
+/**
+ * The registry as JSON. `summary`, `check`, `run` and `simulate` are code and stay behind; that a
+ * step *has* a `simulate` handler travels as a flag, since it changes what a test run means.
+ */
 export function toManifest(registry: Registry<AnyNodeDefinition>): RegistryManifest {
 	return {
 		version: MANIFEST_VERSION,
@@ -49,6 +54,7 @@ export function toManifest(registry: Registry<AnyNodeDefinition>): RegistryManif
 			...(def.icon ? { icon: def.icon } : {}),
 			...(def.trigger ? { trigger: true } : {}),
 			...(def.loop ? { loop: true } : {}),
+			...(def.simulate ? { simulate: true } : {}),
 			...(def.join ? { join: def.join } : {}),
 			...(def.subflow ? { subflow: clone(def.subflow) } : {}),
 			outputs: clone([...def.outputs]),
@@ -124,7 +130,16 @@ export function registryFromManifest(input: unknown): Registry<AnyNodeDefinition
 			...(typeof step.timeoutMs === 'number' ? { timeoutMs: step.timeoutMs } : {}),
 			run() {
 				throw new Error(`"${title(step, kind)}" runs on the flow server, not here.`);
-			}
+			},
+			// Code stays behind, but whether the step can pretend travels: an editor needs it to say
+			// what a test run really did.
+			...(step.simulate === true
+				? {
+						simulate() {
+							throw new Error(`"${title(step, kind)}" runs on the flow server, not here.`);
+						}
+					}
+				: {})
 		};
 		return definition;
 	});

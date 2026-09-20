@@ -2,8 +2,8 @@
  * Plain helpers behind what the toolbar, the problems panel and the run log say.
  * They are framework-free on purpose: the components read them, and the tests read them too.
  */
-import type { Issue } from '@arcflow/core';
-import { format, type Labels } from './options.js';
+import type { AnyNodeDefinition, Issue } from '@arcflow/core';
+import { format, type EditorOptions, type Labels } from './options.js';
 
 export type FlowStatus = 'empty' | 'errors' | 'notes' | 'ready';
 
@@ -69,9 +69,50 @@ export interface RunHeader {
 	live: boolean;
 }
 
-export function runHeader(mode: RunKind, labels: Labels): RunHeader {
+/**
+ * `ran` is how many steps of a finished simulation had no test mode and therefore did the real thing.
+ * Pass `null` while a run is still going or when the steps cannot be counted (a catalog that does not
+ * say which steps can pretend), and the header keeps the general warning instead of a number.
+ */
+export function runHeader(mode: RunKind, labels: Labels, ran: number | null = null): RunHeader {
 	if (mode === 'live') return { title: labels.liveRunTitle, note: labels.ranOnServer, live: true };
-	return { title: labels.runTitle, note: mode === 'test-server' ? labels.simulatedOnServer : labels.simulated, live: false };
+	const note =
+		ran === null
+			? mode === 'test-server'
+				? labels.simulatedOnServer
+				: labels.simulated
+			: ran === 0
+				? labels.simulatedNothing
+				: ran === 1
+					? labels.simulatedOneRan
+					: format(labels.simulatedRan, { count: ran });
+	return { title: labels.runTitle, note, live: false };
+}
+
+/**
+ * What a step says it will do: the host's override for that kind, else the definition's own summary,
+ * else its description. A summary is written by someone else and runs on half-finished config, so a
+ * throw from one falls back rather than taking the canvas with it.
+ */
+export function stepSummary(
+	def: AnyNodeDefinition,
+	config: Record<string, unknown>,
+	overrides?: EditorOptions['summaries']
+): string {
+	const override = overrides?.[def.kind];
+	if (override) {
+		try {
+			const text = override(config, def);
+			if (typeof text === 'string' && text) return text;
+		} catch {
+			// a host's summary is not worth a broken canvas
+		}
+	}
+	try {
+		return def.summary?.(config) ?? def.description;
+	} catch {
+		return def.description;
+	}
 }
 
 /** `1234` → `1.2s`, `65_000` → `1m 5s`. Short enough for a run row. */

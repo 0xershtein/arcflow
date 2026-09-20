@@ -703,9 +703,17 @@
 	box-shadow: 0 0 0 1px var(--fb-line-strong);
 }
 
+/*
+ * The caption is as wide as it needs to be and never wider than a step, so it wraps on the step's
+ * width rather than on its own: at a small `nodeWidth` a fixed-width caption leaves ragged lines
+ * under a 78px square. `text-wrap` is inherited by the title and the summary inside it.
+ */
 .fb-node[data-shape='tile'] .fb-node-caption {
-	width: var(--fb-node-width);
+	width: max-content;
+	max-width: var(--fb-node-width);
 	text-align: center;
+	text-wrap: balance;
+	overflow-wrap: anywhere;
 }
 
 .fb-node[data-shape='tile'] .fb-node-title {

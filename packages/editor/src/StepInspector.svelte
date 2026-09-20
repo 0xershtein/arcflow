@@ -46,6 +46,20 @@
 	const readonly = $derived(editor.readonly);
 	const summary = $derived(problems ?? summarize(issues, 1));
 
+	/**
+	 * Hints for an empty canvas. Each one belongs to a part of the interface, so a host that turned
+	 * that part off is not told to use it; clearing a label in `labels` drops its hint as well.
+	 */
+	const hints = $derived(
+		[
+			{ text: labels.hintAdd, on: editor.ui.palette },
+			{ text: labels.hintConnect, on: true },
+			{ text: labels.hintJson, on: editor.ui.json },
+			{ text: labels.hintImportExport, on: editor.ui.importExport },
+			{ text: labels.hintDelete, on: true }
+		].filter((hint) => hint.on && hint.text.trim())
+	);
+
 	let tab = $state<Tab>('settings');
 	let iteration = $state(-1);
 	let lastNodeId: string | undefined;
@@ -155,7 +169,7 @@
 			walk(`steps.${step.id}.output`, step.output);
 		}
 		walk('trigger', editor.lastRun?.trigger);
-		walk('vars', editor.lastRun?.vars ?? editor.registry.sampleVars);
+		walk('vars', editor.lastRun?.vars ?? { ...editor.registry.sampleVars, ...editor.vars });
 		push('$now', 'current time');
 		push('$item', 'item in a loop');
 		push('$index', 'index in a loop');
@@ -343,12 +357,11 @@
 			<p class="fb-insp-desc fb-flush">{labels.allGood}</p>
 		{/if}
 
-		{#if !readonly}
+		{#if !readonly && hints.length}
 			<ul class="fb-hints">
-				<li>{labels.hintAdd}</li>
-				<li>{labels.hintConnect}</li>
-				{#if editor.ui.json}<li>{labels.hintJson}</li>{/if}
-				<li>{labels.hintDelete}</li>
+				{#each hints as hint (hint.text)}
+					<li>{hint.text}</li>
+				{/each}
 			</ul>
 		{/if}
 	{/if}

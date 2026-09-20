@@ -37,8 +37,9 @@ packages/editor/src        the editor (Svelte 5 inside, framework-free outside)
   index.ts                 public entry: createEditor + option types (bundled by vite, core external)
   svelte.ts                entry for Svelte apps (components as source)
   vanilla.svelte.ts        createEditor: mount + getter props + style injection
-  options.ts               EditorOptions, ThemeOptions, UiOptions, Labels, resolvers
-  summary.ts               problem counts, run-log wording, durations and timestamps (plain, tested)
+  options.ts               EditorOptions, ThemeOptions, UiOptions (toolbar parts), Labels, resolvers
+  summary.ts               problem counts, run-log wording, step summaries, durations and timestamps (plain, tested)
+  dev.ts                   isDev: development-only warnings fold away in a production build
   FlowEditor.svelte        props → context (labels, ui, readonly) + theme → Workspace
   Workspace.svelte         canvas, toolbar, history (JSON snapshots), clipboard, shortcuts, insert picker, test runs
   StepNode / StepPalette / StepInspector / FieldInput / ExpressionInput / JsonTree / JsonPanel

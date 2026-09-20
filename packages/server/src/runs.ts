@@ -15,6 +15,8 @@ export interface StartRunOptions {
 	trigger: RunTrigger;
 	payload?: unknown;
 	mode?: RunMode;
+	/** Run variables for this run, merged over the flow's own. */
+	vars?: Record<string, unknown>;
 	/** Start from this trigger only. */
 	triggerNode?: string;
 	/** Called synchronously as soon as the run has an id, before any step runs. */
@@ -96,7 +98,13 @@ export class RunManager {
 	start(flow: FlowRecord, options: StartRunOptions): Promise<RunHandle> {
 		const base = { flowId: flow.id, flowVersion: flow.version, flow: flow.flow, trigger: options.trigger };
 		return this.#execute(base, (controls) =>
-			this.#engine.start(flow.flow, { ...controls, payload: options.payload, mode: options.mode, trigger: options.triggerNode })
+			this.#engine.start(flow.flow, {
+				...controls,
+				payload: options.payload,
+				mode: options.mode,
+				trigger: options.triggerNode,
+				...(options.vars ? { vars: options.vars } : {})
+			})
 		, options.onCreated);
 	}
 

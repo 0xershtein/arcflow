@@ -64,6 +64,8 @@ export interface StartRunOptions {
 	mode?: 'live' | 'simulate';
 	/** Id of the trigger step to start from. */
 	trigger?: string;
+	/** Run variables for this run only, over the flow's own `vars`. */
+	vars?: Record<string, unknown>;
 }
 
 /** What a flow the model wrote comes back as. */

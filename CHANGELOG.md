@@ -14,7 +14,7 @@ The first release: build a flow in code, JSON, a canvas or a prompt, then run it
 - `applyPatch(flow, ops)`: change part of a flow at the path validation reported, or by node id, with structural operations for wiring. All or nothing, so a half-applied edit never reaches the canvas.
 - Expressions — `{{ path ?? fallback | filter: args }}` over vars, steps, input, trigger, run, `$item`, `$index` — evaluated without `eval`. A required field whose expression resolves to nothing at run time says so, and where the data stopped, instead of reading like a config mistake.
 - A run started without a payload takes its trigger data from the trigger step's own output, so `{{ trigger.* }}` works in a run started by hand.
-- `FlowBuilder` for typed flows in code, automatic layout, `toJSONSchema()` and `describe()` for LLM tooling, and `toManifest()` / `registryFromManifest()` to send a catalog to a browser.
+- `FlowBuilder` for typed flows in code, automatic layout, `toJSONSchema()` and `describe()` for LLM tooling, and `toManifest()` / `registryFromManifest()` to send a catalog to a browser — including which steps can pretend in a test run.
 
 ### `@arcflow/nodes`
 
@@ -30,6 +30,7 @@ The first release: build a flow in code, JSON, a canvas or a prompt, then run it
 - Server mode: flow list, Save, Activate, credential picker, execution history, live runs over SSE. It opens the flow saved last, saves a flow with errors as a draft, and asks the server what it has configured so features it lacks are off rather than failing when pressed.
 - Runs are labelled for what they were: a Test run in simulate mode (here, or on the server when the steps live there) or a real Run on the server, which wears the `live` colour.
 - The layout follows the editor's own width: below about 820px one column, the step list in a drawer and the toolbar's extras in a More menu, usable down to about 400px.
+- Fits into a host that has its own header: `ui.toolbar` takes the parts to keep, `vars` supplies run variables without writing them into the flow, `summaries` replaces what a step says it will do per kind, the empty-canvas hints follow the interface they mention, and an empty label drops its hint. A development build warns once when the editor has no definite height to fill.
 - Prompt bar: build or change a flow with AI, then Keep or Discard; Fix problems and Explain.
 - Three step shapes through `ui.node`: the default `card`, an n8n-style `tile` of icon with the name underneath, and a one-row `compact`.
 - Theming through `--fb-*` variables — nineteen colour tokens, documented one by one — and every string replaceable through `labels`.
@@ -49,7 +50,7 @@ The first release: build a flow in code, JSON, a canvas or a prompt, then run it
 
 ### Documentation
 
-- Reference for every option the packages take: the editor's fourteen, its nineteen colour tokens and 147 labels, and the engine, run, layout, sandbox, server, model and MCP options in each package's README.
+- Reference for every option the packages take: the editor's sixteen, its nineteen colour tokens and 151 labels, and the engine, run, layout, sandbox, server, model and MCP options in each package's README.
 - Docs site with a sidebar that lists each page's sections, mounting examples for HTML, React, Vue and Svelte behind one tab strip, and a live editor that switches step shape as you read about it.
 
 ### `@arcflow/mcp`
