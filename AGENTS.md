@@ -31,12 +31,14 @@ packages/core/src          dependency-free engine
   expressions.ts           {{ path ?? fallback | filter: args }} with FILTERS (no eval)
   engine.ts                createEngine → start / resume; scopes, joins, loops, credentials, RunState, RunEvent
   patch.ts                 applyPatch: set / remove by the path validation reports, addNode / removeNode / connect / disconnect
+  manifest.ts               toManifest / registryFromManifest / isManifestRegistry (a catalog with no code)
   json-schema.ts, describe.ts
 packages/editor/src        the editor (Svelte 5 inside, framework-free outside)
   index.ts                 public entry: createEditor + option types (bundled by vite, core external)
   svelte.ts                entry for Svelte apps (components as source)
   vanilla.svelte.ts        createEditor: mount + getter props + style injection
   options.ts               EditorOptions, ThemeOptions, UiOptions, Labels, resolvers
+  summary.ts               problem counts, run-log wording, durations and timestamps (plain, tested)
   FlowEditor.svelte        props → context (labels, ui, readonly) + theme → Workspace
   Workspace.svelte         canvas, toolbar, history (JSON snapshots), clipboard, shortcuts, insert picker, test runs
   StepNode / StepPalette / StepInspector / FieldInput / ExpressionInput / JsonTree / JsonPanel
@@ -120,5 +122,5 @@ docs/roadmap.md            milestones M1–M6
 | `disconnected`, `unreachable`, `unknown_reference`, `unknown_key` | warnings; the flow still runs |
 
 4. Fix one field rather than the document: `applyPatch(flow, [{ op: 'set', path: issue.path, value }])` takes the path the issue reported (`nodes[fetch].config.url` works too). `addNode` / `removeNode` / `connect` / `disconnect` handle wiring. All or nothing — a failed operation returns the flow untouched with the index that failed.
-5. Run with `createEngine(registry, { services }).start(flow)`; use `mode: 'simulate'` for side-effect-free runs. Resume a `waiting` run with `engine.resume(flow, state, { nodeId: key, data })` or `{ nodeId: key, port }`.
+5. Run with `createEngine(registry, { services }).start(flow)`; `mode: 'simulate'` runs each step's `simulate` handler where it has one (a step without one runs normally, so give anything that sends or pays a `simulate`). Resume a `waiting` run with `engine.resume(flow, state, { nodeId: key, data })` or `{ nodeId: key, port }`.
 6. In a browser, `createEditor(el, { steps, flow })` shows it; `editor.getFlow()` returns the edited JSON.

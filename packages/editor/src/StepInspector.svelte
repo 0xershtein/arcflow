@@ -2,14 +2,17 @@
 	import { fieldLabel, isFieldVisible, resolveTemplates, type AnyNodeDefinition, type Issue, type Shape, type StepRecord } from '@arcflow/core';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
+	import { DEFAULT_ICON } from './icons.js';
 	import JsonTree from './JsonTree.svelte';
 	import { getEditor, type Suggestion } from './context.svelte.js';
 	import type { CanvasNode } from './convert.js';
 	import { format } from './options.js';
+	import { statusTitle, summarize, type FlowSummary } from './summary.js';
 
 	let {
 		node,
 		issues,
+		problems,
 		upstream = [],
 		onconfig,
 		onlabel,
@@ -21,6 +24,8 @@
 	}: {
 		node: CanvasNode | null;
 		issues: Issue[];
+		/** The flow's problems as the toolbar counts them, so both say the same thing. */
+		problems?: FlowSummary;
 		/** Steps that run before this one, nearest first. */
 		upstream?: { id: string; title: string }[];
 		onconfig: (key: string, value: unknown) => void;
@@ -39,6 +44,7 @@
 	const editor = getEditor();
 	const labels = $derived(editor.labels);
 	const readonly = $derived(editor.readonly);
+	const summary = $derived(problems ?? summarize(issues, 1));
 
 	let tab = $state<Tab>('settings');
 	let iteration = $state(-1);
@@ -174,7 +180,7 @@
 <aside class="fb-inspector" aria-label={def?.title ?? labels.flow}>
 	{#if node && def}
 		<div class="fb-insp-head">
-			<span class="fb-node-icon large"><Icon name={def.icon ?? 'sparkle'} size={18} /></span>
+			<span class="fb-node-icon large"><Icon name={def.icon ?? DEFAULT_ICON} size={18} /></span>
 			<div class="fb-insp-titles">
 				<span class="fb-eyebrow">{category}</span>
 				<span class="fb-insp-title">{def.title}</span>
@@ -219,9 +225,9 @@
 			</label>
 
 			{#each fields as [key, field] (key)}
-				{@const problems = nodeIssues.filter((issue) => fieldKey(issue) === key)}
+				{@const fieldIssues = nodeIssues.filter((issue) => fieldKey(issue) === key)}
 				{@const preview = previewOf(node.data.config[key])}
-				<div class="fb-field" class:has-issue={problems.some((p) => p.level === 'error')} role="group" aria-label={fieldLabel(key, field)}>
+				<div class="fb-field" class:has-issue={fieldIssues.some((p) => p.level === 'error')} role="group" aria-label={fieldLabel(key, field)}>
 					<span class="fb-field-label">
 						{fieldLabel(key, field)}{field.optional && field.default === undefined ? ` (${labels.optional})` : ''}
 					</span>
@@ -230,7 +236,7 @@
 						<span class="fb-preview" class:is-error={preview.error}><span class="fb-preview-label">{labels.preview}</span>{preview.text}</span>
 					{/if}
 					{#if field.description}<span class="fb-help">{field.description}</span>{/if}
-					{#each problems as problem, i (i)}
+					{#each fieldIssues as problem, i (i)}
 						<span class="fb-field-issue {problem.level}">{withoutName(problem.message)}</span>
 					{/each}
 				</div>
@@ -311,10 +317,13 @@
 	{:else}
 		<div class="fb-insp-titles">
 			<span class="fb-eyebrow">{labels.flow}</span>
-			<span class="fb-insp-title">{issues.length ? labels.needsAttention : labels.looksGood}</span>
+			<span class="fb-insp-title">{statusTitle(summary, labels)}</span>
 		</div>
 
-		{#if issues.length}
+		<!-- A flow with no steps yet has nothing wrong with it; it needs a trigger, which is guidance. -->
+		{#if summary.status === 'empty'}
+			<p class="fb-insp-desc fb-flush">{labels.emptyBody}</p>
+		{:else if issues.length}
 			<div class="fb-issues">
 				{#each issues as issue, i (i)}
 					{#if issue.nodeId}

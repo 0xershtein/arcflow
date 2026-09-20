@@ -164,6 +164,58 @@ export function evaluate(expression: string, scope: ExpressionScope): unknown {
 	return value;
 }
 
+/** Plain-language name of each expression root, for messages about missing data. */
+const ROOT_NAMES: Record<string, string> = {
+	vars: 'the run variables',
+	steps: 'the earlier steps',
+	input: 'the step input',
+	inputs: 'the step inputs',
+	trigger: 'the trigger payload',
+	run: 'the run'
+};
+
+/** `['body', '0', 'total']` → `body[0].total` */
+function joinSegments(segments: string[]): string {
+	return segments.reduce((path, segment) => {
+		if (/^\d+$/.test(segment)) return `${path}[${segment}]`;
+		return path ? `${path}.${segment}` : segment;
+	}, '');
+}
+
+/**
+ * Why an expression produced nothing, in plain language — e.g. `the trigger payload had no body.total`.
+ * Returns `null` when the expression does resolve to a value, so callers can tell a run-time miss
+ * ("nothing arrived") from a configuration mistake ("nothing was written here").
+ */
+export function describeMissing(expression: string, scope: ExpressionScope): string | null {
+	const [head] = splitTopLevel(expression, '|');
+	const parts = splitTopLevel(head, '??');
+	let path: string | undefined;
+	for (const part of parts) {
+		if (!part) continue;
+		const lit = literal(part);
+		if (lit.found) {
+			if (lit.value !== undefined && lit.value !== null) return null;
+			continue;
+		}
+		if (lookup(part, scope) !== undefined) return null;
+		path ??= part;
+	}
+	if (path === undefined) return null;
+
+	const [root, ...rest] = splitPath(path);
+	if (!root || !(EXPRESSION_ROOTS as readonly string[]).includes(root)) return null;
+	const name = ROOT_NAMES[root] ?? root;
+	let current = (scope as Record<string, unknown>)[root];
+	if (current === undefined || current === null || rest.length === 0) return `there was nothing in ${name}`;
+
+	for (const [index, segment] of rest.entries()) {
+		current = readPath(current, [segment]);
+		if (current === undefined || current === null) return `${name} had no ${joinSegments(rest.slice(0, index + 1))}`;
+	}
+	return `${name} had no ${joinSegments(rest)}`;
+}
+
 /** Returns a problem description, or `null` when the expression is well formed. */
 export function checkExpression(expression: string): string | null {
 	const [head, ...filters] = splitTopLevel(expression, '|');

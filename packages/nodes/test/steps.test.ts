@@ -224,6 +224,38 @@ describe('schedule', () => {
 	});
 });
 
+describe('test payloads on triggers', () => {
+	it('runs a webhook flow from its sample body when no request started it', async () => {
+		const flow = standardRegistry.flow('Big orders');
+		flow
+			.add('trigger.webhook', { path: 'orders/created', sample: { total: 120 } }, { id: 'hook' })
+			.to(flow.add('logic.if', { conditions: [{ left: '{{ trigger.body.total }}', operator: 'gt', right: 100 }] }, { id: 'check' }));
+
+		const run = await createEngine(standardRegistry).start(flow.build(), { mode: 'simulate' });
+		expect(run.status).toBe('completed');
+		expect(run.trigger).toMatchObject({ method: 'POST', path: 'orders/created', body: { total: 120 } });
+		expect(run.steps.check.ports).toEqual(['true']);
+	});
+
+	it('still prefers the real request when there is one', async () => {
+		const flow = standardRegistry.flow('Small orders');
+		flow.add('trigger.webhook', { path: 'orders/created', sample: { total: 120 } }, { id: 'hook' });
+		const payload = { method: 'POST', path: 'orders/created', headers: {}, query: {}, body: { total: 1 } };
+
+		const run = await createEngine(standardRegistry).start(flow.build(), { payload });
+		expect(run.steps.hook.output).toEqual(payload);
+	});
+
+	it('merges a schedule trigger sample into its output', async () => {
+		const flow = standardRegistry.flow('Nightly');
+		flow.add('trigger.schedule', { cron: '0 9 * * 1-5', sample: { region: 'eu' } }, { id: 'cron' });
+
+		const run = await createEngine(standardRegistry).start(flow.build(), { mode: 'simulate' });
+		expect(run.steps.cron.output).toMatchObject({ region: 'eu' });
+		expect(run.trigger).toMatchObject({ region: 'eu' });
+	});
+});
+
 describe('example: open to-do digest', () => {
 	it('fetches, filters in code, branches and posts', async () => {
 		const fetchMock = vi.fn(async (url: URL, init?: RequestInit) =>

@@ -19,6 +19,7 @@ export {
 	type Backend,
 	type HttpBackendOptions,
 	type RunQuery,
+	type ServerCapabilities,
 	type ServerCredential,
 	type ServerFlow,
 	type ServerFlowSummary,

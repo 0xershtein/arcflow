@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { Handle, Position, type NodeProps } from '@xyflow/svelte';
 	import Icon from './Icon.svelte';
+	import { DEFAULT_ICON } from './icons.js';
 	import { getEditor } from './context.svelte.js';
 	import type { CanvasNode } from './convert.js';
 	import { format } from './options.js';
+	import { withLocalTimes } from './summary.js';
 
 	let { id, data, selected }: NodeProps<CanvasNode> = $props();
 
@@ -54,7 +56,7 @@
 {#snippet identity()}
 	<div class="fb-node-title">{title}</div>
 	{#if shape !== 'compact'}
-		<div class="fb-node-summary" class:is-run={Boolean(run?.message)}>{run?.message ?? summary}</div>
+		<div class="fb-node-summary" class:is-run={Boolean(run?.message)}>{run?.message ? withLocalTimes(run.message) : summary}</div>
 	{/if}
 {/snippet}
 
@@ -65,11 +67,11 @@
 		{/if}
 
 		{#if shape === 'tile'}
-			<span class="fb-node-icon"><Icon name={def?.icon ?? 'alert'} size={26} /></span>
+			<span class="fb-node-icon"><Icon name={def?.icon ?? DEFAULT_ICON} size={26} /></span>
 			{@render state()}
 		{:else}
 			<div class="fb-node-head">
-				<span class="fb-node-icon"><Icon name={def?.icon ?? 'alert'} size={15} /></span>
+				<span class="fb-node-icon"><Icon name={def?.icon ?? DEFAULT_ICON} size={15} /></span>
 				{#if shape === 'card'}<span class="fb-node-kind">{category}</span>{/if}
 				{#if shape === 'compact'}{@render identity()}{/if}
 				{@render state()}

@@ -46,8 +46,8 @@
 />
 
 <div class="fb-server" bind:this={element}>
-	<button class="fb-btn" onclick={() => (open = !open)} aria-expanded={open} aria-haspopup="menu">
-		<Icon name="layers" size={15} />{current?.name ?? labels.flows}
+	<button class="fb-btn" onclick={() => (open = !open)} aria-expanded={open} aria-haspopup="menu" aria-label={labels.flows} title={current?.name ?? labels.flows}>
+		<Icon name="layers" size={15} /><span class="fb-label fb-btn-name">{current?.name ?? labels.flows}</span>
 		<Icon name="chevron" size={13} />
 	</button>
 
@@ -79,8 +79,8 @@
 	{/if}
 
 	{#if !readonly}
-		<button class="fb-btn" onclick={onsave} disabled={busy || (!dirty && Boolean(current))}>
-			<Icon name="download" size={15} />{busy ? labels.saving : dirty || !current ? labels.save : labels.savedState}
+		<button class="fb-btn" onclick={onsave} disabled={busy || (!dirty && Boolean(current))} title={labels.save}>
+			<Icon name="download" size={15} /><span class="fb-label">{busy ? labels.saving : dirty || !current ? labels.save : labels.savedState}</span>
 		</button>
 		{#if current}
 			<button
@@ -88,9 +88,10 @@
 				class:is-on={current.active}
 				onclick={ontoggleActive}
 				disabled={busy}
+				aria-label={current.active ? labels.deactivate : labels.activate}
 				title={labels.activeHint}
 			>
-				<Icon name={current.active ? 'stop' : 'check'} size={14} stroke={2} />{current.active ? labels.deactivate : labels.activate}
+				<Icon name={current.active ? 'stop' : 'check'} size={14} stroke={2} /><span class="fb-label">{current.active ? labels.deactivate : labels.activate}</span>
 			</button>
 		{/if}
 	{/if}

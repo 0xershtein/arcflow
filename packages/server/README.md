@@ -59,6 +59,7 @@ interface, so pass `'127.0.0.1'` to keep it local.
 
 | | |
 | --- | --- |
+| `GET /api/health` | `{ ok, ai, credentials }` — what this server has configured, so an editor can hide what is off |
 | `GET /api/steps` | Step catalog: config schemas, outputs, the flow JSON Schema, a Markdown catalog for prompts, and a `manifest` that `registryFromManifest` turns back into a registry in the browser |
 | `POST /api/flows/validate` | Parse and validate a flow without saving it |
 | `GET /api/flows`, `POST /api/flows` | List flows; create one from `{ id?, flow, active? }` |
@@ -70,10 +71,12 @@ interface, so pass `'127.0.0.1'` to keep it local.
 | `POST /api/runs/:id/cancel` | Cancel a running or waiting run |
 | `GET /api/runs/:id/events` | Server-Sent Events for a live run |
 | `GET/POST /api/credentials`, `PUT/DELETE /api/credentials/:id` | Credentials; values are write-only and stored with AES-256-GCM |
-| `POST /api/ai/generate`, `POST /api/ai/edit`, `POST /api/ai/explain` | Build a flow from a description, change one, or describe it — `{ prompt }` / `{ flow, instruction }` / `{ flow, question? }`. 501 when generation is off |
+| `POST /api/ai/generate`, `POST /api/ai/edit`, `POST /api/ai/explain` | Build a flow from a description, change one, or describe it — `{ prompt }` / `{ flow, instruction }` / `{ flow, question? }`. 501 with no model, naming the feature that is off |
 | `ANY /hooks/<path>` | Webhook triggers of active flows |
 
 Flows with errors can be saved as drafts but not activated. Only active flows answer webhooks and schedules.
+
+Every answer under `/api` and `/hooks` is JSON, including 404s: an unknown route, method or id comes back as `{ "error": "…" }`, never as text.
 
 ## Flow generation
 

@@ -98,7 +98,7 @@ Everything that goes in or comes out is JSON-serializable, so it can be stored, 
 | `labels` | `Partial<Labels>` | Replace or translate any interface text. |
 | `readonly` | `boolean` | View only. |
 | `storageKey` | `string` | Autosave to `localStorage`. |
-| `services` | `Services` | Passed to steps during Test run (always `simulate` mode). |
+| `services` | `Services` | Passed to steps during a Test run here (always `simulate` mode). |
 | `runStepDelay` | `number` | Pause between steps during Test run, so a run is watchable. Default `450`ms. |
 | `backend` | `Backend` | Connects to a flow server: open and save flows, activate them, pick credentials, run for real, browse past runs. See [Run flows on a server](#run-flows-on-a-server). |
 
@@ -118,9 +118,35 @@ editor.getFlow();                  // Flow
 editor.getIssues();                // Issue[]
 await editor.setFlow(json);        // { loaded, issues }
 editor.setOptions({ theme: 'dark', readonly: true, labels: { testRun: 'Dry run' } });
-await editor.run();                // simulated run on the canvas
+await editor.run();                // Test run: simulated
+await editor.runOnServer();        // with a backend: the real thing
 editor.destroy();
 ```
+
+### Test run and Run
+
+**Test run** runs the flow in `simulate` mode: steps that define a `simulate` handler report what they
+*would* do instead of doing it. A step without one runs its normal `run` — that is what makes a test
+run useful for `logic.if`, `data.set` or your own pure steps — so the run log says
+*"Simulated — steps without a test mode still run"* rather than promising that nothing happened.
+Give any step that sends, pays or writes a `simulate` handler.
+
+**Run** (server mode) saves the flow and runs it on the server for real. The log says *"Ran on the
+server"* and wears the `live` color, so a real run never looks like a rehearsal.
+
+When the steps came from a server's catalog (`registryFromManifest`, which is what `createArcflowApp`
+does) they carry no code in the browser, so Test run runs on that server in `simulate` mode instead.
+With no server to ask, the button is hidden.
+
+A flow whose trigger is a webhook or a schedule has no payload when you press either button. Give the
+trigger step a **Test body** (`sample`) and both runs start from it, so `{{ trigger.body.total }}`
+resolves to something. A real request or a scheduled fire always wins over the sample.
+
+### Small containers
+
+The editor sizes itself to its container, not to the window. Below about 820px it becomes one column:
+the canvas with the open panel under it, the step list behind an **Add step** drawer, and the toolbar's
+secondary actions behind **More**. Nothing is removed — it folds. It stays usable down to about 400px.
 
 ### Flow JSON
 
@@ -165,7 +191,7 @@ createEditor(el, {
 
 All colors map to `--fb-*` CSS variables on `.fb-root`, so CSS overrides work as well. The defaults are a neutral gray palette with system fonts.
 
-`colors` applies to both modes; `light` and `dark` override the same names for one mode only. The seventeen names:
+`colors` applies to both modes; `light` and `dark` override the same names for one mode only. The nineteen names:
 
 | Token | Paints |
 | --- | --- |
@@ -182,6 +208,8 @@ All colors map to `--fb-*` CSS variables on `.fb-root`, so CSS overrides work as
 | `accentSoft` | The translucent ring and glow behind `accent`. |
 | `primary` | The main button — Test run, Apply. |
 | `primaryText` | Text on that button. |
+| `live` | Runs that really happened: the Run log's frame, badge and rows. |
+| `liveSoft` | The translucent background behind `live`. |
 | `danger` | Errors: text, borders, icons. |
 | `dangerSoft` | The background behind an error. |
 | `edge` | Connection lines. |
@@ -189,7 +217,7 @@ All colors map to `--fb-*` CSS variables on `.fb-root`, so CSS overrides work as
 
 ### Text
 
-Every string the editor can show is in `labels` — 135 of them, from button captions to the
+Every string the editor can show is in `labels` — 147 of them, from button captions to the
 empty-canvas hint to validation wording. Pass the ones you want to change; the rest keep their
 defaults. `{name}` and `{count}` placeholders are filled in at render time.
 
@@ -232,7 +260,8 @@ Built in:
 - **Sub-flows** — a step can run another flow and continue with its result; waits inside it resume through the calling step (`call>approve`).
 - **Credentials** — `f.credential('smtp')` stores only an id; secrets are resolved at run time and never written to flow JSON or run state.
 - **Expressions** — `{{ steps.fetch.output.items | map: "price" | sum | round: 2 }}`, `{{ $item.email ?? "unknown" }}`; lookups and whitelisted filters only, no `eval`.
-- Retries, timeouts, `error` output ports, cancellation, and `simulate` mode for side-effect-free test runs.
+- **Run-time misses read like misses** — a required field whose `{{ }}` resolved to nothing says so (`… resolved to nothing at run time; the trigger payload had no body.total`) instead of looking like a config mistake.
+- Retries, timeouts, `error` output ports, cancellation, and `simulate` mode, where every step that defines a `simulate` handler stands in for the real thing (steps without one still run — see [Test run and Run](#test-run-and-run)).
 
 See [`@arcflow/core`](./packages/core).
 
@@ -254,7 +283,7 @@ Point an agent at your steps and let it build flows:
 claude mcp add arcflow -- npx -y @arcflow/mcp --url http://127.0.0.1:8787
 ```
 
-It gets `list_steps`, `validate_flow`, `test_flow` (a simulated run, nothing sent), `patch_flow` (change one field at the path an issue reported, rather than rewriting the flow), `save_flow`, `run_flow` and `get_run` — see [`@arcflow/mcp`](./packages/mcp). In your own code, [`@arcflow/ai`](./packages/ai) does the same through `generateFlow` / `editFlow`, and with `ANTHROPIC_API_KEY` set the server offers `/api/ai/*` so the editor's prompt bar works without a key in the browser.
+It gets `list_steps`, `validate_flow`, `test_flow` (a run in `simulate` mode), `patch_flow` (change one field at the path an issue reported, rather than rewriting the flow), `save_flow`, `run_flow` and `get_run` — see [`@arcflow/mcp`](./packages/mcp). In your own code, [`@arcflow/ai`](./packages/ai) does the same through `generateFlow` / `editFlow`, and with `ANTHROPIC_API_KEY` set the server offers `/api/ai/*` so the editor's prompt bar works without a key in the browser.
 
 The pieces underneath are plain data:
 

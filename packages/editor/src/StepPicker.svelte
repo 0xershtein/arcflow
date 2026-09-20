@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { AnyNodeDefinition } from '@arcflow/core';
 	import Icon from './Icon.svelte';
+	import { DEFAULT_ICON } from './icons.js';
 	import { getEditor } from './context.svelte.js';
 	import { format } from './options.js';
 
@@ -94,7 +95,7 @@
 				onpointerenter={() => (active = index)}
 				onclick={() => onpick(def.kind)}
 			>
-				<span class="fb-node-icon"><Icon name={def.icon ?? 'sparkle'} size={15} /></span>
+				<span class="fb-node-icon"><Icon name={def.icon ?? DEFAULT_ICON} size={15} /></span>
 				<span class="fb-item-text">
 					<span class="fb-item-title">{def.title}</span>
 					<span class="fb-item-desc">{def.description}</span>

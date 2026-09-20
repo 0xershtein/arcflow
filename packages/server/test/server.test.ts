@@ -139,11 +139,26 @@ describe('runs', () => {
 });
 
 describe('flow generation', () => {
-	it('answers 501 until a model is configured', async () => {
+	it('answers 501 until a model is configured, about the feature that was asked for', async () => {
 		const { call } = await setup();
-		const response = await call('POST', '/api/ai/generate', { prompt: 'wait two hours' });
-		expect(response.status).toBe(501);
-		expect(response.body.error).toContain('ANTHROPIC_API_KEY');
+		const generate = await call('POST', '/api/ai/generate', { prompt: 'wait two hours' });
+		expect(generate.status).toBe(501);
+		expect(generate.body.error).toContain('ANTHROPIC_API_KEY');
+		expect(generate.body.error).toContain('Flow generation is off');
+
+		// Explaining a flow is not generating one; the message says which is off.
+		const explain = await call('POST', '/api/ai/explain', { flow: waitingFlow });
+		expect(explain.status).toBe(501);
+		expect(explain.body.error).toContain('Explaining flows is off');
+		expect((await call('POST', '/api/ai/edit', { flow: waitingFlow, instruction: 'x' })).body.error).toContain('Editing flows is off');
+	});
+
+	it('reports what it has configured on /api/health', async () => {
+		const bare = await setup({ secret: undefined });
+		expect((await bare.call('GET', '/api/health')).body).toEqual({ ok: true, ai: false, credentials: false });
+
+		const full = await setup({ ai: { generate: vi.fn(), edit: vi.fn(), explain: vi.fn() } as never });
+		expect((await full.call('GET', '/api/health')).body).toEqual({ ok: true, ai: true, credentials: true });
 	});
 
 	it('passes prompts to the service and returns the flow it built', async () => {
@@ -172,6 +187,30 @@ describe('flow generation', () => {
 		expect(explained.body.text).toContain('waits two hours');
 		expect(ai.explain).toHaveBeenCalledWith({ flow: expect.objectContaining({ name: waitingFlow.name }), question: 'How long does it wait?' });
 		expect((await call('POST', '/api/ai/explain', {})).status).toBe(422);
+	});
+});
+
+describe('unknown routes', () => {
+	it('answers JSON under /api and /hooks, whatever the method', async () => {
+		const { call } = await setup();
+		for (const [method, path] of [
+			['GET', '/api/nope'],
+			['PATCH', '/api/flows/draft'],
+			['GET', '/api/flows/draft/nope'],
+			['POST', '/hooks']
+		] as const) {
+			const response = await call(method, path);
+			expect(response.status).toBe(404);
+			expect(response.headers.get('content-type')).toContain('application/json');
+			expect(typeof response.body.error).toBe('string');
+		}
+
+		// Ids that do not exist keep answering JSON too.
+		const missing = await call('GET', '/api/flows/ghost');
+		expect(missing.status).toBe(404);
+		expect(missing.body.error).toContain('ghost');
+		expect((await call('GET', '/api/runs/ghost')).body.error).toContain('ghost');
+		expect((await call('POST', '/hooks/nothing/here')).body.error).toContain('No active flow');
 	});
 });
 

@@ -6,6 +6,7 @@ Typed, headless flow engine with no dependencies.
 - **Flows** — plain JSON, built by hand, by `registry.flow()` with type-checked kinds and ports, or by an LLM.
 - **Validation** — `registry.parse()` never throws and returns issues with stable `code`s and JSON `path`s.
 - **Runs** — `createEngine().start()` with retries, timeouts, error ports, `{{ expressions }}`, cancellation, and `wait` / `resume()` for human approvals and delays. Run state is plain JSON.
+- **Expressions that miss** — when a required field's `{{ }}` resolves to nothing at run time, the step's error says so and where the data stopped (`… the trigger payload had no body.total`) rather than reading like a config mistake. `describeMissing(expression, scope)` produces that sentence on its own.
 - **AI** — `registry.toJSONSchema()` for structured output, `registry.describe()` for prompts.
 
 ```ts
@@ -54,7 +55,7 @@ wire it), `removeNode` (which takes its connections with it), `connect` and `dis
 | --- | --- |
 | `services` | Your own services, handed to every step as `ctx.services`. |
 | `flows` | Where sub-flows come from. Required by steps that return `{ call }`. |
-| `mode` | `live` (default) or `simulate`, which lets steps skip anything that leaves the process. |
+| `mode` | `live` (default) or `simulate`. In `simulate` a step runs its `simulate` handler where it has one; a step without one runs normally, which is what makes conditions, data and code steps useful in a test run. |
 | `maxOutputBytes` | Fail a step whose output is bigger than this, measured as JSON. Off by default. |
 | `maxDepth` | How deep sub-flows may call sub-flows. Default 10. |
 | `now` | Clock, for tests and for `$now` in expressions. |
@@ -65,7 +66,7 @@ wire it), `removeNode` (which takes its connections with it), `connect` and `dis
 | | |
 | --- | --- |
 | `trigger` | Trigger to start from. Defaults to every enabled trigger. |
-| `payload` | Trigger payload, readable as `input` and `{{ trigger }}`. |
+| `payload` | Trigger payload, readable as `input` and `{{ trigger }}`. Without one, the trigger step's own output becomes `{{ trigger }}` — so a trigger with a `sample` gives a hand-started run something to read. |
 | `vars` | Run variables, readable as `{{ vars.name }}`. |
 | `mode`, `signal`, `stepDelayMs`, `onEvent` | Per-run overrides of the mode, cancellation, a pause between steps, and the event stream. |
 

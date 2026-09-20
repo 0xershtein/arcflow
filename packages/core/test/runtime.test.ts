@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { checkExpression, createEngine, createRegistry, defineNode, f, resolveTemplates, waitingSteps } from '../src/index.js';
+import { checkExpression, createEngine, createRegistry, defineNode, describeMissing, f, resolveTemplates, waitingSteps } from '../src/index.js';
 
 const start = defineNode({ kind: 'rt.start', title: 'Start', description: 'Starts the flow.', trigger: true, run: (ctx) => ({ output: ctx.input }) });
 
@@ -57,7 +57,25 @@ const secret = defineNode({
 	run: (ctx) => ({ output: { length: String(ctx.secrets.token).length } })
 });
 
-const registry = createRegistry([start, note, branch, merge, each, approve, secret]);
+/** A trigger that describes the request it would receive, the way trigger.webhook does. */
+const hook = defineNode({
+	kind: 'rt.hook',
+	title: 'Hook',
+	description: 'Starts on a request.',
+	trigger: true,
+	config: { sample: f.json({ optional: true }) },
+	run: (ctx) => ({ output: ctx.input ?? { method: 'POST', body: ctx.config.sample ?? null } })
+});
+
+const total = defineNode({
+	kind: 'rt.total',
+	title: 'Total',
+	description: 'Needs an amount.',
+	config: { amount: f.number() },
+	run: (ctx) => ({ output: { amount: ctx.config.amount } })
+});
+
+const registry = createRegistry([start, note, branch, merge, each, approve, secret, hook, total]);
 
 describe('joins', () => {
 	it('waits for every branch with join "all"', async () => {
@@ -229,5 +247,69 @@ describe('LLM helpers', () => {
 		expect(text).toContain('- Waits for every incoming branch before running.');
 		expect(text).toContain('Filters:');
 		expect(JSON.stringify(registry.toJSONSchema())).toContain('"join"');
+	});
+});
+
+
+describe('expressions at run time', () => {
+	/** hook → total, where the amount comes out of the trigger payload. */
+	const flowWithTotal = (sample?: unknown) => {
+		const flow = registry.flow('Total');
+		flow.add('rt.hook', sample === undefined ? {} : { sample }, { id: 'hook' }).to(
+			flow.add('rt.total', { amount: '{{ trigger.body.total }}' }, { id: 'total' })
+		);
+		return flow.build();
+	};
+
+	it('says an expression resolved to nothing, instead of reporting a config error', async () => {
+		// A request arrives, but without the field the flow reads.
+		const run = await createEngine(registry).start(flowWithTotal({ note: 'hello' }));
+		expect(run.status).toBe('failed');
+		const message = run.error?.message ?? '';
+		expect(message).toContain('resolved to nothing at run time');
+		expect(message).toContain('{{ trigger.body.total }}');
+		expect(message).toContain('the trigger payload had no body.total');
+		// The field's own wording stays, so the path still points at what to fix.
+		expect(message).toContain('amount: Amount is required.');
+	});
+
+	it('says so when there was no trigger data at all', async () => {
+		const run = await createEngine(registry).start(flowWithTotal());
+		expect(run.error?.message).toContain('the trigger payload had no body');
+	});
+
+	it('leaves a value that did arrive to speak for itself', async () => {
+		const flow = registry.flow('Wrong type');
+		flow.add('rt.hook', { sample: { total: 'lots' } }, { id: 'hook' }).to(
+			flow.add('rt.total', { amount: '{{ trigger.body.total }}' }, { id: 'total' })
+		);
+		const run = await createEngine(registry).start(flow.build());
+		expect(run.status).toBe('failed');
+		expect(run.error?.message).toBe('amount: Amount must be a number.');
+	});
+
+	it('names where the data stopped, for each root', () => {
+		const scope = { trigger: { body: { id: 7 } }, steps: { fetch: { output: {} } }, vars: {} };
+		expect(describeMissing('trigger.body.total', scope)).toBe('the trigger payload had no body.total');
+		expect(describeMissing('trigger.body.id', scope)).toBe(null);
+		expect(describeMissing('steps.fetch.output.items[0]', scope)).toBe('the earlier steps had no fetch.output.items');
+		expect(describeMissing('vars.limit', scope)).toBe('the run variables had no limit');
+		expect(describeMissing('input.x', {})).toBe('there was nothing in the step input');
+		// A fallback that does resolve is not a miss.
+		expect(describeMissing('trigger.body.total ?? 0', scope)).toBe(null);
+	});
+
+	it('takes the trigger payload from the trigger step when the run was given none', async () => {
+		const run = await createEngine(registry).start(flowWithTotal({ total: 42 }));
+		expect(run.status).toBe('completed');
+		expect(run.trigger).toEqual({ method: 'POST', body: { total: 42 } });
+		expect(run.steps.total.output).toEqual({ amount: 42 });
+	});
+
+	it('keeps the payload the caller passed', async () => {
+		const run = await createEngine(registry).start(flowWithTotal({ total: 42 }), { payload: { body: { total: 7 } } });
+		expect(run.status).toBe('completed');
+		expect(run.trigger).toEqual({ body: { total: 7 } });
+		expect(run.steps.total.output).toEqual({ amount: 7 });
 	});
 });

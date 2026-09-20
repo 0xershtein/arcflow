@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine, createRegistry, defineNode, f, registryFromManifest, toManifest } from '../src/index.js';
+import { createEngine, createRegistry, defineNode, f, isManifestRegistry, registryFromManifest, toManifest } from '../src/index.js';
 import { paymentFlow, registry } from './fixtures.js';
 
 /** What a browser receives: the manifest as JSON text. */
@@ -48,11 +48,17 @@ describe('step manifest', () => {
 		expect(remote.parse(broken).issues.map((issue) => `${issue.code}@${issue.path}`)).toContain('too_small@nodes[0].config.signers');
 	});
 
-	it('refuses to run steps that live on the server', async () => {
+	it('refuses to run steps that live on the server, in words a user can read', async () => {
 		const remote = overTheWire();
+		expect(isManifestRegistry(remote)).toBe(true);
+		expect(isManifestRegistry(registry)).toBe(false);
+
 		const run = await createEngine(remote).start(paymentFlow().build(), { mode: 'live' });
 		expect(run.status).toBe('failed');
-		expect(run.error?.message).toMatch(/runs on the server/);
+		expect(run.error?.message).toMatch(/runs on the flow server/);
+		// The step's title, not its kind, and no talk of catalogs or missing code.
+		expect(run.error?.message).toContain('"Start"');
+		expect(run.error?.message).not.toMatch(/catalog|no code/);
 	});
 
 	it('rejects a manifest from another version and keeps unknown fields usable', () => {

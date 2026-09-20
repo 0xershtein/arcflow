@@ -102,7 +102,8 @@ export function createApp(ctx: AppContext) {
 		return json({ error: 'Internal server error.' }, 500);
 	});
 
-	app.get('/api/health', () => json({ ok: true }));
+	// `ok` plus what this server can do, so an editor can hide what is off instead of failing on use.
+	app.get('/api/health', () => json({ ok: true, ai: Boolean(ctx.ai), credentials: Boolean(ctx.box) }));
 
 	// ---------- Steps ----------
 
@@ -311,20 +312,21 @@ export function createApp(ctx: AppContext) {
 
 	// ---------- Flow generation ----------
 
-	const requireAi = () => {
-		if (!ctx.ai) throw new HttpError(501, 'Flow generation is off: start the server with a model (ANTHROPIC_API_KEY).');
+	/** The same 501 for every AI route, worded for the route the caller asked for. */
+	const requireAi = (feature: 'Flow generation' | 'Editing flows' | 'Explaining flows') => {
+		if (!ctx.ai) throw new HttpError(501, `${feature} is off: start the server with a model (ANTHROPIC_API_KEY).`);
 		return ctx.ai;
 	};
 
 	app.post('/api/ai/generate', async (c) => {
-		const ai = requireAi();
+		const ai = requireAi('Flow generation');
 		const body = await readJson(c);
 		if (typeof body.prompt !== 'string' || !body.prompt.trim()) throw badRequest('"prompt" is required: what the flow should do.');
 		return json(await ai.generate({ prompt: body.prompt, ...(isRecord(body.vars) ? { vars: body.vars } : {}) }));
 	});
 
 	app.post('/api/ai/edit', async (c) => {
-		const ai = requireAi();
+		const ai = requireAi('Editing flows');
 		const body = await readJson(c);
 		if (typeof body.instruction !== 'string' || !body.instruction.trim()) throw badRequest('"instruction" is required: what to change.');
 		const parsed = registry.parse(body.flow);
@@ -333,7 +335,7 @@ export function createApp(ctx: AppContext) {
 	});
 
 	app.post('/api/ai/explain', async (c) => {
-		const ai = requireAi();
+		const ai = requireAi('Explaining flows');
 		const body = await readJson(c);
 		const parsed = registry.parse(body.flow);
 		if (!parsed.flow) throw new HttpError(422, 'The body has no flow to explain.', { issues: parsed.issues });
@@ -405,6 +407,12 @@ export function createApp(ctx: AppContext) {
 		if (run.status === 'failed') return json({ runId: run.id, status: run.status, error: run.state.error?.message }, 500);
 		return json({ runId: run.id, status: run.status, output: runResult(run.state) }, run.status === 'completed' ? 200 : 202);
 	});
+
+	// Anything else under /api or /hooks answers JSON too, so a client never has to parse a text/plain 404.
+	const noRoute = (c: Context) => json({ error: `No route for ${c.req.method} ${c.req.path}.` }, 404);
+	app.all('/api', noRoute);
+	app.all('/api/*', noRoute);
+	app.all('/hooks', noRoute);
 
 	return app;
 }

@@ -14,6 +14,7 @@
 		createEngine,
 		defaultsOf,
 		hasErrors,
+		isManifestRegistry,
 		type AnyNodeDefinition,
 		type Flow,
 		type Issue,
@@ -47,6 +48,7 @@
 		type StepData
 	} from './convert.js';
 	import { format } from './options.js';
+	import { runHeader, statusText, summarize, withLocalTimes, type RunKind } from './summary.js';
 
 	interface Props {
 		flow?: unknown;
@@ -84,9 +86,28 @@
 	const edgeTypes = { flow: InsertEdge };
 	const BACKGROUND = { dots: BackgroundVariant.Dots, lines: BackgroundVariant.Lines, cross: BackgroundVariant.Cross } as const;
 	const HISTORY_LIMIT = 100;
+	/**
+	 * Widths where the layout changes, in sync with the container queries in theme.css. CSS moves the
+	 * panels; these drive what CSS cannot do — the palette drawer, the overflow menu and refitting the view.
+	 */
+	const NARROW = 820;
+	const TINY = 560;
 	/** Shared so the fit on mount, the fit on init and the fit after a load all agree. */
 	const FIT = { padding: 0.1, minZoom: 0.15, maxZoom: 1 } as const;
 	const GAP = 60;
+
+	/**
+	 * Waits until the browser has laid out and measured what just changed. Svelte Flow sizes its
+	 * viewport and its steps from observers that run after the frame we change them in, so fitting
+	 * the view any earlier fits it to the layout that is on the way out.
+	 */
+	const afterLayout = async () => {
+		await tick();
+		if (typeof requestAnimationFrame !== 'function') return;
+		await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+		// Svelte Flow reads its own size from a resize observer, which lands a beat after that frame.
+		await new Promise((resolve) => setTimeout(resolve, 120));
+	};
 
 	const editor = getEditor();
 	const registry = editor.registry;
@@ -105,6 +126,14 @@
 	let canvasEl = $state<HTMLDivElement>();
 	let fileInput = $state<HTMLInputElement>();
 	let notice = $state<string | null>(null);
+
+	/** `narrow` stacks the panels, `tiny` also moves the run buttons into the menu. */
+	let layout = $state<'wide' | 'narrow' | 'tiny'>('wide');
+	const narrow = $derived(layout !== 'wide');
+	/** The palette is a drawer over the canvas once there is no column for it. */
+	let paletteOpen = $state(false);
+	let moreOpen = $state(false);
+	let moreEl = $state<HTMLDivElement>();
 
 	const backend = $derived(editor.backend);
 	let serverFlows = $state.raw<ServerFlowSummary[]>([]);
@@ -146,6 +175,8 @@
 
 	type LogEntry = { nodeId: string; status: 'success' | 'waiting' | 'error'; message?: string; at: number };
 	let running = $state(false);
+	/** Which kind of run the log is showing: a simulation here, one on the server, or a real one. */
+	let runKind = $state<RunKind>('test');
 	let outcome = $state<RunStatus | null>(null);
 	let log = $state<LogEntry[]>([]);
 	let logOpen = $state(false);
@@ -155,9 +186,17 @@
 
 	const current = $derived(fromCanvas(meta, nodes, edges));
 	const issues = $derived(registry.validate(current));
-	const errorCount = $derived(issues.filter((issue) => issue.level === 'error').length);
 	const steps = $derived(nodes.filter(isStep));
+	/** One reading of the flow's problems for the toolbar badge and the panel alike. */
+	const problems = $derived(summarize(issues, steps.length));
+	const errorCount = $derived(problems.errors);
 	const selected = $derived(steps.find((node) => node.id === selectedId) ?? null);
+
+	/**
+	 * These steps came from a server's catalog, so they carry no code here: running one has to
+	 * happen on that server. The registry is fixed for the life of the editor.
+	 */
+	const remoteSteps = isManifestRegistry(registry);
 
 	/** Steps that run before the selected one, nearest first. */
 	const upstream = $derived.by(() => {
@@ -181,9 +220,40 @@
 	});
 
 	const showPanel = $derived(ui.inspector || panel === 'json');
+	const showPalette = $derived(ui.palette && !readonly);
 	const columns = $derived(
-		[ui.palette && !readonly ? '264px' : '', 'minmax(0, 1fr)', showPanel ? (panel === 'json' ? '420px' : '320px') : ''].filter(Boolean).join(' ')
+		narrow
+			? 'minmax(0, 1fr)'
+			: [showPalette ? '264px' : '', 'minmax(0, 1fr)', showPanel ? (panel === 'json' ? '420px' : '320px') : ''].filter(Boolean).join(' ')
 	);
+
+	/** Test run needs code for the steps: either they are here, or the server that has them runs it. */
+	const canTestRun = $derived(ui.testRun && (!remoteSteps || Boolean(backend)));
+
+	// The editor sizes itself to its container, which is not always the window: watch the element.
+	$effect(() => {
+		const element = rootEl;
+		if (!element || typeof ResizeObserver === 'undefined') return;
+		const observer = new ResizeObserver(([entry]) => {
+			const width = entry.contentRect.width;
+			layout = width <= TINY ? 'tiny' : width <= NARROW ? 'narrow' : 'wide';
+		});
+		observer.observe(element);
+		return () => observer.disconnect();
+	});
+
+	// Each layout leaves the canvas a different shape, so the steps are fitted into the new one.
+	let lastLayout = 'wide';
+	$effect(() => {
+		const mode = layout;
+		untrack(() => {
+			if (mode === lastLayout) return;
+			lastLayout = mode;
+			if (mode === 'wide') paletteOpen = false;
+			moreOpen = false;
+			void afterLayout().then(() => fitView({ ...FIT, duration: 200 }));
+		});
+	});
 
 	function apply(input: unknown): { loaded: boolean; issues: Issue[] } {
 		const parsed = registry.parse(input);
@@ -230,7 +300,7 @@
 		closeLog();
 		const result = apply(input);
 		if (result.loaded) {
-			await tick();
+			await afterLayout();
 			fitView({ ...FIT, duration: 300 });
 		}
 		return result;
@@ -417,11 +487,31 @@
 		}
 	}
 
+	/** What the server has configured, so features it cannot do are off before they are pressed. */
+	async function refreshCapabilities() {
+		if (!backend?.capabilities) return;
+		try {
+			const found = await backend.capabilities();
+			aiOff = !found.ai;
+			editor.credentialsOff = !found.credentials;
+		} catch {
+			// a server that does not answer keeps the defaults; the first use reports the problem
+		}
+	}
+
+	/** Opens the flow that was saved last, so server mode does not start on an empty canvas. */
+	async function openLatestFlow() {
+		if (serverFlow || steps.length || !serverFlows.length) return;
+		const latest = [...serverFlows].sort((a, b) => b.updatedAt - a.updatedAt)[0];
+		if (latest) await openServerFlow(latest.id);
+	}
+
 	$effect(() => {
 		if (!backend) return;
 		untrack(() => {
-			refreshFlows();
+			refreshCapabilities();
 			refreshCredentials();
+			void refreshFlows().then(openLatestFlow);
 		});
 	});
 
@@ -449,12 +539,8 @@
 			: [...serverFlows, record];
 	}
 
+	/** Leaves a stored run: the canvas, the log and the executions panel go back to editing. */
 	function stopViewingRun() {
-		stopWatching?.();
-		stopWatching = null;
-		viewingRunId = null;
-		running = false;
-		editor.lastRun = null;
 		closeLog();
 	}
 
@@ -523,15 +609,26 @@
 		await load({ version: 1, name: labels.untitled, nodes: [], edges: [] });
 	}
 
+	/**
+	 * Saves the flow. A flow with errors cannot run, so Save parks it as a draft instead of being
+	 * refused for something the person did not ask for; pressing Activate on one still says so.
+	 */
 	async function saveToServer(active?: boolean) {
 		if (!backend || readonly) return;
+		const errors = problems.errors;
+		const draft = active === undefined && errors > 0;
+		const wanted = draft ? false : active;
 		const result = await withServer(() =>
-			backend.saveFlow({ ...(serverFlow ? { id: serverFlow.id } : {}), flow: getFlow(), ...(active === undefined ? {} : { active }) })
+			backend.saveFlow({ ...(serverFlow ? { id: serverFlow.id } : {}), flow: getFlow(), ...(wanted === undefined ? {} : { active: wanted }) })
 		);
 		if (!result) return;
-		const { flow: _flow, ...summary } = result.record;
-		markSaved(summary);
-		flash(format(labels.saved, { name: summary.name }));
+		const { flow: _flow, ...record } = result.record;
+		markSaved(record);
+		flash(
+			draft
+				? format(labels.savedDraft, { problems: format(errors === 1 ? labels.problemCount : labels.problemsCount, { count: errors }) })
+				: format(labels.saved, { name: record.name })
+		);
 	}
 
 	function toggleActive() {
@@ -604,6 +701,14 @@
 
 	/** Saves the flow and runs it on the server for real, streaming events onto the canvas. */
 	export async function runOnServer() {
+		return startServerRun('live');
+	}
+
+	/**
+	 * Runs on the server: for real, or in simulate mode when this is a test run of steps whose code
+	 * lives there. The flow has to be saved first — that is what the server runs.
+	 */
+	async function startServerRun(mode: 'live' | 'simulate') {
 		if (!backend) return;
 		if (running) {
 			if (viewingRunId) await cancelServerRun(viewingRunId);
@@ -613,6 +718,7 @@
 			flash(labels.fixBeforeRun);
 			return;
 		}
+		// The run has no errors to save around, so this never turns the flow into a draft.
 		if (!serverFlow || dirty) await saveToServer();
 		const flow = serverFlow;
 		if (!flow) return;
@@ -620,9 +726,10 @@
 		log = [];
 		outcome = null;
 		logOpen = true;
+		runKind = mode === 'live' ? 'live' : 'test-server';
 		pinLog();
 		running = true;
-		const started = await withServer(() => backend.startRun(flow.id, { mode: 'live' }));
+		const started = await withServer(() => backend.startRun(flow.id, { mode }));
 		if (!started) {
 			running = false;
 			return;
@@ -705,15 +812,22 @@
 		aiBusy = false;
 	}
 
+	/** Whether the server can describe a flow. Off with no model, like generating one. */
+	const canExplain = $derived(Boolean(backend?.explainFlow) && !aiOff);
+
 	/** Asks the model what this flow does, in plain language. */
 	export async function explainAi() {
-		if (!backend?.explainFlow || aiExplaining) return;
+		if (!backend?.explainFlow || aiExplaining || aiOff) return;
 		aiExplaining = true;
 		try {
 			const explanation = await backend.explainFlow({ flow: getFlow() });
 			aiExplanation = explanation.text;
 		} catch (error) {
-			flash(format(labels.serverError, { error: errorText(error) }));
+			// 501 is a server with no model: turn the feature off rather than report it again.
+			if (error instanceof BackendError && error.status === 501) {
+				aiOff = true;
+				flash(labels.aiUnavailable);
+			} else flash(format(labels.serverError, { error: errorText(error) }));
 		} finally {
 			aiExplaining = false;
 		}
@@ -1010,12 +1124,21 @@
 
 	function onWindowPointerDown(event: PointerEvent) {
 		active = Boolean(rootEl?.contains(event.target as Node));
+		if (moreOpen && moreEl && !moreEl.contains(event.target as Node)) moreOpen = false;
+	}
+
+	/** Runs a toolbar action and closes the overflow menu behind it. */
+	function choose(action: () => void) {
+		moreOpen = false;
+		action();
 	}
 
 	function onWindowKeydown(event: KeyboardEvent) {
 		if (!active || isTyping(event.target)) return;
 		if (event.key === 'Escape') {
-			if (picker) picker = null;
+			if (moreOpen) moreOpen = false;
+			else if (paletteOpen) paletteOpen = false;
+			else if (picker) picker = null;
 			else clearSelection();
 			return;
 		}
@@ -1136,8 +1259,16 @@
 		}
 	}
 
-	/** Runs the flow in simulate mode on the canvas, or stops a run in progress. */
+	/**
+	 * Runs the flow in simulate mode, or stops a run in progress. Steps that came from a server's
+	 * catalog have no code here, so their test run happens on that server, in simulate mode too.
+	 */
 	export async function run() {
+		if (remoteSteps) {
+			if (backend) await startServerRun('simulate');
+			else flash(labels.testRunNeedsServer);
+			return;
+		}
 		if (running) {
 			controller?.abort();
 			return;
@@ -1152,6 +1283,7 @@
 		log = [];
 		outcome = null;
 		logOpen = true;
+		runKind = 'test';
 		pinLog();
 		running = true;
 		controller = new AbortController();
@@ -1191,8 +1323,23 @@
 		logPinned = true;
 	}
 
+	/**
+	 * Closes the run log. A run from the server is also let go here — its events, the run being
+	 * viewed and the data in the inspector — so the executions panel never keeps pointing at a run
+	 * the canvas no longer shows.
+	 */
 	function closeLog() {
 		controller?.abort();
+		// A run from the server is let go with the log — its events, the run being viewed and its data —
+		// so the executions panel never keeps pointing at a run the canvas no longer shows. A test run
+		// here leaves its data behind on purpose: the inspector's Input and Output tabs still read it.
+		if (viewingRunId) {
+			stopWatching?.();
+			stopWatching = null;
+			viewingRunId = null;
+			running = false;
+			editor.lastRun = null;
+		}
 		logOpen = false;
 		log = [];
 		outcome = null;
@@ -1230,7 +1377,55 @@
 
 <svelte:window onpointerdown={onWindowPointerDown} onkeydown={onWindowKeydown} oncopy={onClipboard} oncut={onClipboard} onpaste={onClipboard} />
 
-<div class="fb-root" class:no-toolbar={!ui.toolbar} data-theme={themeMode} style={themeStyle} bind:this={rootEl}>
+<!--
+	Secondary actions. They sit in the toolbar while there is room for them and move into the
+	"More" menu when there is not, so a narrow editor hides nothing — it only folds it away.
+-->
+{#snippet extras(menu: boolean)}
+	{#if !readonly}
+		<button class={menu ? 'fb-menu-item' : 'fb-icon-btn'} onclick={() => choose(undo)} disabled={!canUndo} aria-label={labels.undo} title="{labels.undo} (⌘Z)">
+			<Icon name="undo" size={menu ? 15 : 16} />{#if menu}<span>{labels.undo}</span>{/if}
+		</button>
+		<button class={menu ? 'fb-menu-item' : 'fb-icon-btn'} onclick={() => choose(redo)} disabled={!canRedo} aria-label={labels.redo} title="{labels.redo} (⇧⌘Z)">
+			<Icon name="redo" size={menu ? 15 : 16} />{#if menu}<span>{labels.redo}</span>{/if}
+		</button>
+		<button class={menu ? 'fb-menu-item' : 'fb-btn'} onclick={() => choose(addNote)}><Icon name="note" size={15} /><span>{labels.addNote}</span></button>
+	{/if}
+	{#if ui.json}
+		<button class={menu ? 'fb-menu-item' : 'fb-btn'} class:is-on={panel === 'json'} onclick={() => choose(() => (panel = panel === 'json' ? 'step' : 'json'))}>
+			{#if menu}<Icon name="panel" size={15} />{/if}<span>{labels.json}</span>
+		</button>
+	{/if}
+	{#if ui.importExport}
+		{#if !readonly}
+			<button class={menu ? 'fb-menu-item' : 'fb-btn'} onclick={() => choose(() => fileInput?.click())}>
+				<Icon name="upload" size={15} /><span>{labels.import}</span>
+			</button>
+		{/if}
+		<button class={menu ? 'fb-menu-item' : 'fb-btn'} onclick={() => choose(exportFlow)}><Icon name="download" size={15} /><span>{labels.export}</span></button>
+	{/if}
+	{#if backend && ui.executions}
+		<button
+			class={menu ? 'fb-menu-item' : 'fb-btn'}
+			class:is-on={runsOpen}
+			onclick={() =>
+				choose(() => {
+					runsOpen = !runsOpen;
+					if (runsOpen) refreshRuns();
+				})}
+		>
+			<Icon name="clock" size={15} /><span>{labels.executions}</span>
+		</button>
+	{/if}
+	<!-- At the narrowest sizes the toolbar keeps one run button; the other joins the menu. -->
+	{#if menu && layout === 'tiny' && canTestRun}
+		<button class="fb-menu-item" onclick={() => choose(run)}>
+			<Icon name={running ? 'stop' : 'play'} size={15} /><span>{running ? labels.stop : labels.testRun}</span>
+		</button>
+	{/if}
+{/snippet}
+
+<div class="fb-root" class:no-toolbar={!ui.toolbar} data-layout={layout} data-theme={themeMode} style={themeStyle} bind:this={rootEl}>
 	{#if ui.toolbar}
 		<header class="fb-topbar">
 			{#if brand}
@@ -1238,21 +1433,35 @@
 				<span class="fb-divider"></span>
 			{/if}
 			<input class="fb-name" bind:value={meta.name} aria-label={labels.flowName} placeholder={labels.untitled} spellcheck="false" disabled={readonly} />
-			<span class="fb-status" class:has-errors={errorCount > 0}>
-				{#if errorCount}
-					<Icon name="alert" size={13} />{format(errorCount === 1 ? labels.problemCount : labels.problemsCount, { count: errorCount })}
-				{:else}
-					<Icon name="check" size={13} stroke={2} />{labels.ready}
-				{/if}
+			<span class="fb-status" data-status={problems.status}>
+				<Icon
+					name={problems.status === 'errors' ? 'alert' : problems.status === 'notes' ? 'alert' : problems.status === 'empty' ? 'plus' : 'check'}
+					size={13}
+					stroke={problems.status === 'ready' ? 2 : 1.6}
+				/>{statusText(problems, labels)}
 			</span>
 
 			<div class="fb-spacer"></div>
 
-			{#if !readonly}
-				<button class="fb-icon-btn" onclick={undo} disabled={!canUndo} aria-label={labels.undo} title="{labels.undo} (⌘Z)"><Icon name="undo" size={16} /></button>
-				<button class="fb-icon-btn" onclick={redo} disabled={!canRedo} aria-label={labels.redo} title="{labels.redo} (⇧⌘Z)"><Icon name="redo" size={16} /></button>
-				<button class="fb-btn" onclick={addNote}><Icon name="note" size={15} />{labels.addNote}</button>
+			{#if narrow && showPalette}
+				<button class="fb-btn" class:is-on={paletteOpen} onclick={() => (paletteOpen = !paletteOpen)} aria-expanded={paletteOpen} title={labels.addStep}>
+					<Icon name="plus" size={15} /><span class="fb-label">{labels.addStep}</span>
+				</button>
 			{/if}
+
+			{#if narrow}
+				<div class="fb-more" bind:this={moreEl}>
+					<button class="fb-icon-btn" class:is-on={moreOpen} onclick={() => (moreOpen = !moreOpen)} aria-expanded={moreOpen} aria-haspopup="menu" aria-label={labels.moreActions} title={labels.more}>
+						<Icon name="chevron" size={16} />
+					</button>
+					{#if moreOpen}
+						<div class="fb-menu fb-more-menu" role="menu">{@render extras(true)}</div>
+					{/if}
+				</div>
+			{:else}
+				{@render extras(false)}
+			{/if}
+
 			{#if backend && ui.flows}
 				<ServerBar
 					flows={serverFlows}
@@ -1266,47 +1475,28 @@
 					ondelete={deleteServerFlow}
 				/>
 			{/if}
-			{#if ui.json}
-				<button class="fb-btn" class:is-on={panel === 'json'} onclick={() => (panel = panel === 'json' ? 'step' : 'json')}>{labels.json}</button>
-			{/if}
-			{#if ui.importExport}
-				{#if !readonly}
-					<button class="fb-btn" onclick={() => fileInput?.click()}><Icon name="upload" size={15} />{labels.import}</button>
-					<input bind:this={fileInput} type="file" accept="application/json,.json" hidden onchange={importFlow} />
-				{/if}
-				<button class="fb-btn" onclick={exportFlow}><Icon name="download" size={15} />{labels.export}</button>
-			{/if}
-			{#if backend && ui.executions}
-				<button
-					class="fb-btn"
-					class:is-on={runsOpen}
-					onclick={() => {
-						runsOpen = !runsOpen;
-						if (runsOpen) refreshRuns();
-					}}
-				>
-					<Icon name="clock" size={15} />{labels.executions}
-				</button>
-			{/if}
 			{#if backend && !readonly}
 				<button class="fb-btn primary" onclick={runOnServer} disabled={serverBusy} title={labels.liveRun}>
-					<Icon name={running ? 'stop' : 'play'} size={13} />{running ? labels.stop : labels.runLive}
+					<Icon name={running ? 'stop' : 'play'} size={13} /><span class="fb-label">{running ? labels.stop : labels.runLive}</span>
 				</button>
 			{/if}
-			{#if ui.testRun}
+			{#if canTestRun && layout !== 'tiny'}
 				<button class="fb-btn" class:primary={!backend} onclick={run}>
 					{#if running}
-						<Icon name="stop" size={13} />{labels.stop}
+						<Icon name="stop" size={13} /><span class="fb-label">{labels.stop}</span>
 					{:else}
-						<Icon name="play" size={13} />{labels.testRun}
+						<Icon name="play" size={13} /><span class="fb-label">{labels.testRun}</span>
 					{/if}
 				</button>
+			{/if}
+			{#if ui.importExport && !readonly}
+				<input bind:this={fileInput} type="file" accept="application/json,.json" hidden onchange={importFlow} />
 			{/if}
 		</header>
 	{/if}
 
 	<div class="fb-body" style:grid-template-columns={columns}>
-		{#if ui.palette && !readonly}
+		{#if showPalette && !narrow}
 			<StepPalette onadd={(kind) => addNode(kind)} />
 		{/if}
 
@@ -1373,6 +1563,23 @@
 					</div>
 				{/if}
 
+				<!-- Too narrow for a column of steps: the same list slides over the canvas instead. -->
+				{#if narrow && showPalette && paletteOpen}
+					<div class="fb-scrim" role="presentation" onclick={() => (paletteOpen = false)}></div>
+					<div class="fb-drawer" role="dialog" aria-label={labels.steps}>
+						<div class="fb-drawer-head">
+							<span>{labels.steps}</span>
+							<button class="fb-icon-btn" onclick={() => (paletteOpen = false)} aria-label={labels.close}><Icon name="x" size={15} /></button>
+						</div>
+						<StepPalette
+							onadd={(kind) => {
+								addNode(kind);
+								paletteOpen = false;
+							}}
+						/>
+					</div>
+				{/if}
+
 				{#if selectedCount > 1 && !readonly}
 					<div class="fb-selection-bar" role="toolbar" aria-label={format(labels.selectedCount, { count: selectedCount })}>
 						<span>{format(labels.selectedCount, { count: selectedCount })}</span>
@@ -1403,7 +1610,7 @@
 						ondiscard={discardAi}
 						onstop={stopAi}
 						onfix={fixProblems}
-						canExplain={Boolean(backend?.explainFlow)}
+						{canExplain}
 						explaining={aiExplaining}
 						explanation={aiExplanation}
 						onexplain={explainAi}
@@ -1429,9 +1636,10 @@
 
 			<!-- Docked under the canvas, not over it: a run never hides the steps it is running. -->
 			{#if logOpen}
-				<section class="fb-log" aria-label={labels.runTitle} aria-live="polite">
+				{@const header = runHeader(runKind, labels)}
+				<section class="fb-log" class:is-live={header.live} aria-label={header.title} aria-live="polite">
 					<div class="fb-log-head">
-						<span>{labels.runTitle}</span>
+						<span>{header.title}</span>
 						{#if running}
 							<span class="fb-badge">{labels.running}</span>
 						{:else if outcome === 'completed'}
@@ -1443,7 +1651,7 @@
 						{:else if outcome === 'cancelled'}
 							<span class="fb-badge">{labels.stopped}</span>
 						{/if}
-						<span class="fb-log-note">{labels.simulated}</span>
+						<span class="fb-log-note">{header.note}</span>
 						<button class="fb-icon-btn" onclick={closeLog} aria-label={labels.close}><Icon name="x" size={15} /></button>
 					</div>
 					<div class="fb-log-list" bind:this={logListEl} onscroll={onLogScroll}>
@@ -1451,7 +1659,7 @@
 							<button class="fb-log-row" class:bad={entry.status === 'error'} onclick={() => focusNode(entry.nodeId)}>
 								<Icon name={entry.status === 'error' ? 'x' : entry.status === 'waiting' ? 'hourglass' : 'check'} size={14} stroke={2.2} />
 								<span class="fb-log-node">{stepName(entry.nodeId)}</span>
-								<span class="fb-log-msg">{entry.message ?? labels.done}</span>
+								<span class="fb-log-msg">{entry.message ? withLocalTimes(entry.message) : labels.done}</span>
 								<time>{new Date(entry.at).toLocaleTimeString([], { hour12: false })}</time>
 							</button>
 						{:else}
@@ -1468,6 +1676,7 @@
 			<StepInspector
 				node={selected}
 				{issues}
+				{problems}
 				{upstream}
 				onrun={run}
 				onconfig={setConfig}

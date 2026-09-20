@@ -28,7 +28,7 @@ What `createEditor` returns. The Svelte component has a smaller set — see [Sve
 | `getIssues()` | Current problems |
 | `setFlow(flow)` | Replace the flow → `{ loaded, issues }` |
 | `setOptions(partial)` | Update theme, ui, labels, readonly, callbacks |
-| `run()` | Simulated run on the canvas (or stop it) |
+| `run()` | Test run in `simulate` mode (or stop it) |
 | `runOnServer()` | Server mode: save and run for real (or cancel) |
 | `askAi(prompt)` | Ask the backend's model for a flow or a change |
 | `undo()` / `redo()` | Step through edit history |
@@ -65,7 +65,7 @@ The methods live on the component, so reach them through `bind:this`:
 | `getFlow()` | Current flow JSON |
 | `getIssues()` | Current problems |
 | `load(input)` | Replace the flow → `{ loaded, issues }` |
-| `run()` | Simulated run on the canvas (or stop it) |
+| `run()` | Test run in `simulate` mode (or stop it) |
 | `runOnServer()` | Server mode: save and run for real (or cancel) |
 | `askAi(prompt)` | Ask the backend's model for a flow or a change |
 | `undo()` / `redo()` | Step through edit history |
@@ -98,6 +98,15 @@ import '@arcflow/editor/styles.css';
 
 Shortcuts apply to the editor that was clicked last, and never while typing in a field.
 
+## In a small container
+
+The layout follows the width of the editor's own container (container queries), not the window, so an
+editor in a side panel behaves like an editor on a phone. Below about 820px it becomes one column —
+canvas above, the open panel below with its own scroll — the step list moves into an **Add step**
+drawer, and the toolbar's secondary actions into a **More** menu. Below about 560px the buttons keep
+their icons and drop their words. Nothing is dropped from the interface at any width, and the canvas
+refits itself whenever the layout changes.
+
 ## Server mode
 
 Pass a `backend` and the editor opens and saves flows on a server, activates them, picks stored credentials, runs them for real and replays past runs:
@@ -111,7 +120,13 @@ createEditor('#editor', {
 });
 ```
 
-The toolbar then has a flow list with Save and Activate, an Executions panel with the run history, and a Run button that runs on the server and streams events onto the canvas — Test run still simulates locally. Credential fields become a picker over the server's credentials. `Backend` is a plain interface, so your own API can implement it instead.
+The toolbar then has a flow list with Save and Activate, an Executions panel with the run history, and a Run button that runs on the server and streams events onto the canvas. Credential fields become a picker over the server's credentials. `Backend` is a plain interface, so your own API can implement it instead.
+
+On opening, the editor shows the flow that was saved last rather than an empty canvas, and asks the server what it has configured (`capabilities()`, `GET /api/health` over HTTP) so features it cannot do — flow generation, Explain, stored credentials — are off instead of failing when pressed.
+
+**Save** keeps a flow with errors as a draft (*"Saved as a draft — fix 2 problems before it can run"*); only **Activate** insists on a flow without errors, since only an active flow answers webhooks and schedules.
+
+**Test run** stays a simulation. Where the steps carry code (a registry you built), it runs in the browser; where they came from the server's catalog, the server runs it in `simulate` mode. The run log names which it was, and a real Run is marked with the `live` color.
 
 Without a build step, let the server hand over its step catalog too:
 
@@ -127,7 +142,7 @@ Without a build step, let the server hand over its step catalog too:
 
 ## Prompt bar
 
-When the backend can generate flows (`@arcflow/server` with an API key, or your own `generateFlow` / `editFlow`), a prompt bar appears on the canvas. Describe a flow and it is built and validated; describe a change and it is applied to the flow that is open. The result lands on the canvas straight away with **Keep** and **Discard** — discarding restores what was there, and either way undo still works. With errors on the canvas the bar offers **Fix problems**, which hands the model the issues and their paths; otherwise it offers **Explain**, which describes the open flow in plain language. `ui: { ai: false }` hides it.
+When the backend can generate flows (`@arcflow/server` with an API key, or your own `generateFlow` / `editFlow`), a prompt bar appears on the canvas. Describe a flow and it is built and validated; describe a change and it is applied to the flow that is open. The result lands on the canvas straight away with **Keep** and **Discard** — discarding restores what was there, and either way undo still works. With errors on the canvas the bar offers **Fix problems**, which hands the model the issues and their paths; otherwise it offers **Explain**, which describes the open flow in plain language. A server with no model configured has no bar at all, so neither button can be pressed into an error. `ui: { ai: false }` hides it.
 
 Exports `lightColors`, `darkColors`, `defaultLabels` and `defaultUi` so you can start from the defaults.
 

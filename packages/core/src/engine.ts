@@ -1,7 +1,7 @@
-import { ExpressionError, resolveTemplates } from './expressions.js';
+import { ExpressionError, collectExpressions, describeMissing, resolveTemplates, splitPath, type ExpressionScope } from './expressions.js';
 import type { Flow, FlowNode } from './flow.js';
 import { analyzeFlow, type FlowGraph } from './graph.js';
-import { FlowError, formatIssues } from './issues.js';
+import { FlowError, formatIssues, type Issue } from './issues.js';
 import type { AnyNodeDefinition, NodeContext, RunMode, Services, StepResult, StepView } from './node.js';
 import type { Registry } from './registry.js';
 import { parseShape } from './schema.js';
@@ -173,6 +173,30 @@ function withTimeout<T>(promise: Promise<T>, ms: number | undefined, key: string
 		timer = setTimeout(() => reject(new Error(`Step "${key}" timed out after ${ms} ms.`)), ms);
 	});
 	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+/** The raw config value an issue points at, e.g. `conditions[0].left`. */
+function configValueAt(config: Record<string, unknown>, path: string): unknown {
+	let current: unknown = config;
+	for (const key of splitPath(path)) {
+		if (current === null || typeof current !== 'object') return undefined;
+		current = (current as Record<string, unknown>)[key];
+	}
+	return current;
+}
+
+/**
+ * Why a step's config did not parse. A field whose value is an expression that resolved to nothing
+ * is a run-time miss, not a configuration mistake, so the message says what the flow was reading
+ * and where the data stopped instead of only "Value is required".
+ */
+function explainConfigIssue(issue: Issue, config: Record<string, unknown>, scope: ExpressionScope): string {
+	const raw = configValueAt(config, issue.path);
+	for (const expression of typeof raw === 'string' ? collectExpressions(raw) : []) {
+		const why = describeMissing(expression, scope);
+		if (why) return `${issue.path}: ${issue.message} {{ ${expression} }} resolved to nothing at run time; ${why}.`;
+	}
+	return `${issue.path}: ${issue.message}`;
 }
 
 /** `each[2]/send` → `{ scope: 'each[2]', nodeId: 'send' }` */
@@ -425,7 +449,11 @@ export function createEngine<D extends AnyNodeDefinition>(registry: Registry<D>,
 		delete record.error;
 		emit(run, { type: 'step:success', ...stepBase(run, key), ports: result.ports, output: result.output, message: result.message });
 		// Steps without output pass their input along.
-		deliver(run, scope, nodeId, result.ports, result.output !== undefined ? result.output : record.input);
+		const value = result.output !== undefined ? result.output : record.input;
+		// A run started without a payload (a test run) still gets trigger data: what the trigger step
+		// produced — a webhook's sample request, say — so `{{ trigger.* }}` has something to read.
+		if (!scope && state.trigger === undefined && value !== undefined && def(run, nodeId).trigger) state.trigger = value;
+		deliver(run, scope, nodeId, result.ports, value);
 	}
 
 	function failStep(run: Run, scope: string, nodeId: string, record: StepRecord, message: string) {
@@ -511,7 +539,7 @@ export function createEngine<D extends AnyNodeDefinition>(registry: Registry<D>,
 				};
 				const parsed = parseShape(definition.config, resolveTemplates(node.config, scopeValues));
 				const errors = parsed.issues.filter((issue) => issue.level === 'error');
-				if (errors.length) throw new StepError(errors.map((issue) => `${issue.path}: ${issue.message}`).join(' '));
+				if (errors.length) throw new StepError(errors.map((issue) => explainConfigIssue(issue, node.config, scopeValues)).join(' '));
 				const secrets = await resolveSecrets(definition, parsed.value, key, state.id);
 
 				const ctx: NodeContext = {

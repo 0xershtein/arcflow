@@ -79,9 +79,19 @@ export interface AiSuggestion {
 	attempts?: number;
 }
 
+/** What a server can do, so the editor can hide what is off instead of failing on use. */
+export interface ServerCapabilities {
+	/** Flow generation, editing and explaining are configured. */
+	ai: boolean;
+	/** Credentials can be stored (the server has a secret). */
+	credentials: boolean;
+}
+
 export interface Backend {
 	/** Step catalog as JSON (`registryFromManifest` turns it into a registry). Optional. */
 	manifest?(): Promise<unknown>;
+	/** What this server has configured. Optional; everything is assumed available without it. */
+	capabilities?(): Promise<ServerCapabilities>;
 	listFlows(): Promise<ServerFlowSummary[]>;
 	getFlow(id: string): Promise<{ record: ServerFlow; issues: Issue[] }>;
 	/** Creates the flow when `id` is missing, otherwise saves a new version. */
@@ -162,6 +172,12 @@ export function createHttpBackend(url: string, options: HttpBackendOptions = {})
 
 	return {
 		manifest: () => request('/steps'),
+
+		async capabilities() {
+			const health = await request<{ ai?: boolean; credentials?: boolean }>('/health');
+			// Servers older than this field answer `{ ok: true }`; assume they have both.
+			return { ai: health.ai !== false, credentials: health.credentials !== false };
+		},
 
 		async listFlows() {
 			return (await request<{ flows: ServerFlowSummary[] }>('/flows')).flows;

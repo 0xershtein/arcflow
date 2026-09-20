@@ -81,6 +81,19 @@ function readShape(input: unknown): Shape {
 	return Object.fromEntries(Object.entries(input).map(([key, field]) => [key, readField(field)]));
 }
 
+/** Registries built by `registryFromManifest`, so hosts can tell steps with code from steps without. */
+const manifestRegistries = new WeakSet<object>();
+
+/**
+ * Whether a registry came from `registryFromManifest`. Its steps carry no code, so flows made of
+ * them can be shown, edited and validated here but have to run on the server that sent the manifest.
+ */
+export function isManifestRegistry(registry: unknown): boolean {
+	return typeof registry === 'object' && registry !== null && manifestRegistries.has(registry);
+}
+
+const title = (step: Record<string, unknown>, kind: string) => (typeof step.title === 'string' && step.title ? step.title : kind);
+
 /**
  * Rebuilds a registry from a manifest, for editors and tools that only display, edit and validate flows.
  * The steps have no code: running one throws, because it belongs on the server that sent the manifest.
@@ -110,7 +123,7 @@ export function registryFromManifest(input: unknown): Registry<AnyNodeDefinition
 			...(isObject(step.retry) ? { retry: step.retry as NodeDefinition['retry'] } : {}),
 			...(typeof step.timeoutMs === 'number' ? { timeoutMs: step.timeoutMs } : {}),
 			run() {
-				throw new Error(`Step "${kind}" has no code here: it runs on the server that provided the catalog.`);
+				throw new Error(`"${title(step, kind)}" runs on the flow server, not here.`);
 			}
 		};
 		return definition;
@@ -125,5 +138,7 @@ export function registryFromManifest(input: unknown): Registry<AnyNodeDefinition
 		nodes,
 		...(isObject(input.sampleVars) ? { sampleVars: input.sampleVars } : {})
 	};
-	return createRegistry([pack]) as Registry<AnyNodeDefinition>;
+	const registry = createRegistry([pack]) as Registry<AnyNodeDefinition>;
+	manifestRegistries.add(registry);
+	return registry;
 }

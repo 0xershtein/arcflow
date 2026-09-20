@@ -41,3 +41,9 @@ export const icons = {
 } as const;
 
 export type IconName = keyof typeof icons;
+
+/**
+ * Drawn for a step whose definition names no icon. Neutral on purpose: the canvas, the palette and
+ * the inspector all use it, and a step without an icon is not a step with a problem.
+ */
+export const DEFAULT_ICON: IconName = 'sparkle';

@@ -50,8 +50,15 @@ export const webhookTrigger = defineNode({
 				'when-finished': 'When the flow finishes, with its result',
 				'respond-step': 'From a "Respond to webhook" step'
 			}
+		}),
+		sample: f.json({
+			optional: true,
+			label: 'Test body',
+			description: 'Stands in for the request body when a run has no request, for example in test runs.'
 		})
 	},
 	summary: (c) => `${c.method} /hooks/${c.path}`,
-	run: (ctx) => ({ output: ctx.input ?? { method: ctx.config.method, path: ctx.config.path, headers: {}, query: {}, body: null } })
+	run: (ctx) => ({
+		output: ctx.input ?? { method: ctx.config.method, path: ctx.config.path, headers: {}, query: {}, body: ctx.config.sample ?? null }
+	})
 });

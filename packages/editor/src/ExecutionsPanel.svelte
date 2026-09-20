@@ -3,6 +3,7 @@
 	import type { ServerRunSummary } from './backend.js';
 	import { getEditor } from './context.svelte.js';
 	import { format } from './options.js';
+	import { formatDuration, localTime } from './summary.js';
 
 	/** Run history for the open flow, with the run being viewed highlighted. */
 	let {
@@ -35,8 +36,8 @@
 						? labels.stopped
 						: labels.running;
 
-	const time = (at: number) => new Date(at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-	const took = (run: ServerRunSummary) => Math.max(0, Math.round(((run.finishedAt ?? run.updatedAt) - run.startedAt) / 100) / 10);
+	const time = (at: number) => localTime(at);
+	const took = (run: ServerRunSummary) => formatDuration((run.finishedAt ?? run.updatedAt) - run.startedAt);
 </script>
 
 <section class="fb-runs" aria-label={labels.executions}>
@@ -48,10 +49,13 @@
 	<div class="fb-runs-list">
 		{#each runs as run (run.id)}
 			<div class="fb-run-row" class:is-on={run.id === selectedId}>
+				<!-- Two lines: a run's time and what started it both get the width they need. -->
 				<button class="fb-run-open" onclick={() => onopen(run.id)} title={run.error ?? labels.openExecution}>
 					<span class="fb-badge" class:ok={run.status === 'completed'} class:bad={run.status === 'failed'}>{statusLabel(run.status)}</span>
-					<span class="fb-run-time">{time(run.startedAt)}</span>
-					<span class="fb-run-meta">{run.trigger.type} · {took(run)}s</span>
+					<span class="fb-run-lines">
+						<span class="fb-run-time">{time(run.startedAt)}</span>
+						<span class="fb-run-meta">{run.trigger.type} · {took(run)}</span>
+					</span>
 				</button>
 				{#if run.status === 'running' || run.status === 'waiting'}
 					<button class="fb-icon-btn" onclick={() => oncancel(run.id)} aria-label={labels.cancelRun}><Icon name="stop" size={13} /></button>

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { icons, type IconName } from './icons.js';
+	import { DEFAULT_ICON, icons, type IconName } from './icons.js';
 
 	/** Unknown names (e.g. from a custom step) fall back to a generic mark. */
 	let { name, size = 18, stroke = 1.6 }: { name: IconName | (string & {}); size?: number; stroke?: number } = $props();
 
-	const markup = $derived(icons[name as IconName] ?? icons.sparkle);
+	const markup = $derived(icons[name as IconName] ?? icons[DEFAULT_ICON]);
 </script>
 
 <svg

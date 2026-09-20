@@ -32,6 +32,10 @@ export interface ThemeColors {
 	/** Main buttons (Test run, Apply). */
 	primary: string;
 	primaryText: string;
+	/** Runs that really happen: the live run log, its badge. */
+	live: string;
+	/** Translucent `live` for badges and glows. */
+	liveSoft: string;
 	danger: string;
 	dangerSoft: string;
 	/** Connection lines. */
@@ -54,6 +58,8 @@ export const lightColors: ThemeColors = {
 	accentSoft: 'rgba(79, 70, 229, 0.12)',
 	primary: '#18181b',
 	primaryText: '#ffffff',
+	live: '#047857',
+	liveSoft: 'rgba(4, 120, 87, 0.12)',
 	danger: '#dc2626',
 	dangerSoft: 'rgba(220, 38, 38, 0.1)',
 	edge: '#a1a1aa',
@@ -74,6 +80,8 @@ export const darkColors: ThemeColors = {
 	accentSoft: 'rgba(129, 140, 248, 0.16)',
 	primary: '#fafafa',
 	primaryText: '#18181b',
+	live: '#34d399',
+	liveSoft: 'rgba(52, 211, 153, 0.16)',
 	danger: '#f87171',
 	dangerSoft: 'rgba(248, 113, 113, 0.14)',
 	edge: '#52525b',
@@ -155,6 +163,8 @@ export const defaultLabels = {
 	ready: 'Ready',
 	problemCount: '{count} problem',
 	problemsCount: '{count} problems',
+	noteCount: '{count} note',
+	notesCount: '{count} notes',
 	json: 'JSON',
 	import: 'Import',
 	export: 'Export',
@@ -185,12 +195,16 @@ export const defaultLabels = {
 	emptyTitle: 'Start with a trigger',
 	emptyBody: 'Pick a step from the list, or paste a flow into JSON.',
 	runTitle: 'Test run',
+	liveRunTitle: 'Run',
 	running: 'Running…',
 	completed: 'Completed',
 	waiting: 'Waiting',
 	failed: 'Failed',
 	stopped: 'Stopped',
-	simulated: 'Simulated — nothing is sent',
+	simulated: 'Simulated — steps without a test mode still run',
+	simulatedOnServer: 'Simulated on the server — steps without a test mode still run',
+	ranOnServer: 'Ran on the server',
+	testRunNeedsServer: 'A test run needs the server these steps come from.',
 	starting: 'Starting…',
 	done: 'Done',
 	close: 'Close',
@@ -235,6 +249,7 @@ export const defaultLabels = {
 	save: 'Save',
 	saving: 'Saving…',
 	saved: 'Saved “{name}”.',
+	savedDraft: 'Saved as a draft — fix {problems} before it can run.',
 	savedState: 'Saved',
 	unsaved: 'Unsaved',
 	saveFirst: 'Save the flow first.',
@@ -267,7 +282,7 @@ export const defaultLabels = {
 	credentialsOff: 'Credentials are disabled on this server.',
 	create: 'Create',
 	cancel: 'Cancel',
-	serverError: 'Server: {error}',
+	serverError: '{error}',
 	askAi: 'Ask AI',
 	aiPlaceholder: 'Describe what this flow should do…',
 	aiEditPlaceholder: 'What should change?',
@@ -284,7 +299,12 @@ export const defaultLabels = {
 	aiStop: 'Stop',
 	aiFix: 'Fix problems',
 	aiExplain: 'Explain',
-	aiExplaining: 'Reading the flow…'
+	aiExplaining: 'Reading the flow…',
+	aiUnavailable: 'This server has no model configured.',
+	addStep: 'Add step',
+	steps: 'Steps',
+	more: 'More',
+	moreActions: 'More actions'
 };
 
 export type Labels = { [K in keyof typeof defaultLabels]: string };
@@ -356,6 +376,8 @@ const COLOR_VARS: Record<keyof ThemeColors, string> = {
 	accentSoft: '--fb-accent-soft',
 	primary: '--fb-primary',
 	primaryText: '--fb-primary-text',
+	live: '--fb-live',
+	liveSoft: '--fb-live-soft',
 	danger: '--fb-danger',
 	dangerSoft: '--fb-danger-soft',
 	edge: '--fb-edge',

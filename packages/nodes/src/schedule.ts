@@ -26,7 +26,12 @@ export const scheduleTrigger = defineNode({
 			label: 'Cron expression',
 			description: 'minute hour day-of-month month day-of-week — "0 9 * * 1-5" is 09:00 on weekdays.'
 		}),
-		timezone: f.string({ default: 'UTC', label: 'Time zone', placeholder: 'Europe/Istanbul' })
+		timezone: f.string({ default: 'UTC', label: 'Time zone', placeholder: 'Europe/Istanbul' }),
+		sample: f.json({
+			optional: true,
+			label: 'Test payload',
+			description: 'Merged into the output when a run has no payload, for example in test runs.'
+		})
 	},
 	check: (c) => {
 		if (hasExpression(c.cron) || hasExpression(c.timezone)) return null;
@@ -45,5 +50,10 @@ export const scheduleTrigger = defineNode({
 			return c.cron;
 		}
 	},
-	run: (ctx) => ({ output: { firedAt: new Date().toISOString(), ...(isRecord(ctx.input) ? ctx.input : {}) } })
+	run: (ctx) => ({
+		output: {
+			firedAt: new Date().toISOString(),
+			...(isRecord(ctx.input) ? ctx.input : isRecord(ctx.config.sample) ? ctx.config.sample : {})
+		}
+	})
 });
