@@ -103,7 +103,9 @@ export const tools: Tool[] = [
 			const parsed = asFlow(args.flow, context);
 			if (!parsed.flow) return { text: `Not a flow:\n${issueLines(parsed.issues)}`, isError: true };
 			if (!Array.isArray(args.operations) || args.operations.length === 0) {
-				return { text: 'Give at least one operation.', isError: true };
+				const given = Object.keys(args).filter((key) => key !== 'flow');
+				const hint = given.length ? ` (got ${given.map((key) => `"${key}"`).join(', ')} instead)` : '';
+				return { text: `Pass the changes as "operations": a non-empty array of { "op", … }${hint}.`, isError: true };
 			}
 			const result = applyPatch(parsed.flow, args.operations as PatchOp[]);
 			if (!result.applied) {

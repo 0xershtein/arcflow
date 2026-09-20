@@ -105,6 +105,13 @@ describe('tools without a server', () => {
 		expect(dataOf<RunState>(response)?.steps.tell.output).toEqual({ sent: 'team@example.com' });
 	});
 
+	it('names the argument when the operations are missing or misnamed', async () => {
+		const misnamed = await server.handle(call('patch_flow', { flow, ops: [{ op: 'set', path: 'name', value: 'x' }] }));
+		expect(isError(misnamed)).toBe(true);
+		expect(textOf(misnamed)).toContain('"operations"');
+		expect(textOf(misnamed)).toContain('"ops"');
+	});
+
 	it('refuses to run a flow with errors', async () => {
 		const response = await server.handle(call('test_flow', { flow: brokenFlow }));
 		expect(isError(response)).toBe(true);

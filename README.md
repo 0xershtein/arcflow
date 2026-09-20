@@ -26,8 +26,9 @@ ARCFLOW_SECRET="a long random string" npx arcflow serve --db ./arcflow.db
 ```
 
 ```sh
+# a flow whose trigger is { "kind": "trigger.webhook", "config": { "path": "orders/created" } }
 curl -X POST localhost:8787/api/flows -d '{ "id": "orders", "active": true, "flow": { … } }'
-curl -X POST localhost:8787/hooks/orders/created -d '{ "id": 42 }'   # runs every active flow with that webhook
+curl -X POST localhost:8787/hooks/orders/created -d '{ "id": 42 }'   # runs every active flow whose webhook path is orders/created
 curl localhost:8787/api/runs?flowId=orders                            # history
 ```
 
@@ -366,6 +367,11 @@ onBeforeUnmount(() => editor?.destroy());
 ```
 
 **No framework**
+
+The bare `@arcflow/editor` import below is resolved by a bundler (Vite, webpack, esbuild) or by an
+[import map](https://developer.mozilla.org/docs/Web/HTML/Element/script/type/importmap) that points
+`@arcflow/editor` and `@arcflow/nodes` at a CDN such as esm.sh. `arcflow dev` serves a ready-made page
+with the editor and the standard steps if you just want to see it run.
 
 ```html
 <div id="editor" style="height: 100dvh"></div>
