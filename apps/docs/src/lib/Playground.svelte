@@ -25,7 +25,8 @@
 	let preset = $state<Preset>('default');
 	let toolbar = $state<Toolbar>('full');
 	let palette = $state<'on' | 'off'>('on');
-	let inspector = $state<'on' | 'off'>('on');
+	// Off by default: in the docs column the canvas is otherwise too narrow to read the steps.
+	let inspector = $state<'on' | 'off'>('off');
 	let minimap = $state<'off' | 'on'>('off');
 	let background = $state<Background>('dots');
 	let language = $state<'en' | 'de'>('en');
@@ -171,6 +172,14 @@
 	@media (min-width: 961px) {
 		.frame:not(.narrow) {
 			margin-inline: -12px;
+		}
+	}
+
+	/* On wide screens the frame also takes the free space right of the column, so the
+	   canvas keeps a readable width with the step list and the inspector open. */
+	@media (min-width: 1240px) {
+		.frame:not(.narrow) {
+			margin-right: calc(-1 * min(320px, (100vw - 1140px) / 2 + 12px));
 		}
 	}
 

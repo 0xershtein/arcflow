@@ -28,7 +28,7 @@ export function createPlaygroundFlow(): Flow {
 		annotations: [
 			{
 				id: 'note',
-				text: 'Press Test run, then click “Fetch status” and open Output to see what came back.',
+				text: 'Press Test run. Then turn the inspector on, click “Fetch status” and open Output to see what came back.',
 				position: { x: 300, y: 220 },
 				width: 260,
 				height: 96

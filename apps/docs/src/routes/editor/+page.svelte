@@ -93,7 +93,7 @@ createEditor('#editor', {
 <Playground />
 <p>
 	<strong>Test run</strong> really calls the GitHub API: the HTTP step sends <code>GET</code> and <code>HEAD</code> requests in test runs and only pretends
-	for the others. After a run, click a step and open <strong>Input</strong> or <strong>Output</strong>. On a phone the editor is already in its one-column
+	for the others. After a run, switch the inspector on, click a step and open <strong>Input</strong> or <strong>Output</strong>. On a phone the editor is already in its one-column
 	layout; on a wide screen, pick <strong>420px</strong> to see it fold. Look sets <code>theme.colors</code>, <code>radius</code> and, for Serif, <code>fontFamily</code>.
 </p>
 
