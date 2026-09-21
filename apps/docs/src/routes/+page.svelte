@@ -127,10 +127,16 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 <section class="canvas">
 	<h2>The canvas is the same flow</h2>
 	<p class="measure">
-		This is the editor itself, running in this page — not a screenshot. Drag a step in, connect it, press <strong>Test run</strong>: every step reports what
-		it would do and nothing is sent. Whatever you build here is the same JSON the engine runs.
+		This is the editor itself, running in this page — not a screenshot. Drag a step in, connect it, press <strong>Test run</strong>: steps with a test mode
+		report what they would do, and the HTTP step really sends its <code>GET</code> to the GitHub API, since test runs only hold back other methods.
+		Whatever you build here is the same JSON the engine runs.
 	</p>
 	<Demo flow={createDemoFlow()} />
+	<p class="measure caption">
+		Step shapes, themes, a compact toolbar, translated labels, read-only and a narrow container, on one editor: <a href="{base}/editor#playground"
+			>open the playground</a
+		>.
+	</p>
 </section>
 
 <section class="agents">
@@ -156,7 +162,7 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 		<tbody>
 			<tr><td><code>@arcsig-labs/core</code></td><td>The engine: steps, flows, validation, expressions, branching, loops, waits, sub-flows. No dependencies.</td></tr>
 			<tr><td><code>@arcsig-labs/nodes</code></td><td>Thirteen standard steps: triggers, HTTP, sandboxed JavaScript, set fields, if, switch, merge, loop, wait, run flow.</td></tr>
-			<tr><td><code>@arcsig-labs/editor</code></td><td>The canvas. One ES module with styles included, framework-free, 17 colour tokens, 129 replaceable strings.</td></tr>
+			<tr><td><code>@arcsig-labs/editor</code></td><td>The canvas. One ES module with styles included, framework-free, 19 colour tokens, 151 replaceable strings.</td></tr>
 			<tr><td><code>@arcsig-labs/server</code></td><td>Webhooks, schedules, restart-safe timers, run history, encrypted credentials, live events.</td></tr>
 			<tr><td><code>@arcsig-labs/ai</code></td><td>Build and change flows with a model: every attempt is validated, and the issues go back for repair for a set number of tries.</td></tr>
 			<tr><td><code>@arcsig-labs/mcp</code></td><td>An MCP server, so agents list steps, write flows, check them and run them.</td></tr>

@@ -5,16 +5,16 @@ Runs arcflow flows for real: an HTTP API, webhook and cron triggers, timers that
 ## Command line
 
 ```sh
-ARCFLOW_SECRET="a long random string" npx arcflow serve --db ./arcflow.db --steps ./my-steps.js
+ARCFLOW_SECRET="a long random string" npx -y @arcsig-labs/server serve --db ./arcflow.db --steps ./my-steps.js
 ```
 
 Loads the standard steps plus any modules passed with `--steps` (exporting a pack or step definitions), stores everything in one SQLite file, and listens on `http://127.0.0.1:8787`. `--api-key` protects `/api`; `--cors` allows a browser editor on another origin.
 
 ```sh
-npx arcflow dev
+npx -y -p @arcsig-labs/server -p @arcsig-labs/editor arcflow dev
 ```
 
-Same server with the editor on the same address: open `http://127.0.0.1:8787` and build flows against your real steps, credentials and run history. The page takes its step catalog from `GET /api/steps`, so custom steps passed with `--steps` show up with no build step. It needs `@arcsig-labs/editor` installed next to the server.
+Same server with the editor on the same address: open `http://127.0.0.1:8787` and build flows against your real steps, credentials and run history. The page takes its step catalog from `GET /api/steps`, so custom steps passed with `--steps` show up with no build step. It needs `@arcsig-labs/editor` installed next to the server — which is what the second `-p` does; in a project with both installed, `npx arcflow dev` is enough.
 
 ## In your app
 

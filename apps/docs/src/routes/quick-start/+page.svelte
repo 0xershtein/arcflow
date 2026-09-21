@@ -13,7 +13,7 @@ const steps = createRegistry([standardSteps]);
 
 const flow = steps.flow('Daily digest');
 const start = flow.add('trigger.schedule', { cron: '0 9 * * *' });
-const fetchTodos = flow.add('http.request', { url: 'https://example.com/todos' });
+const fetchTodos = flow.add('http.request', { url: 'https://example.com/todos' }, { id: 'fetch' });
 const tell = flow.add('http.request', {
 	method: 'POST',
 	url: 'https://hooks.example.com/digest',
@@ -28,13 +28,13 @@ const json = flow.build(); // plain JSON: store it, edit it, send it anywhere`;
 	const run = `import { createEngine } from '@arcsig-labs/core';
 
 const engine = createEngine(steps);
-const result = await engine.start(json, { mode: 'simulate' }); // nothing is sent
+const result = await engine.start(json, { mode: 'simulate' }); // the POST is held back
 console.log(result.status, result.steps);`;
 
 	const editor = `npm install @arcsig-labs/editor`;
 
 
-	const server = `ARCFLOW_SECRET="a long random string" npx arcflow dev`;
+	const server = `ARCFLOW_SECRET="a long random string" npx -y -p @arcsig-labs/server -p @arcsig-labs/editor arcflow dev`;
 </script>
 
 <svelte:head><title>Quick start — arcflow</title></svelte:head>
@@ -53,7 +53,9 @@ console.log(result.status, result.steps);`;
 
 <h2>3. Run it</h2>
 <p>
-	<code>simulate</code> mode never sends a request or moves money — every step reports what it would do. Swap it for <code>live</code> when you mean it.
+	In <code>simulate</code> mode, a step that defines a <code>simulate</code> handler reports what it would do instead of doing it. The HTTP step sends
+	<code>GET</code> and <code>HEAD</code> requests and only pretends for the others, so here the fetch goes out and the <code>POST</code> does not. A step
+	without a handler runs normally — give anything that sends, pays or writes one. Swap the mode for <code>live</code> when you mean it.
 </p>
 <Code code={run} />
 

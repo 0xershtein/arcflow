@@ -26,7 +26,7 @@ Neighboring products pick one side: hosted automation tools own the runtime but 
 
 ## Operating Context
 
-- Installed from npm into someone's app (`@arcsig-labs/core`, `@arcsig-labs/editor`, `@arcsig-labs/nodes`, `@arcsig-labs/server`, `@arcsig-labs/ai`, `@arcsig-labs/mcp`), or run as `npx arcflow dev`, which serves the editor and the API on one origin.
+- Installed from npm into someone's app (`@arcsig-labs/core`, `@arcsig-labs/editor`, `@arcsig-labs/nodes`, `@arcsig-labs/server`, `@arcsig-labs/ai`, `@arcsig-labs/mcp`), or run as `npx -y -p @arcsig-labs/server -p @arcsig-labs/editor arcflow dev`, which serves the editor and the API on one origin.
 - Added to a coding agent as an MCP server: `claude mcp add arcflow -- npx -y @arcsig-labs/mcp`.
 - Evaluated on GitHub (`arcsig-labs/arcflow`, MIT) and on the docs site, which is prerendered and deployed to GitHub Pages by CI.
 - The editor is framework-free: one ES module with Svelte compiled in, mounted by `createEditor(element, options)` from React, Vue, Angular or plain HTML; a `/svelte` entry for Svelte apps.
@@ -38,7 +38,7 @@ Measured in this repository, 2026-09-16:
 - **Catalog:** 39 entries, 7 042 characters from `registry.describe()`; 20 KB of JSON Schema from `registry.toJSONSchema()`; 13 standard steps in `@arcsig-labs/nodes`.
 - **Engine:** branching, joins (`any` / `all`), loops with concurrency, sub-flows, retries, timeouts, `wait` / `resume`, credentials, dead-branch elimination, expressions without `eval`.
 - **Validation:** `registry.parse()` never throws; each issue carries a level, a stable code and a JSON path (`error required @ nodes[1].config.url`).
-- **Editor:** 14 options, 9 theme options, 13 UI toggles, 17 colour tokens, 135 replaceable strings, 3 step shapes (`card`, `tile`, `compact`).
+- **Editor:** 16 options, 9 theme options, 14 UI options, 19 colour tokens, 151 replaceable strings, 3 step shapes (`card`, `tile`, `compact`).
 - **Agents:** MCP over stdio exposes 4 tools standalone (`list_steps`, `validate_flow`, `patch_flow`, `test_flow`) and 9 against a running server. `applyPatch` acts on the same JSON path an issue reports.
 - **Code step** runs in a fresh QuickJS sandbox per step: no network, no filesystem, 1 s CPU and 32 MB heap by default.
 - **Test suite:** 318 tests, 26 files, and `pnpm check` across every package and app.

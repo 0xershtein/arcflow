@@ -33,7 +33,7 @@ Drop a visual workflow builder into your own product — an automation panel, an
 ## Run flows on a server
 
 ```sh
-ARCFLOW_SECRET="a long random string" npx arcflow serve --db ./arcflow.db
+ARCFLOW_SECRET="a long random string" npx -y @arcsig-labs/server serve --db ./arcflow.db
 ```
 
 ```sh

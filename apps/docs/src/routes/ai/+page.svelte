@@ -27,7 +27,7 @@ console.log(summarizeChanges(result.changes)); // "2 added, 1 changed"`;
 
 	const mcp = `claude mcp add arcflow -- npx -y @arcsig-labs/mcp --url http://127.0.0.1:8787`;
 
-	const serverAi = `ANTHROPIC_API_KEY=sk-... npx arcflow dev`;
+	const serverAi = `ANTHROPIC_API_KEY=sk-... npx -y -p @arcsig-labs/server -p @arcsig-labs/editor arcflow dev`;
 </script>
 
 <svelte:head><title>AI and agents — arcflow</title></svelte:head>
@@ -76,7 +76,7 @@ console.log(summarizeChanges(result.changes)); // "2 added, 1 changed"`;
 	<tbody>
 		<tr><td><code>list_steps</code></td><td>Every step with its settings and outputs — the only source of truth</td></tr>
 		<tr><td><code>validate_flow</code></td><td>Problems with their JSON paths, without saving</td></tr>
-		<tr><td><code>test_flow</code></td><td>A simulated run: nothing is sent, every step reports what it would do</td></tr>
+		<tr><td><code>test_flow</code></td><td>A run in <code>simulate</code> mode: steps with a test mode report what they would do instead of doing it</td></tr>
 		<tr><td><code>patch_flow</code></td><td>Changes one part of a flow at the path an issue reported, instead of rewriting the document</td></tr>
 		<tr><td><code>list_flows</code>, <code>get_flow</code>, <code>save_flow</code></td><td>What is on the server, and new versions of it</td></tr>
 		<tr><td><code>run_flow</code>, <code>get_run</code></td><td>Run a saved flow and read what happened, step by step</td></tr>

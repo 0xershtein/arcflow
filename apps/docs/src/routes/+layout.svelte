@@ -487,7 +487,10 @@
 			display: flex;
 		}
 
+		/* Auto margins stop a grid item from stretching, so without a width it grows to its
+		   widest code line and the page scrolls sideways on a phone. */
 		main {
+			width: 100%;
 			margin: 0 auto;
 		}
 	}

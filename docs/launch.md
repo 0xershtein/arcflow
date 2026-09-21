@@ -16,7 +16,7 @@ Record at 1920×1080 with the docs site or `arcflow dev` open. Voice-over in pla
 | 6 | Paste a flow with a mistake (a missing URL) as JSON; the issue appears with its path `nodes[1].config.url` | "Every problem is a typed issue with a stable code and a JSON path." |
 | 7 | Terminal: `claude mcp add arcflow -- npx -y @arcsig-labs/mcp`, then Claude Code asked to "build a flow that fetches open invoices every Monday and posts a summary" — `list_steps`, `validate_flow`, `patch_flow`, `test_flow` calls scroll by | "That path is what lets an agent fix its own flow. Over MCP, a coding agent lists your steps, writes the flow, gets it checked, patches one field instead of rewriting, and runs it." |
 | 8 | The editor again: the prompt bar builds the same flow live on the canvas; **Keep** | "The same thing works from the prompt bar in the editor." |
-| 9 | Terminal: `ARCFLOW_SECRET=… npx arcflow serve --db ./arcflow.db`, then `curl -X POST localhost:8787/hooks/orders/created` and the run appearing in the history panel | "And when it's time to run for real: webhooks, cron, timers that survive a restart, run history, encrypted credentials. One command." |
+| 9 | Terminal: `ARCFLOW_SECRET=… npx -y @arcsig-labs/server serve --db ./arcflow.db`, then `curl -X POST localhost:8787/hooks/orders/created` and the run appearing in the history panel | "And when it's time to run for real: webhooks, cron, timers that survive a restart, run history, encrypted credentials. One command." |
 | 10 | Landing page with the install command, then the GitHub repository | "arcflow. MIT, on npm and GitHub." |
 
 Cut anything that runs long; shots 2, 6 and 7 carry the argument. Record shot 7 for real against a running MCP server and cut it down, rather than staging it.
@@ -51,7 +51,7 @@ For agents: `claude mcp add arcflow -- npx -y @arcsig-labs/mcp`
 Claude Code or Cursor can `list_steps`, `validate_flow`, `patch_flow` (one field at the path an issue reported, not a rewrite) and `test_flow`. Against a running server, also save and run.
 
 **6.**
-Running for real is one command: `npx arcflow serve`. Webhooks, cron, timers that survive restarts, run history, AES-256-GCM credentials, live events over SSE. SQLite by default, memory for tests.
+Running for real is one command: `npx -y @arcsig-labs/server serve`. Webhooks, cron, timers that survive restarts, run history, AES-256-GCM credentials, live events over SSE. SQLite by default, memory for tests.
 
 **7.**
 What's in the box today: 13 standard steps (HTTP, sandboxed JavaScript in QuickJS, if/switch/merge/loop/wait, sub-flows), joins, loops with concurrency, retries, pause and resume for approvals. 248 tests. No dependencies in the engine.

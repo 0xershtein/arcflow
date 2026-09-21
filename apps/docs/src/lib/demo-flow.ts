@@ -20,3 +20,49 @@ export function createDemoFlow(): Flow {
 	start.to(check).to(report);
 	return flow.build();
 }
+
+/** The demo flow with a sticky note, so the playground shows annotations as well as steps. */
+export function createPlaygroundFlow(): Flow {
+	return {
+		...createDemoFlow(),
+		annotations: [
+			{
+				id: 'note',
+				text: 'Press Test run, then click “Fetch status” and open Output to see what came back.',
+				position: { x: 300, y: 220 },
+				width: 260,
+				height: 96
+			}
+		]
+	};
+}
+
+/**
+ * A flow that only reads run variables, for the `vars` and `summaries` demo. Nothing in it
+ * leaves the browser, so a test run never depends on the network.
+ */
+export function createVarsFlow(): Flow {
+	const flow = standardRegistry.flow('Balance check').description('Compare a balance handed in by the host with a threshold.');
+
+	const start = flow.add('trigger.manual', {}, { id: 'start' });
+	const check = flow.add(
+		'logic.if',
+		{ conditions: [{ left: '{{ vars.balance }}', operator: 'gt', right: 1000 }] },
+		{ id: 'enough', label: 'Enough to pay?' }
+	);
+	const pay = flow.add(
+		'data.set',
+		{ fields: [{ name: 'message', value: 'Paying out of {{ vars.balance }} {{ vars.currency }}' }], keepInput: false },
+		{ id: 'pay', label: 'Pay' }
+	);
+	const hold = flow.add(
+		'data.set',
+		{ fields: [{ name: 'message', value: 'Holding: only {{ vars.balance }} {{ vars.currency }}' }], keepInput: false },
+		{ id: 'hold', label: 'Hold' }
+	);
+
+	start.to(check);
+	check.on('true').to(pay);
+	check.on('false').to(hold);
+	return flow.build();
+}

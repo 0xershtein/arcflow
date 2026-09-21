@@ -33,6 +33,11 @@ export const transfer = defineNode({
 	simulate: (ctx) => ({ output: { total: ctx.config.recipients.length }, message: 'Would send' })
 });`;
 
+	const standard = `import { createRegistry } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
+
+const registry = createRegistry([standardSteps, myPack]);`;
+
 	const expressions = `{{ steps.check.output.balance }}        // another step's output
 {{ input.email ?? "team@example.com" }} // fallback when missing
 {{ steps.list.output.items | length }}  // filters after a pipe
@@ -67,6 +72,23 @@ if (!result.ok) {
 	<code>simulate</code> is what test runs use, so a flow can be exercised end to end without side effects. <code>summary</code> is the line under the step's
 	name on the canvas.
 </p>
+
+<h2 id="standard-steps">Standard steps</h2>
+<p>
+	<code>@arcsig-labs/nodes</code> has thirteen steps to start from; your own packs sit next to them in the same registry.
+</p>
+<Code code={standard} />
+<table>
+	<thead><tr><th>Kind</th><th></th></tr></thead>
+	<tbody>
+		<tr><td><code>trigger.manual</code>, <code>trigger.webhook</code>, <code>trigger.schedule</code></td><td>Start by hand, from an HTTP call, or on a cron schedule. Each takes a <code>sample</code> payload for runs started by hand.</td></tr>
+		<tr><td><code>http.request</code>, <code>http.respond</code></td><td>Call APIs (with credentials, timeouts, an error output); answer the webhook caller. In test runs the request step sends only <code>GET</code> and <code>HEAD</code>.</td></tr>
+		<tr><td><code>code.javascript</code></td><td>JavaScript in a QuickJS sandbox: no network or file access, 1 s of CPU and 32 MB of heap by default.</td></tr>
+		<tr><td><code>data.set</code></td><td>Build an object from values and expressions.</td></tr>
+		<tr><td><code>logic.if</code>, <code>logic.switch</code>, <code>logic.merge</code></td><td>Branch on conditions or values; wait for branches and combine them.</td></tr>
+		<tr><td><code>logic.loop</code>, <code>logic.wait</code>, <code>flow.call</code></td><td>Repeat per item, pause, run another flow.</td></tr>
+	</tbody>
+</table>
 
 <h2>Expressions</h2>
 <p>Any setting can be an expression. They are parsed, not evaluated — there is no <code>eval</code> anywhere.</p>

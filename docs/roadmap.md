@@ -38,11 +38,11 @@ Runs flows for real, on Node, Bun, or edge runtimes.
 - Storage adapters: memory, SQLite (`node:sqlite`), and an interface for Postgres and others.
 - Encrypted credentials store.
 - Live run events over Server-Sent Events.
-- `npx arcflow dev`: server plus editor locally.
+- `npx -y -p @arcsig-labs/server -p @arcsig-labs/editor arcflow dev`: server plus editor locally.
 
 Done when: a flow saved in the editor fires from a real webhook and a cron schedule, survives a restart while waiting, and its run history is browsable.
 
-**Status: runtime done; editor connection moves to M4.** `@arcsig-labs/server` has the API, webhooks (immediate, when-finished and respond-step answers), a tick-based scheduler for cron and timers, memory and SQLite storage, encrypted credentials, SSE events, crash recovery that fails interrupted runs instead of replaying them, and `arcflow serve`. Saving from the editor and `npx arcflow dev` with the editor bundled come with the M4 server mode.
+**Status: runtime done; editor connection moves to M4.** `@arcsig-labs/server` has the API, webhooks (immediate, when-finished and respond-step answers), a tick-based scheduler for cron and timers, memory and SQLite storage, encrypted credentials, SSE events, crash recovery that fails interrupted runs instead of replaying them, and `arcflow serve`. Saving from the editor and `npx -y -p @arcsig-labs/server -p @arcsig-labs/editor arcflow dev` with the editor bundled come with the M4 server mode.
 
 ## M4 — Editor, n8n level (`@arcsig-labs/editor`)
 

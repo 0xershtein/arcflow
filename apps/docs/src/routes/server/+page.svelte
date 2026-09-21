@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Code from '$lib/Code.svelte';
 
-	const cli = `ARCFLOW_SECRET="a long random string" npx arcflow dev --db ./arcflow.db`;
+	const cli = `ARCFLOW_SECRET="a long random string" npx -y -p @arcsig-labs/server -p @arcsig-labs/editor arcflow dev --db ./arcflow.db`;
 
 	const embed = `import { createRegistry } from '@arcsig-labs/core';
 import { standardSteps } from '@arcsig-labs/nodes';
