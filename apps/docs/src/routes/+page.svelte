@@ -86,14 +86,14 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 	</div>
 
 	<aside class="status" aria-label="Project status">
-		<p class="now"><span class="mark" aria-hidden="true"></span>0.1.0, unreleased</p>
+		<p class="now"><span class="mark" aria-hidden="true"></span>0.1.0, released 2026-09-21</p>
 		<p>
-			Nothing is on npm until the first tag, so that command is the intended path and not a working one today. Until then:
+			The packages are on npm under <code>@arcsig-labs</code>, so that command works as written. To run everything from source instead:
 			<a href="https://github.com/arcsig-labs/arcflow">clone the repository</a>, then <code>pnpm install</code> and <code>pnpm dev</code>.
 		</p>
 		<dl>
 			<div><dt>License</dt><dd>MIT</dd></div>
-			<div><dt>Tests</dt><dd>248, across 24 files</dd></div>
+			<div><dt>Tests</dt><dd>318, across 26 files</dd></div>
 			<div><dt>Dependencies</dt><dd>none in the engine</dd></div>
 		</dl>
 	</aside>

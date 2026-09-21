@@ -41,12 +41,11 @@ Measured in this repository, 2026-09-16:
 - **Editor:** 14 options, 9 theme options, 13 UI toggles, 17 colour tokens, 135 replaceable strings, 3 step shapes (`card`, `tile`, `compact`).
 - **Agents:** MCP over stdio exposes 4 tools standalone (`list_steps`, `validate_flow`, `patch_flow`, `test_flow`) and 9 against a running server. `applyPatch` acts on the same JSON path an issue reports.
 - **Code step** runs in a fresh QuickJS sandbox per step: no network, no filesystem, 1 s CPU and 32 MB heap by default.
-- **Test suite:** 248 tests, 24 files, and `pnpm check` across every package and app.
+- **Test suite:** 318 tests, 26 files, and `pnpm check` across every package and app.
 
 Undecided or not yet true, and not to be implied anywhere:
 
-- **Version 0.1.0 is unreleased. Nothing is published to npm yet**, so every `npm install` instruction is the intended path, not a working one today. The release workflow publishes on a `v*` tag once an npm token exists.
-- The docs site is not deployed yet: GitHub Pages has to be enabled on the repository.
+- Version 0.1.0 was published to npm on 2026-09-21 under the `@arcsig-labs` scope (the `@arcflow` scope belongs to an unrelated user). The docs site is live on GitHub Pages.
 - No users, customers, testimonials, benchmarks or download counts exist. None may be invented.
 
 ## Brand Commitments

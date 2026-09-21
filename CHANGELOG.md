@@ -2,7 +2,7 @@
 
 All notable changes to arcflow are recorded here. The packages share one version and are released together; the project follows [semantic versioning](https://semver.org), and while the major version is 0 a minor bump may contain breaking changes.
 
-## 0.1.0 — unreleased
+## 0.1.0 — 2026-09-21
 
 The first release: build a flow in code, JSON, a canvas or a prompt, then run it headless or on a server.
 

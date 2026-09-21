@@ -317,7 +317,7 @@ Everything here is a frame around someone else's content. The character is quiet
 - **Footer:** hairline top, 13px muted, the licence and framework credits left, source right.
 
 ### Status Aside (signature)
-- The honest half of the hero: 12px corners, hairline border, `paper-raised` ground, 14px text. Opens with a 7px accent dot beside "0.1.0, unreleased", then the plain statement that nothing is on npm yet, then a definition list of hairline-separated rows (term muted left, value right-aligned) in tabular numerals.
+- The honest half of the hero: 12px corners, hairline border, `paper-raised` ground, 14px text. Opens with a 7px accent dot beside "0.1.0, released 2026-09-21", then the plain statement of where the packages live, then a definition list of hairline-separated rows (term muted left, value right-aligned) in tabular numerals.
 - Its quietness is the whole design: it is never collapsed, never behind a toggle, and never styled as a warning banner.
 
 ### Artifact Panels
@@ -352,7 +352,7 @@ Everything here is a frame around someone else's content. The character is quiet
 - **Do** set `--code-bg` when a code block sits on a surface other than `paper-raised`, so the copy fade matches its ground.
 - **Do** derive in-page navigation from the rendered `h2` elements rather than a parallel list.
 - **Do** theme the browser's own surfaces — selection, focus ring, scrollbar, caret — from the same palette, and use tabular numerals wherever numbers stack.
-- **Do** keep every claim about the packages inside what is true today: 0.1.0 is unreleased, nothing is on npm, and the working path is clone + `pnpm install` + `pnpm dev`.
+- **Do** keep every claim about the packages inside what is true today: 0.1.0 is on npm under `@arcsig-labs`, and running from source is clone + `pnpm install` + `pnpm dev`.
 
 ### Don't:
 - **Don't** add a `box-shadow`. The system has none; use a hairline or a tonal step.
