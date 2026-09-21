@@ -1,7 +1,7 @@
-import type { Flow, Issue, RunEvent, RunState } from '@arcflow/core';
+import type { Flow, Issue, RunEvent, RunState } from '@arcsig-labs/core';
 
 /**
- * The editor's view of a flow server. `createHttpBackend` speaks to `@arcflow/server`;
+ * The editor's view of a flow server. `createHttpBackend` speaks to `@arcsig-labs/server`;
  * implement this interface yourself to store flows in your own app.
  */
 
@@ -138,7 +138,7 @@ export class BackendError extends Error {
 	}
 }
 
-/** Talks to an `@arcflow/server` HTTP API. `url` is the server root, e.g. `http://localhost:8787`. */
+/** Talks to an `@arcsig-labs/server` HTTP API. `url` is the server root, e.g. `http://localhost:8787`. */
 export function createHttpBackend(url: string, options: HttpBackendOptions = {}): Backend {
 	const base = url.replace(/\/+$/, '');
 	const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);

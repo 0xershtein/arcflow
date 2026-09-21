@@ -1,5 +1,5 @@
 {
-	"name": "@arcflow/mcp",
+	"name": "@arcsig-labs/mcp",
 	"version": "0.1.0",
 	"description": "MCP server for arcflow: lets Claude Code, Cursor and other agents list steps, write, validate, save and run flows.",
 	"license": "MIT",
@@ -33,8 +33,8 @@
 		"start": "tsx src/cli.ts"
 	},
 	"dependencies": {
-		"@arcflow/core": "workspace:*",
-		"@arcflow/nodes": "workspace:*"
+		"@arcsig-labs/core": "workspace:*",
+		"@arcsig-labs/nodes": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "^26.6.0",

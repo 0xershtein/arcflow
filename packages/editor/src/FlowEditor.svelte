@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
 	import { SvelteFlowProvider } from '@xyflow/svelte';
-	import type { Flow, Issue } from '@arcflow/core';
+	import type { Flow, Issue } from '@arcsig-labs/core';
 	import Workspace from './Workspace.svelte';
 	import { EditorState, setEditor } from './context.svelte.js';
 	import { resolveLabels, resolveRegistry, resolveTheme, resolveUi, type EditorOptions } from './options.js';

@@ -1,5 +1,5 @@
-import type { EngineOptions, Registry, Services } from '@arcflow/core';
-import type { HttpResponseData } from '@arcflow/nodes';
+import type { EngineOptions, Registry, Services } from '@arcsig-labs/core';
+import type { HttpResponseData } from '@arcsig-labs/nodes';
 import type { FlowAiService } from './ai.js';
 import { createApp } from './app.js';
 import { RunManager } from './runs.js';
@@ -12,7 +12,7 @@ export interface ServerOptions {
 	/** Step types flows may use. */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	registry: Registry<any>;
-	/** Defaults to in-memory storage. Use `SqliteStorage` from `@arcflow/server/node` to keep data. */
+	/** Defaults to in-memory storage. Use `SqliteStorage` from `@arcsig-labs/server/node` to keep data. */
 	storage?: Storage;
 	/** Encrypts stored credentials. Without it, credential endpoints are disabled. At least 16 characters. */
 	secret?: string;

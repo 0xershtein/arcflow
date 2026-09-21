@@ -22,7 +22,7 @@
 		type RunState,
 		type RunStatus,
 		type Services
-	} from '@arcflow/core';
+	} from '@arcsig-labs/core';
 	import Icon from './Icon.svelte';
 	import InsertEdge from './InsertEdge.svelte';
 	import JsonPanel from './JsonPanel.svelte';

@@ -1,4 +1,4 @@
-import type { Flow, Registry } from '@arcflow/core';
+import type { Flow, Registry } from '@arcsig-labs/core';
 import type { ModelAdapter } from './model.js';
 import { buildExplainPrompt, type PromptOptions } from './prompt.js';
 

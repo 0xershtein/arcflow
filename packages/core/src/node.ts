@@ -19,7 +19,7 @@ export interface CredentialResolver {
  * Services your steps call at run time (payment rails, LLMs, notifications).
  * Extend it with declaration merging so `ctx.services` is typed:
  *
- *   declare module '@arcflow/core' {
+ *   declare module '@arcsig-labs/core' {
  *     interface Services { slack?: { post(channel: string, text: string): Promise<void> } }
  *   }
  */

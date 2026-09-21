@@ -1,5 +1,5 @@
 {
-	"name": "@arcflow/editor",
+	"name": "@arcsig-labs/editor",
 	"version": "0.1.0",
 	"description": "Embeddable n8n-style flow editor. Framework-free: mount it anywhere, feed it flow JSON, get flow JSON back.",
 	"license": "MIT",
@@ -48,7 +48,7 @@
 		"check": "svelte-check --tsconfig ./tsconfig.json"
 	},
 	"dependencies": {
-		"@arcflow/core": "workspace:*",
+		"@arcsig-labs/core": "workspace:*",
 		"@xyflow/svelte": "^1.6.6"
 	},
 	"peerDependencies": {

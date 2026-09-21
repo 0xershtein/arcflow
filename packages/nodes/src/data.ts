@@ -1,4 +1,4 @@
-import { defineNode, f } from '@arcflow/core';
+import { defineNode, f } from '@arcsig-labs/core';
 import { isRecord, setPath } from './util.js';
 
 export const setFields = defineNode({

@@ -1,4 +1,4 @@
-import type { Flow, RunState } from '@arcflow/core';
+import type { Flow, RunState } from '@arcsig-labs/core';
 
 export interface FlowRecord {
 	id: string;

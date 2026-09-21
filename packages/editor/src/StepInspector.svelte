@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fieldLabel, isFieldVisible, resolveTemplates, type AnyNodeDefinition, type Issue, type Shape, type StepRecord } from '@arcflow/core';
+	import { fieldLabel, isFieldVisible, resolveTemplates, type AnyNodeDefinition, type Issue, type Shape, type StepRecord } from '@arcsig-labs/core';
 	import FieldInput from './FieldInput.svelte';
 	import Icon from './Icon.svelte';
 	import { DEFAULT_ICON } from './icons.js';

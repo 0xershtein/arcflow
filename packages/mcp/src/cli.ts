@@ -2,8 +2,8 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
-import { createRegistry, type AnyNodeDefinition, type Pack } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
+import { createRegistry, type AnyNodeDefinition, type Pack } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
 import { createHttpStore } from './http-store.js';
 import { createMcpServer } from './server.js';
 
@@ -20,7 +20,7 @@ Options:
 Without --url the server still lists steps, validates flows and runs them in simulate mode.
 
 In Claude Code:
-  claude mcp add arcflow -- npx -y @arcflow/mcp --url http://127.0.0.1:8787
+  claude mcp add arcflow -- npx -y @arcsig-labs/mcp --url http://127.0.0.1:8787
 `;
 
 const { values } = parseArgs({

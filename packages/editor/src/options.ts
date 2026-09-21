@@ -9,7 +9,7 @@ import {
 	type Registry,
 	type RunEvent,
 	type Services
-} from '@arcflow/core';
+} from '@arcsig-labs/core';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -388,7 +388,7 @@ export interface EditorOptions {
 	ui?: UiOptions;
 	/**
 	 * Connects the editor to a flow server: open and save flows, activate them, pick credentials,
-	 * run for real and watch past runs. `createHttpBackend(url)` talks to `@arcflow/server`.
+	 * run for real and watch past runs. `createHttpBackend(url)` talks to `@arcsig-labs/server`.
 	 */
 	backend?: Backend;
 	/** Replace any interface text, e.g. to translate the editor. */

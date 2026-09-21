@@ -1,4 +1,4 @@
-import { createRegistry, type Flow } from '@arcflow/core';
+import { createRegistry, type Flow } from '@arcsig-labs/core';
 import { standardSteps } from './pack.js';
 
 export const standardRegistry = createRegistry([standardSteps]);

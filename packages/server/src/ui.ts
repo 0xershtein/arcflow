@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 
 /**
  * Serves the editor as a page on the same origin as the API — what `arcflow dev` adds to `arcflow serve`.
- * Needs `@arcflow/editor` to be installed; the bundle it ships is served as is, with no build step.
+ * Needs `@arcsig-labs/editor` to be installed; the bundle it ships is served as is, with no build step.
  */
 
 const page = (title: string) => `<!doctype html>
@@ -59,9 +59,9 @@ export function createEditorUi(options: EditorUiOptions = {}) {
 		const require = createRequire(import.meta.url);
 		let file: string;
 		try {
-			file = require.resolve('@arcflow/editor/app');
+			file = require.resolve('@arcsig-labs/editor/app');
 		} catch {
-			throw new Error('The editor is not installed here. Add it with: npm install @arcflow/editor');
+			throw new Error('The editor is not installed here. Add it with: npm install @arcsig-labs/editor');
 		}
 		const code = await readFile(file, 'utf8');
 		const map = await readFile(join(dirname(file), 'app.js.map'), 'utf8').catch(() => undefined);

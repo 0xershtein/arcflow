@@ -1,4 +1,4 @@
-import type { AnyNodeDefinition, Flow, Issue, Registry } from '@arcflow/core';
+import type { AnyNodeDefinition, Flow, Issue, Registry } from '@arcsig-labs/core';
 
 /** The rules a flow must follow, on top of the step catalog the registry describes. */
 const RULES = `# How to answer

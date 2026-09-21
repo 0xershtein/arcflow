@@ -1,8 +1,8 @@
-import { defineNode, definePack, f, type Services } from '@arcflow/core';
+import { defineNode, definePack, f, type Services } from '@arcsig-labs/core';
 
 /**
  * Treasury steps: runway checks, multisig approvals, stablecoin transfers and team notifications.
- * Combine with `@arcflow/nodes` for triggers, branching and HTTP.
+ * Combine with `@arcsig-labs/nodes` for triggers, branching and HTTP.
  */
 
 export interface Recipient {
@@ -32,7 +32,7 @@ export interface PaymentServices {
 	notify(request: { channel: string; message: string }): Promise<void>;
 }
 
-declare module '@arcflow/core' {
+declare module '@arcsig-labs/core' {
 	interface Services {
 		payments?: PaymentServices;
 	}

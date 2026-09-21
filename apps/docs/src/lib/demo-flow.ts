@@ -1,5 +1,5 @@
-import type { Flow } from '@arcflow/core';
-import { standardRegistry } from '@arcflow/nodes';
+import type { Flow } from '@arcsig-labs/core';
+import { standardRegistry } from '@arcsig-labs/nodes';
 
 /**
  * A short flow for the embedded demo: wide enough to show connections and ports,

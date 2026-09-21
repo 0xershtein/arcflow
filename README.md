@@ -11,13 +11,13 @@ Drop a visual workflow builder into your own product — an automation panel, an
 
 | Package | |
 | --- | --- |
-| [`@arcflow/core`](./packages/core) | Headless engine, zero dependencies: step definitions, flow builder, parser/validator, runner with retries and pause/resume, JSON Schema + LLM catalog. |
-| [`@arcflow/editor`](./packages/editor) | The canvas editor. One ES module with styles included. |
-| [`@arcflow/nodes`](./packages/nodes) | Standard steps: manual, webhook and cron triggers, HTTP request and response, sandboxed JavaScript, set fields, if, switch, merge, loop, wait, run flow. |
-| [`@arcflow/server`](./packages/server) | Runs flows for real: HTTP API, webhook and cron triggers, restart-safe timers, run history, encrypted credentials, live events, `arcflow serve` CLI. |
-| [`@arcflow/ai`](./packages/ai) | Builds and edits flows with an LLM: model-agnostic adapter, JSON output, and a repair loop that feeds validation issues back until the flow is valid. |
-| [`@arcflow/mcp`](./packages/mcp) | MCP server so agents like Claude Code and Cursor can list steps, write, validate, test, save and run flows. |
-| [`@arcflow/payments`](./packages/payments) | Example domain pack (runway check → multisig approval → transfer) built on the standard steps. |
+| [`@arcsig-labs/core`](./packages/core) | Headless engine, zero dependencies: step definitions, flow builder, parser/validator, runner with retries and pause/resume, JSON Schema + LLM catalog. |
+| [`@arcsig-labs/editor`](./packages/editor) | The canvas editor. One ES module with styles included. |
+| [`@arcsig-labs/nodes`](./packages/nodes) | Standard steps: manual, webhook and cron triggers, HTTP request and response, sandboxed JavaScript, set fields, if, switch, merge, loop, wait, run flow. |
+| [`@arcsig-labs/server`](./packages/server) | Runs flows for real: HTTP API, webhook and cron triggers, restart-safe timers, run history, encrypted credentials, live events, `arcflow serve` CLI. |
+| [`@arcsig-labs/ai`](./packages/ai) | Builds and edits flows with an LLM: model-agnostic adapter, JSON output, and a repair loop that feeds validation issues back until the flow is valid. |
+| [`@arcsig-labs/mcp`](./packages/mcp) | MCP server so agents like Claude Code and Cursor can list steps, write, validate, test, save and run flows. |
+| [`@arcsig-labs/payments`](./packages/payments) | Example domain pack (runway check → multisig approval → transfer) built on the standard steps. |
 
 ## Run flows on a server
 
@@ -32,13 +32,13 @@ curl -X POST localhost:8787/hooks/orders/created -d '{ "id": 42 }'   # runs ever
 curl localhost:8787/api/runs?flowId=orders                            # history
 ```
 
-Webhooks, cron schedules and `logic.wait` timers are handled for you, runs survive restarts while they wait, and credentials are encrypted at rest. See [`@arcflow/server`](./packages/server) for the full API.
+Webhooks, cron schedules and `logic.wait` timers are handled for you, runs survive restarts while they wait, and credentials are encrypted at rest. See [`@arcsig-labs/server`](./packages/server) for the full API.
 
 ## Standard steps
 
 ```ts
-import { createRegistry } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
+import { createRegistry } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
 
 const registry = createRegistry([standardSteps, myPack]);
 ```
@@ -55,12 +55,12 @@ const registry = createRegistry([standardSteps, myPack]);
 ## Quick start
 
 ```sh
-npm install @arcflow/core @arcflow/editor
+npm install @arcsig-labs/core @arcsig-labs/editor
 ```
 
 ```ts
-import { createRegistry, defineNode, f } from '@arcflow/core';
-import { createEditor } from '@arcflow/editor';
+import { createRegistry, defineNode, f } from '@arcsig-labs/core';
+import { createEditor } from '@arcsig-labs/editor';
 
 // 1. Describe the steps your product supports.
 const steps = createRegistry([
@@ -288,7 +288,7 @@ empty-canvas hint to validation wording. Pass the ones you want to change; the r
 defaults. `{name}` and `{count}` placeholders are filled in at render time.
 
 ```ts
-import { defaultLabels } from '@arcflow/editor';
+import { defaultLabels } from '@arcsig-labs/editor';
 
 Object.keys(defaultLabels); // every string, with its default
 ```
@@ -307,7 +307,7 @@ same handles, so switching is safe on a flow that already has positions.
 ## Running flows (headless)
 
 ```ts
-import { createEngine, waitingSteps } from '@arcflow/core';
+import { createEngine, waitingSteps } from '@arcsig-labs/core';
 
 const engine = createEngine(steps, { services });
 let state = await engine.start(flow, { payload: request.body });
@@ -329,7 +329,7 @@ Built in:
 - **Run-time misses read like misses** — a required field whose `{{ }}` resolved to nothing says so (`… resolved to nothing at run time; the trigger payload had no body.total`) instead of looking like a config mistake.
 - Retries, timeouts, `error` output ports, cancellation, and `simulate` mode, where every step that defines a `simulate` handler stands in for the real thing (steps without one still run — see [Test run and Run](#test-run-and-run)).
 
-See [`@arcflow/core`](./packages/core).
+See [`@arcsig-labs/core`](./packages/core).
 
 ## Building flows in code
 
@@ -346,10 +346,10 @@ Kinds, config and port names are type-checked.
 Point an agent at your steps and let it build flows:
 
 ```sh
-claude mcp add arcflow -- npx -y @arcflow/mcp --url http://127.0.0.1:8787
+claude mcp add arcflow -- npx -y @arcsig-labs/mcp --url http://127.0.0.1:8787
 ```
 
-It gets `list_steps`, `validate_flow`, `test_flow` (a run in `simulate` mode), `patch_flow` (change one field at the path an issue reported, rather than rewriting the flow), `save_flow`, `run_flow` and `get_run` — see [`@arcflow/mcp`](./packages/mcp). In your own code, [`@arcflow/ai`](./packages/ai) does the same through `generateFlow` / `editFlow`, and with `ANTHROPIC_API_KEY` set the server offers `/api/ai/*` so the editor's prompt bar works without a key in the browser.
+It gets `list_steps`, `validate_flow`, `test_flow` (a run in `simulate` mode), `patch_flow` (change one field at the path an issue reported, rather than rewriting the flow), `save_flow`, `run_flow` and `get_run` — see [`@arcsig-labs/mcp`](./packages/mcp). In your own code, [`@arcsig-labs/ai`](./packages/ai) does the same through `generateFlow` / `editFlow`, and with `ANTHROPIC_API_KEY` set the server offers `/api/ai/*` so the editor's prompt bar works without a key in the browser.
 
 The pieces underneath are plain data:
 
@@ -388,7 +388,7 @@ tell it not to externalize them:
 ```ts
 // vite.config.ts
 export default defineConfig({
-	ssr: { noExternal: ['@arcflow/core', '@arcflow/nodes', '@arcflow/editor', '@arcflow/server'] }
+	ssr: { noExternal: ['@arcsig-labs/core', '@arcsig-labs/nodes', '@arcsig-labs/editor', '@arcsig-labs/server'] }
 });
 ```
 
@@ -398,7 +398,7 @@ Published tarballs ship built JavaScript, so this is only for source consumers.
 
 ```tsx
 import { useEffect, useRef } from 'react';
-import { createEditor, type EditorInstance, type EditorOptions } from '@arcflow/editor';
+import { createEditor, type EditorInstance, type EditorOptions } from '@arcsig-labs/editor';
 
 export function FlowEditor({ steps, className, ...options }: EditorOptions & { className?: string }) {
 	const host = useRef<HTMLDivElement>(null);
@@ -433,7 +433,7 @@ export function FlowEditor({ steps, className, ...options }: EditorOptions & { c
 ```vue
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, useTemplateRef, watchEffect } from 'vue';
-import { createEditor, type EditorInstance, type EditorOptions } from '@arcflow/editor';
+import { createEditor, type EditorInstance, type EditorOptions } from '@arcsig-labs/editor';
 
 const props = defineProps<{ steps: EditorOptions['steps']; flow?: EditorOptions['flow']; readonly?: boolean }>();
 const emit = defineEmits<{ change: [unknown] }>();
@@ -465,8 +465,8 @@ onBeforeUnmount(() => editor?.destroy());
 
 ```svelte
 <script lang="ts">
-	import { FlowEditor } from '@arcflow/editor/svelte';
-	import { standardRegistry } from '@arcflow/nodes';
+	import { FlowEditor } from '@arcsig-labs/editor/svelte';
+	import { standardRegistry } from '@arcsig-labs/nodes';
 
 	let { flow, save }: { flow?: unknown; save: (next: unknown) => void } = $props();
 </script>
@@ -478,17 +478,17 @@ onBeforeUnmount(() => editor?.destroy());
 
 **No framework**
 
-The bare `@arcflow/editor` import below is resolved by a bundler (Vite, webpack, esbuild) or by an
+The bare `@arcsig-labs/editor` import below is resolved by a bundler (Vite, webpack, esbuild) or by an
 [import map](https://developer.mozilla.org/docs/Web/HTML/Element/script/type/importmap) that points
-`@arcflow/editor` and `@arcflow/nodes` at a CDN such as esm.sh. `arcflow dev` serves a ready-made page
+`@arcsig-labs/editor` and `@arcsig-labs/nodes` at a CDN such as esm.sh. `arcflow dev` serves a ready-made page
 with the editor and the standard steps if you just want to see it run.
 
 ```html
 <div id="editor" style="height: 100dvh"></div>
 
 <script type="module">
-	import { createEditor } from '@arcflow/editor';
-	import { standardSteps } from '@arcflow/nodes';
+	import { createEditor } from '@arcsig-labs/editor';
+	import { standardSteps } from '@arcsig-labs/nodes';
 
 	const editor = createEditor('#editor', {
 		steps: [standardSteps],
@@ -531,8 +531,8 @@ pnpm build
 Version 0.1.0 covers the engine, the standard steps, the server, the editor and the AI tooling; [`docs/roadmap.md`](./docs/roadmap.md) records what each milestone set out to do and what shipped. After 1.0:
 
 - Custom node renderers per step kind
-- A Postgres storage adapter for `@arcflow/server`
-- Model adapters beyond Anthropic in `@arcflow/ai`
+- A Postgres storage adapter for `@arcsig-labs/server`
+- Model adapters beyond Anthropic in `@arcsig-labs/ai`
 
 Releases follow [`docs/release.md`](./docs/release.md).
 

@@ -1,4 +1,4 @@
-# @arcflow/server
+# @arcsig-labs/server
 
 Runs arcflow flows for real: an HTTP API, webhook and cron triggers, timers that survive restarts, run history, encrypted credentials and live run events. Built on [Hono](https://hono.dev), so the app runs on Node, Bun, Deno or edge runtimes; storage is pluggable (memory and SQLite included).
 
@@ -14,15 +14,15 @@ Loads the standard steps plus any modules passed with `--steps` (exporting a pac
 npx arcflow dev
 ```
 
-Same server with the editor on the same address: open `http://127.0.0.1:8787` and build flows against your real steps, credentials and run history. The page takes its step catalog from `GET /api/steps`, so custom steps passed with `--steps` show up with no build step. It needs `@arcflow/editor` installed next to the server.
+Same server with the editor on the same address: open `http://127.0.0.1:8787` and build flows against your real steps, credentials and run history. The page takes its step catalog from `GET /api/steps`, so custom steps passed with `--steps` show up with no build step. It needs `@arcsig-labs/editor` installed next to the server.
 
 ## In your app
 
 ```ts
-import { createRegistry } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
-import { createServer } from '@arcflow/server';
-import { SqliteStorage, serveNode } from '@arcflow/server/node';
+import { createRegistry } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
+import { createServer } from '@arcsig-labs/server';
+import { SqliteStorage, serveNode } from '@arcsig-labs/server/node';
 
 const server = await createServer({
 	registry: createRegistry([standardSteps, myPack]),
@@ -40,7 +40,7 @@ await serveNode(server, { port: 8787 });
 | | |
 | --- | --- |
 | `registry` | Step types flows may use. Required. |
-| `storage` | Defaults to memory. `SqliteStorage` from `@arcflow/server/node` keeps data across restarts. |
+| `storage` | Defaults to memory. `SqliteStorage` from `@arcsig-labs/server/node` keeps data across restarts. |
 | `secret` | Encrypts stored credentials, at least 16 characters. Without it the credential endpoints are off. |
 | `services` | Your own services for custom steps. `credentials` and `http` come from the server. |
 | `apiKey` | Requires `Authorization: Bearer <apiKey>` on `/api/*`. Webhooks stay open, by design. |
@@ -83,7 +83,7 @@ Every answer under `/api` and `/hooks` is JSON, including 404s: an unknown route
 With `ANTHROPIC_API_KEY` set, `arcflow serve` and `arcflow dev` answer `/api/ai/*` and the editor gets a prompt bar. The key stays on the server — browsers never see it. `--no-ai` turns it off.
 
 ```ts
-import { createFlowAi, createServer } from '@arcflow/server';
+import { createFlowAi, createServer } from '@arcsig-labs/server';
 
 const server = await createServer({
 	registry,
@@ -91,7 +91,7 @@ const server = await createServer({
 });
 ```
 
-`createFlowAi` uses [`@arcflow/ai`](../ai), which stays optional: install it (with `@anthropic-ai/sdk`) only if you want generation. Pass any `ModelAdapter` as `model` to use a different provider.
+`createFlowAi` uses [`@arcsig-labs/ai`](../ai), which stays optional: install it (with `@anthropic-ai/sdk`) only if you want generation. Pass any `ModelAdapter` as `model` to use a different provider.
 
 ## Triggers and timers
 

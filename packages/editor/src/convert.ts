@@ -1,4 +1,4 @@
-import { edgeId, layoutFlow, type Flow, type FlowAnnotation, type FlowNode, type Registry } from '@arcflow/core';
+import { edgeId, layoutFlow, type Flow, type FlowAnnotation, type FlowNode, type Registry } from '@arcsig-labs/core';
 import type { Edge, Node } from '@xyflow/svelte';
 
 export interface StepData extends Record<string, unknown> {

@@ -1,5 +1,5 @@
 {
-	"name": "@arcflow/ai",
+	"name": "@arcsig-labs/ai",
 	"version": "0.1.0",
 	"description": "Build and edit arcflow flows with an LLM: a model-agnostic adapter, JSON output and a repair loop that feeds validation issues back until the flow is valid.",
 	"license": "MIT",
@@ -29,7 +29,7 @@
 		"check": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
-		"@arcflow/core": "workspace:*"
+		"@arcsig-labs/core": "workspace:*"
 	},
 	"peerDependencies": {
 		"@anthropic-ai/sdk": ">=0.60.0"

@@ -18,7 +18,7 @@
 	let shape = $state<(typeof shapes)[number]>('card');
 	const shapeCode = $derived(`createEditor('#editor', { steps, ui: { node: '${shape}' } });`);
 
-	const labelsCode = `import { defaultLabels } from '@arcflow/editor';
+	const labelsCode = `import { defaultLabels } from '@arcsig-labs/editor';
 
 Object.keys(defaultLabels); // every string, with its default
 
@@ -27,7 +27,7 @@ createEditor('#editor', {
 	labels: { testRun: 'Çalıştır', searchSteps: 'Adım ara', emptyTitle: 'Bir tetikleyiciyle başla' }
 });`;
 
-	const server = `import { createEditor, createHttpBackend } from '@arcflow/editor';
+	const server = `import { createEditor, createHttpBackend } from '@arcsig-labs/editor';
 
 createEditor('#editor', {
 	steps,

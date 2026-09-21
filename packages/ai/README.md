@@ -1,11 +1,11 @@
-# @arcflow/ai
+# @arcsig-labs/ai
 
 Builds and edits [arcflow](https://github.com/arcsig-labs/arcflow) flows with an LLM. The model only ever sees the steps you registered, and whatever it returns is validated against them — issues go back to the model until the flow is valid.
 
 ```ts
-import { createRegistry } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
-import { anthropicModel, generateFlow } from '@arcflow/ai';
+import { createRegistry } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
+import { anthropicModel, generateFlow } from '@arcsig-labs/ai';
 
 const registry = createRegistry([standardSteps]);
 
@@ -16,12 +16,12 @@ const { ok, flow, issues, attempts } = await generateFlow({
 });
 ```
 
-`flow` is ordinary flow JSON: run it with `@arcflow/core`, save it through `@arcflow/server`, or open it in `@arcflow/editor`.
+`flow` is ordinary flow JSON: run it with `@arcsig-labs/core`, save it through `@arcsig-labs/server`, or open it in `@arcsig-labs/editor`.
 
 ## Editing
 
 ```ts
-import { editFlow, summarizeChanges } from '@arcflow/ai';
+import { editFlow, summarizeChanges } from '@arcsig-labs/ai';
 
 const result = await editFlow({ registry, model, flow, instruction: 'Also tell me when the request fails' });
 console.log(summarizeChanges(result.changes)); // "2 added, 1 changed"
@@ -32,7 +32,7 @@ console.log(summarizeChanges(result.changes)); // "2 added, 1 changed"
 ## Explaining
 
 ```ts
-import { explainFlow } from '@arcflow/ai';
+import { explainFlow } from '@arcsig-labs/ai';
 
 const { text } = await explainFlow({ registry, model, flow });
 const answer = await explainFlow({ registry, model, flow, question: 'Can this pay someone twice?' });

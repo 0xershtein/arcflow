@@ -1,9 +1,9 @@
-import type { Flow, Issue, Registry } from '@arcflow/core';
+import type { Flow, Issue, Registry } from '@arcsig-labs/core';
 
 /**
  * Flow generation, kept behind an interface so the server never needs an AI dependency
  * and browsers never need an API key: the editor asks the server, the server asks the model.
- * `createFlowAi` wires it to `@arcflow/ai` when that package is installed.
+ * `createFlowAi` wires it to `@arcsig-labs/ai` when that package is installed.
  */
 
 export interface AiResult {
@@ -28,7 +28,7 @@ export interface FlowAiService {
 export interface FlowAiOptions {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	registry: Registry<any>;
-	/** A `ModelAdapter` from `@arcflow/ai`. Defaults to `anthropicModel()` (ANTHROPIC_API_KEY). */
+	/** A `ModelAdapter` from `@arcsig-labs/ai`. Defaults to `anthropicModel()` (ANTHROPIC_API_KEY). */
 	model?: unknown;
 	/** House rules appended to the system prompt. */
 	instructions?: string;
@@ -38,17 +38,17 @@ export interface FlowAiOptions {
 	maxRepairs?: number;
 }
 
-type AiModule = typeof import('@arcflow/ai');
+type AiModule = typeof import('@arcsig-labs/ai');
 
 /**
- * Builds the service from `@arcflow/ai`, which stays an optional dependency: it is imported
+ * Builds the service from `@arcsig-labs/ai`, which stays an optional dependency: it is imported
  * the first time a flow is generated.
  */
 export function createFlowAi(options: FlowAiOptions): FlowAiService {
 	let module: Promise<AiModule> | undefined;
 	const load = () =>
-		(module ??= import('@arcflow/ai').catch(() => {
-			throw new Error('Flow generation needs @arcflow/ai: npm install @arcflow/ai @anthropic-ai/sdk');
+		(module ??= import('@arcsig-labs/ai').catch(() => {
+			throw new Error('Flow generation needs @arcsig-labs/ai: npm install @arcsig-labs/ai @anthropic-ai/sdk');
 		}));
 
 	const shared = async (ai: AiModule) => ({

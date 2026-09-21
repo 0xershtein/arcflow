@@ -1,4 +1,4 @@
-# @arcflow/core
+# @arcsig-labs/core
 
 Typed, headless flow engine with no dependencies.
 
@@ -11,7 +11,7 @@ Typed, headless flow engine with no dependencies.
 - **AI** — `registry.toJSONSchema()` for structured output, `registry.describe()` for prompts.
 
 ```ts
-import { createEngine, createRegistry, defineNode, f } from '@arcflow/core';
+import { createEngine, createRegistry, defineNode, f } from '@arcsig-labs/core';
 
 const start = defineNode({ kind: 'start', title: 'Start', description: 'Manual start.', trigger: true });
 const greet = defineNode({
@@ -37,7 +37,7 @@ all or nothing: if any operation fails, the flow comes back untouched and every 
 index of the operation that caused it.
 
 ```ts
-import { applyPatch } from '@arcflow/core';
+import { applyPatch } from '@arcsig-labs/core';
 
 const issue = registry.validate(flow).find((entry) => entry.code === 'required');
 // error required @ nodes[1].config.url

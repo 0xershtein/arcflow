@@ -4,10 +4,10 @@
 	import Tabs from '$lib/Tabs.svelte';
 	import { mounting } from '$lib/frameworks';
 
-	const install = `npm install @arcflow/core @arcflow/nodes`;
+	const install = `npm install @arcsig-labs/core @arcsig-labs/nodes`;
 
-	const first = `import { createRegistry } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
+	const first = `import { createRegistry } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
 
 const steps = createRegistry([standardSteps]);
 
@@ -25,13 +25,13 @@ fetchTodos.to(tell);
 
 const json = flow.build(); // plain JSON: store it, edit it, send it anywhere`;
 
-	const run = `import { createEngine } from '@arcflow/core';
+	const run = `import { createEngine } from '@arcsig-labs/core';
 
 const engine = createEngine(steps);
 const result = await engine.start(json, { mode: 'simulate' }); // nothing is sent
 console.log(result.status, result.steps);`;
 
-	const editor = `npm install @arcflow/editor`;
+	const editor = `npm install @arcsig-labs/editor`;
 
 
 	const server = `ARCFLOW_SECRET="a long random string" npx arcflow dev`;

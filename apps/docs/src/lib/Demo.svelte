@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import type { Flow } from '@arcflow/core';
-	import type { UiOptions } from '@arcflow/editor/svelte';
-	import { FlowEditor } from '@arcflow/editor/svelte';
-	import { createTodoDigestFlow, standardRegistry } from '@arcflow/nodes';
+	import type { Flow } from '@arcsig-labs/core';
+	import type { UiOptions } from '@arcsig-labs/editor/svelte';
+	import { FlowEditor } from '@arcsig-labs/editor/svelte';
+	import { createTodoDigestFlow, standardRegistry } from '@arcsig-labs/nodes';
 
 	/** A real editor, running the standard steps in the page. */
 	let {

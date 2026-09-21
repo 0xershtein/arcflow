@@ -1,4 +1,4 @@
-import { registryFromManifest } from '@arcflow/core';
+import { registryFromManifest } from '@arcsig-labs/core';
 import { createHttpBackend, type HttpBackendOptions } from './backend.js';
 import { createEditor, type CreateEditorOptions, type EditorInstance } from './vanilla.svelte.js';
 
@@ -26,7 +26,7 @@ export async function createArcflowApp(target: HTMLElement | string, options: Ap
 	let registry = steps;
 	if (!registry) {
 		const catalog = (await backend.manifest?.()) as { manifest?: unknown } | undefined;
-		if (!catalog?.manifest) throw new Error('The server did not send a step catalog. Is it running @arcflow/server 0.2 or newer?');
+		if (!catalog?.manifest) throw new Error('The server did not send a step catalog. Is it running @arcsig-labs/server 0.2 or newer?');
 		registry = registryFromManifest(catalog.manifest);
 	}
 	return createEditor(target, { ...rest, steps: registry, backend });

@@ -13,13 +13,13 @@ importers:
 
   apps/docs:
     dependencies:
-      '@arcflow/core':
+      '@arcsig-labs/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@arcflow/editor':
+      '@arcsig-labs/editor':
         specifier: workspace:*
         version: link:../../packages/editor
-      '@arcflow/nodes':
+      '@arcsig-labs/nodes':
         specifier: workspace:*
         version: link:../../packages/nodes
     devDependencies:
@@ -50,13 +50,13 @@ importers:
 
   apps/playground:
     dependencies:
-      '@arcflow/core':
+      '@arcsig-labs/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@arcflow/editor':
+      '@arcsig-labs/editor':
         specifier: workspace:*
         version: link:../../packages/editor
-      '@arcflow/payments':
+      '@arcsig-labs/payments':
         specifier: workspace:*
         version: link:../../packages/payments
     devDependencies:
@@ -87,13 +87,13 @@ importers:
 
   apps/vanilla:
     dependencies:
-      '@arcflow/core':
+      '@arcsig-labs/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@arcflow/editor':
+      '@arcsig-labs/editor':
         specifier: workspace:*
         version: link:../../packages/editor
-      '@arcflow/payments':
+      '@arcsig-labs/payments':
         specifier: workspace:*
         version: link:../../packages/payments
     devDependencies:
@@ -106,7 +106,7 @@ importers:
 
   packages/ai:
     dependencies:
-      '@arcflow/core':
+      '@arcsig-labs/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -118,7 +118,7 @@ importers:
 
   packages/editor:
     dependencies:
-      '@arcflow/core':
+      '@arcsig-labs/core':
         specifier: workspace:*
         version: link:../core
       '@xyflow/svelte':
@@ -146,10 +146,10 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@arcflow/core':
+      '@arcsig-labs/core':
         specifier: workspace:*
         version: link:../core
-      '@arcflow/nodes':
+      '@arcsig-labs/nodes':
         specifier: workspace:*
         version: link:../nodes
     devDependencies:
@@ -162,7 +162,7 @@ importers:
 
   packages/nodes:
     dependencies:
-      '@arcflow/core':
+      '@arcsig-labs/core':
         specifier: workspace:*
         version: link:../core
       '@jitl/quickjs-wasmfile-release-sync':
@@ -177,19 +177,19 @@ importers:
 
   packages/payments:
     dependencies:
-      '@arcflow/core':
+      '@arcsig-labs/core':
         specifier: workspace:*
         version: link:../core
-      '@arcflow/nodes':
+      '@arcsig-labs/nodes':
         specifier: workspace:*
         version: link:../nodes
 
   packages/server:
     dependencies:
-      '@arcflow/core':
+      '@arcsig-labs/core':
         specifier: workspace:*
         version: link:../core
-      '@arcflow/nodes':
+      '@arcsig-labs/nodes':
         specifier: workspace:*
         version: link:../nodes
       '@hono/node-server':
@@ -199,10 +199,10 @@ importers:
         specifier: ^4.13.8
         version: 4.13.8
     devDependencies:
-      '@arcflow/ai':
+      '@arcsig-labs/ai':
         specifier: workspace:*
         version: link:../ai
-      '@arcflow/editor':
+      '@arcsig-labs/editor':
         specifier: workspace:*
         version: link:../editor
       '@types/node':

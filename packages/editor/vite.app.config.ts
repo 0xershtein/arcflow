@@ -1,7 +1,7 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig } from 'vite';
 
-// Standalone bundle for a browser with no build step: everything is compiled in, @arcflow/core included.
+// Standalone bundle for a browser with no build step: everything is compiled in, @arcsig-labs/core included.
 // `arcflow dev` serves this file next to a one-line HTML page.
 export default defineConfig({
 	plugins: [svelte({ compilerOptions: { css: 'injected' } })],

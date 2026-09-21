@@ -3,10 +3,10 @@
 
 	const cli = `ARCFLOW_SECRET="a long random string" npx arcflow dev --db ./arcflow.db`;
 
-	const embed = `import { createRegistry } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
-import { createServer } from '@arcflow/server';
-import { SqliteStorage, serveNode } from '@arcflow/server/node';
+	const embed = `import { createRegistry } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
+import { createServer } from '@arcsig-labs/server';
+import { SqliteStorage, serveNode } from '@arcsig-labs/server/node';
 
 const server = await createServer({
 	registry: createRegistry([standardSteps, myPack]),
@@ -24,7 +24,7 @@ await serveNode(server, { port: 8787 });`;
 
 <h1>Server</h1>
 <p>
-	<code>@arcflow/server</code> runs flows for real: an HTTP API, webhook and cron triggers, timers that survive restarts, run history, encrypted credentials and
+	<code>@arcsig-labs/server</code> runs flows for real: an HTTP API, webhook and cron triggers, timers that survive restarts, run history, encrypted credentials and
 	live events. It is a <a href="https://hono.dev">Hono</a> app, so it runs on Node, Bun, Deno or an edge runtime, and storage is pluggable.
 </p>
 

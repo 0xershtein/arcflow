@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRegistry, defineNode, f, type Flow } from '@arcflow/core';
+import { createRegistry, defineNode, f, type Flow } from '@arcsig-labs/core';
 import { buildSystemPrompt, diffFlows, editFlow, explainFlow, extractJson, generateFlow, summarizeChanges, type ModelAdapter } from '../src/index.js';
 
 const start = defineNode({ kind: 'test.start', title: 'Start', description: 'Starts the flow.', trigger: true, category: 'triggers' });

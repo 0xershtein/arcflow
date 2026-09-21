@@ -14,7 +14,7 @@ Record at 1920×1080 with the docs site or `arcflow dev` open. Voice-over in pla
 | 4 | Drag a webhook trigger, an HTTP request and an `if` step onto the canvas; connect them; open the inspector | "Flows are plain JSON in and plain JSON out, so you can store them, diff them, review them." |
 | 5 | Click **Test run**; steps light up in order; the run log docked under the canvas | "A test run sends nothing, and every step says what it would have done." |
 | 6 | Paste a flow with a mistake (a missing URL) as JSON; the issue appears with its path `nodes[1].config.url` | "Every problem is a typed issue with a stable code and a JSON path." |
-| 7 | Terminal: `claude mcp add arcflow -- npx -y @arcflow/mcp`, then Claude Code asked to "build a flow that fetches open invoices every Monday and posts a summary" — `list_steps`, `validate_flow`, `patch_flow`, `test_flow` calls scroll by | "That path is what lets an agent fix its own flow. Over MCP, a coding agent lists your steps, writes the flow, gets it checked, patches one field instead of rewriting, and runs it." |
+| 7 | Terminal: `claude mcp add arcflow -- npx -y @arcsig-labs/mcp`, then Claude Code asked to "build a flow that fetches open invoices every Monday and posts a summary" — `list_steps`, `validate_flow`, `patch_flow`, `test_flow` calls scroll by | "That path is what lets an agent fix its own flow. Over MCP, a coding agent lists your steps, writes the flow, gets it checked, patches one field instead of rewriting, and runs it." |
 | 8 | The editor again: the prompt bar builds the same flow live on the canvas; **Keep** | "The same thing works from the prompt bar in the editor." |
 | 9 | Terminal: `ARCFLOW_SECRET=… npx arcflow serve --db ./arcflow.db`, then `curl -X POST localhost:8787/hooks/orders/created` and the run appearing in the history panel | "And when it's time to run for real: webhooks, cron, timers that survive a restart, run history, encrypted credentials. One command." |
 | 10 | Landing page with the install command, then the GitHub repository | "arcflow. MIT, on npm and GitHub." |
@@ -30,7 +30,7 @@ arcflow is out: an embeddable, n8n-style flow editor and engine for your own pro
 
 Define a step once. Get the types, the validation, the canvas form and the LLM catalog from that one definition.
 
-MIT, on npm: `npm i @arcflow/core @arcflow/editor`
+MIT, on npm: `npm i @arcsig-labs/core @arcsig-labs/editor`
 
 **2.**
 Why one definition matters: every flow tool has a schema layer, a form layer and a runtime, and they drift. In arcflow there is one `defineNode({ config: { url: f.string() } })` and everything else is derived from it, so the canvas can't disagree with the engine.
@@ -46,7 +46,7 @@ That line is what lets an LLM repair its own output instead of guessing.
 The editor is framework-free — `createEditor(element, options)` — and unbranded on purpose. 17 colour tokens, 135 replaceable strings, three step shapes, light/dark/auto. It's meant to look like your product, not like ours.
 
 **5.**
-For agents: `claude mcp add arcflow -- npx -y @arcflow/mcp`
+For agents: `claude mcp add arcflow -- npx -y @arcsig-labs/mcp`
 
 Claude Code or Cursor can `list_steps`, `validate_flow`, `patch_flow` (one field at the path an issue reported, not a rewrite) and `test_flow`. Against a running server, also save and run.
 
@@ -69,4 +69,4 @@ It's 0.1.0. Tell us what's wrong with it.
 
 Title: **arcflow – Embeddable n8n-style flow editor and engine, with an MCP server for agents**
 
-Body: the first two sentences of post 1, then posts 2, 3 and 5 as paragraphs, then the two links. Answer the first comments with the honest limits: single Anthropic adapter in `@arcflow/ai` so far, SQLite and memory storage only, no custom node renderers yet.
+Body: the first two sentences of post 1, then posts 2, 3 and 5 as paragraphs, then the two links. Answer the first comments with the honest limits: single Anthropic adapter in `@arcsig-labs/ai` so far, SQLite and memory storage only, no custom node renderers yet.

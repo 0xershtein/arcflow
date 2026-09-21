@@ -2,8 +2,8 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
-import { createRegistry, type AnyNodeDefinition, type Pack } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
+import { createRegistry, type AnyNodeDefinition, type Pack } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
 import { serveNode, SqliteStorage } from './node.js';
 import { createFlowAi } from './ai.js';
 import { createServer } from './server.js';
@@ -12,7 +12,7 @@ import { createEditorUi } from './ui.js';
 const USAGE = `Usage: arcflow serve|dev [options]
 
 Runs flows with the standard steps (and your own) over HTTP.
-"dev" also serves the editor at the same address (needs @arcflow/editor).
+"dev" also serves the editor at the same address (needs @arcsig-labs/editor).
 
 Options:
   --port <number>     Port to listen on (default 8787)

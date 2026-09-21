@@ -1,5 +1,5 @@
 /**
- * The only thing `@arcflow/ai` needs from a model: text in, text out.
+ * The only thing `@arcsig-labs/ai` needs from a model: text in, text out.
  * Implement `ModelAdapter` for any provider, gateway or local model; `anthropicModel()`
  * is included for Claude.
  */

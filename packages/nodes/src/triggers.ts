@@ -1,4 +1,4 @@
-import { defineNode, f } from '@arcflow/core';
+import { defineNode, f } from '@arcsig-labs/core';
 
 export const manualTrigger = defineNode({
 	kind: 'trigger.manual',

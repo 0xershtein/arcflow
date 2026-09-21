@@ -1,12 +1,12 @@
-# @arcflow/editor
+# @arcsig-labs/editor
 
 Embeddable n8n-style flow editor. One ES module with its styles; no framework required.
 
 ```ts
-import { createEditor } from '@arcflow/editor';
+import { createEditor } from '@arcsig-labs/editor';
 
 const editor = createEditor(document.querySelector('#editor'), {
-	steps,                // from @arcflow/core createRegistry, or packs / step definitions
+	steps,                // from @arcsig-labs/core createRegistry, or packs / step definitions
 	flow,                 // Flow JSON (optional)
 	theme: 'auto',        // or { mode, colors, light, dark, fontFamily, radius, nodeWidth, ... }
 	ui: { minimap: true },
@@ -44,8 +44,8 @@ Svelte 5 apps can mount the component instead of calling `createEditor`. It is t
 
 ```svelte
 <script lang="ts">
-	import { FlowEditor } from '@arcflow/editor/svelte';
-	import type { Flow } from '@arcflow/core';
+	import { FlowEditor } from '@arcsig-labs/editor/svelte';
+	import type { Flow } from '@arcsig-labs/core';
 
 	let editor = $state<ReturnType<typeof FlowEditor>>();
 	let flow = $state<Flow>();
@@ -60,7 +60,7 @@ Svelte 5 apps can mount the component instead of calling `createEditor`. It is t
 
 `steps`, `flow`, `theme`, `ui`, `labels`, `backend`, `readonly`, `storageKey`, `services`, `vars`, `summaries`, `runStepDelay` and the `onChange` / `onValidate` / `onSelect` / `onRun` callbacks are the `createEditor` options, passed as props. One prop is Svelte-only: `brand`, a snippet rendered on the left of the toolbar — with `ui: { toolbar: { name: false } }` it stands where the flow name would be.
 
-Consuming this package **from source** (a workspace or `npm link`) means your Vite or SvelteKit build compiles its TypeScript, so an SSR build needs `ssr: { noExternal: ['@arcflow/core', '@arcflow/nodes', '@arcflow/editor', '@arcflow/server'] }`. The published tarballs ship JavaScript and need nothing.
+Consuming this package **from source** (a workspace or `npm link`) means your Vite or SvelteKit build compiles its TypeScript, so an SSR build needs `ssr: { noExternal: ['@arcsig-labs/core', '@arcsig-labs/nodes', '@arcsig-labs/editor', '@arcsig-labs/server'] }`. The published tarballs ship JavaScript and need nothing.
 
 There is no bindable `flow` prop — `flow` is the flow to start from. Read the current one from `onChange`, or call `getFlow()` on the component.
 
@@ -81,7 +81,7 @@ The methods live on the component, so reach them through `bind:this`:
 The styles come with the import — the entry pulls in the theme, the editor CSS and Svelte Flow's. If your bundler drops side-effect-only imports, or you load CSS yourself, import the same three at once instead:
 
 ```ts
-import '@arcflow/editor/styles.css';
+import '@arcsig-labs/editor/styles.css';
 ```
 
 ## Fitting into a host
@@ -138,7 +138,7 @@ refits itself whenever the layout changes.
 Pass a `backend` and the editor opens and saves flows on a server, activates them, picks stored credentials, runs them for real and replays past runs:
 
 ```ts
-import { createEditor, createHttpBackend } from '@arcflow/editor';
+import { createEditor, createHttpBackend } from '@arcsig-labs/editor';
 
 createEditor('#editor', {
 	steps,
@@ -159,7 +159,7 @@ Without a build step, let the server hand over its step catalog too:
 ```html
 <div id="app" style="height: 100vh"></div>
 <script type="module">
-	import { createArcflowApp } from 'https://esm.sh/@arcflow/editor/app';
+	import { createArcflowApp } from 'https://esm.sh/@arcsig-labs/editor/app';
 	createArcflowApp('#app', { url: 'http://localhost:8787' });
 </script>
 ```
@@ -168,7 +168,7 @@ Without a build step, let the server hand over its step catalog too:
 
 ## Prompt bar
 
-When the backend can generate flows (`@arcflow/server` with an API key, or your own `generateFlow` / `editFlow`), a prompt bar appears on the canvas. Describe a flow and it is built and validated; describe a change and it is applied to the flow that is open. The result lands on the canvas straight away with **Keep** and **Discard** — discarding restores what was there, and either way undo still works. With errors on the canvas the bar offers **Fix problems**, which hands the model the issues and their paths; otherwise it offers **Explain**, which describes the open flow in plain language. A server with no model configured has no bar at all, so neither button can be pressed into an error. `ui: { ai: false }` hides it.
+When the backend can generate flows (`@arcsig-labs/server` with an API key, or your own `generateFlow` / `editFlow`), a prompt bar appears on the canvas. Describe a flow and it is built and validated; describe a change and it is applied to the flow that is open. The result lands on the canvas straight away with **Keep** and **Discard** — discarding restores what was there, and either way undo still works. With errors on the canvas the bar offers **Fix problems**, which hands the model the issues and their paths; otherwise it offers **Explain**, which describes the open flow in plain language. A server with no model configured has no bar at all, so neither button can be pressed into an error. `ui: { ai: false }` hides it.
 
 Exports `lightColors`, `darkColors`, `defaultLabels` and `defaultUi` so you can start from the defaults.
 

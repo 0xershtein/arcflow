@@ -1,4 +1,4 @@
-import { hasErrors, type Flow, type Issue, type Registry } from '@arcflow/core';
+import { hasErrors, type Flow, type Issue, type Registry } from '@arcsig-labs/core';
 import type { ModelAdapter, ModelMessage } from './model.js';
 import { buildSystemPrompt, describeEdit, describeTask, extractJson, issuesMessage, type PromptOptions } from './prompt.js';
 

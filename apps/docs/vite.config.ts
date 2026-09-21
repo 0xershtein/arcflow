@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	// The workspace packages ship TypeScript sources, so Vite must transform them
 	// instead of handing them to Node's ESM resolver when rendering on the server.
-	ssr: { noExternal: ['@arcflow/core', '@arcflow/nodes', '@arcflow/editor'] },
+	ssr: { noExternal: ['@arcsig-labs/core', '@arcsig-labs/nodes', '@arcsig-labs/editor'] },
 	plugins: [
 		sveltekit({
 			compilerOptions: {

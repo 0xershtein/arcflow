@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { Issue } from '@arcflow/core';
+import type { Issue } from '@arcsig-labs/core';
 import { afterEach, vi } from 'vitest';
-import { defineNode, f } from '@arcflow/core';
+import { defineNode, f } from '@arcsig-labs/core';
 import { defaultUi, isCompactToolbar, resolveLabels, resolveToolbar, resolveUi } from '../src/options.js';
 import { formatDuration, runHeader, statusText, statusTitle, stepSummary, summarize, withLocalTimes } from '../src/summary.js';
 

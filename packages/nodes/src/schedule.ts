@@ -1,4 +1,4 @@
-import { defineNode, f } from '@arcflow/core';
+import { defineNode, f } from '@arcsig-labs/core';
 import { Cron } from 'croner';
 import { hasExpression, isRecord } from './util.js';
 
@@ -15,7 +15,7 @@ export function nextRuns(cron: string, timezone?: string, count = 3, from?: Date
 export const scheduleTrigger = defineNode({
 	kind: 'trigger.schedule',
 	title: 'Schedule',
-	description: 'Starts the flow on a cron schedule. A scheduler, such as @arcflow/server, starts runs at these times.',
+	description: 'Starts the flow on a cron schedule. A scheduler, such as @arcsig-labs/server, starts runs at these times.',
 	category: 'triggers',
 	icon: 'clock',
 	trigger: true,

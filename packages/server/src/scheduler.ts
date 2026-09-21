@@ -1,5 +1,5 @@
-import { waitingSteps } from '@arcflow/core';
-import { nextRuns } from '@arcflow/nodes';
+import { waitingSteps } from '@arcsig-labs/core';
+import { nextRuns } from '@arcsig-labs/nodes';
 import type { RunManager } from './runs.js';
 import type { RunRecord, Storage } from './types.js';
 

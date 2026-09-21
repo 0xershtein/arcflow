@@ -87,7 +87,7 @@
       "kind": "custom",
       "refersTo": "code-block",
       "description": "Every artifact on the site: a hairline figure with a pinned copy button and a functional right-edge fade keyed to --code-bg.",
-      "html": "<figure class=\"ds-code\"><button class=\"ds-code-copy\" aria-label=\"Copy code\">Copy</button><pre><code>npm install @arcflow/core @arcflow/editor</code></pre></figure>",
+      "html": "<figure class=\"ds-code\"><button class=\"ds-code-copy\" aria-label=\"Copy code\">Copy</button><pre><code>npm install @arcsig-labs/core @arcsig-labs/editor</code></pre></figure>",
       "css": ".ds-code { position: relative; margin: 0 0 24px; border: 1px solid var(--line, #e4e4e7); border-radius: 10px; background: var(--code-bg, var(--surface-2, #fafafa)); overflow: hidden; } .ds-code::after { content: ''; position: absolute; top: 0; right: 0; width: 108px; height: 46px; background: linear-gradient(to right, transparent, var(--code-bg, var(--surface-2, #fafafa)) 58%); pointer-events: none; } .ds-code-copy { position: absolute; top: 8px; right: 8px; z-index: 1; padding: 4px 10px; border: 1px solid var(--line-strong, #d4d4d8); border-radius: 6px; background: var(--bg, #ffffff); color: var(--text-soft, #3f3f46); font-family: var(--font, ui-sans-serif, system-ui, sans-serif); font-size: 12px; font-weight: 500; cursor: pointer; transition: color 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1); } .ds-code-copy:hover { color: var(--text, #18181b); background: var(--surface-2, #fafafa); } .ds-code-copy:focus-visible { outline: 2px solid var(--accent, #4f46e5); outline-offset: 2px; } .ds-code pre { margin: 0; padding: 16px 18px; overflow-x: auto; font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace); font-size: 13px; line-height: 1.6; tab-size: 2; color: var(--text-soft, #3f3f46); }"
     },
     {
@@ -143,7 +143,7 @@
       "kind": "custom",
       "refersTo": null,
       "description": "Hairline-ruled rows, tabular numerals, no zebra striping and no outer border.",
-      "html": "<table class=\"ds-table\"><thead><tr><th>Package</th><th>What it is</th></tr></thead><tbody><tr><td><code>@arcflow/core</code></td><td>The engine. No dependencies.</td></tr><tr><td><code>@arcflow/editor</code></td><td>The canvas. One ES module, framework-free.</td></tr></tbody></table>",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Package</th><th>What it is</th></tr></thead><tbody><tr><td><code>@arcsig-labs/core</code></td><td>The engine. No dependencies.</td></tr><tr><td><code>@arcsig-labs/editor</code></td><td>The canvas. One ES module, framework-free.</td></tr></tbody></table>",
       "css": ".ds-table { width: 100%; margin: 0 0 24px; border-collapse: collapse; font-family: var(--font, ui-sans-serif, system-ui, sans-serif); font-size: 14px; font-variant-numeric: tabular-nums; } .ds-table th { text-align: left; font-weight: 600; } .ds-table th, .ds-table td { padding: 9px 12px; border-bottom: 1px solid var(--line, #e4e4e7); vertical-align: top; color: var(--text-soft, #3f3f46); } .ds-table code { font-family: var(--mono, ui-monospace, Menlo, monospace); font-size: 0.92em; padding: 1px 5px; border-radius: 5px; background: var(--surface-2, #fafafa); border: 1px solid var(--line, #e4e4e7); color: var(--text, #18181b); }"
     }
   ],

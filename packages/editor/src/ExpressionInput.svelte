@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { FILTERS } from '@arcflow/core';
+	import { FILTERS } from '@arcsig-labs/core';
 	import { EXPRESSION_DRAG, type Suggestion } from './context.svelte.js';
 
 	/**

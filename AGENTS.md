@@ -60,7 +60,7 @@ packages/ai/src            generateFlow / editFlow: prompt from registry.describ
 packages/mcp/src           MCP server over stdio for agents (list_steps, validate_flow, test_flow, save_flow, run_flow, …)
   protocol.ts              JSON-RPC 2.0 framing, no SDK
   tools.ts                 the tools; remote ones need a FlowStore
-  http-store.ts            FlowStore against a running @arcflow/server
+  http-store.ts            FlowStore against a running @arcsig-labs/server
 packages/nodes/src         standard steps (kinds trigger.*, http.*, code.javascript, data.set, logic.*, flow.call)
   code.ts                  runSandboxed: QuickJS sandbox, loaded lazily with a dynamic import
   http.ts                  fetch-based request (credentials via ctx.secrets) and webhook response (services.http)
@@ -71,7 +71,7 @@ packages/server/src        runtime service (Hono)
   server.ts                createServer: storage, secret box, services (credentials, http.respond), RunManager, Scheduler, app
   app.ts                   /api/* routes and /hooks/* webhooks; errors → JSON with issues
   runs.ts                  RunManager: start/resume/cancel, checkpoint persistence, events, recover(); runResult, wakeAtOf
-  scheduler.ts             tick(): cron triggers (croner via @arcflow/nodes) and due logic.wait timers
+  scheduler.ts             tick(): cron triggers (croner via @arcsig-labs/nodes) and due logic.wait timers
   storage/                 Storage interface implementations: memory, sqlite (node:sqlite)
   secrets.ts               AES-256-GCM credential encryption (WebCrypto)
   cli.ts                   `arcflow serve`
@@ -99,7 +99,7 @@ docs/roadmap.md            milestones M1–M6
 - Every interface string lives in `defaultLabels`; every color in `ThemeColors` and `--fb-*`. No hard-coded colors in components or CSS.
 - New field kinds must work in types, `parseField`, `fieldSchema`, `describe` and `FieldInput`.
 - Money-moving or otherwise non-idempotent steps must not set `retry`.
-- `@arcflow/editor` keeps `"sideEffects": true`. The `/svelte` entry styles itself through bare CSS imports, and under Vite 8 / rolldown a side-effect-free package drops them before the CSS is ever resolved — a clean build with no styles and no warning. No CSS-targeting glob prevents that (it is the importer that is judged, not the stylesheet); only the whole package or the entry module itself can be marked. `@arcflow/editor/styles.css` exists for hosts that strip side-effect imports anyway.
+- `@arcsig-labs/editor` keeps `"sideEffects": true`. The `/svelte` entry styles itself through bare CSS imports, and under Vite 8 / rolldown a side-effect-free package drops them before the CSS is ever resolved — a clean build with no styles and no warning. No CSS-targeting glob prevents that (it is the importer that is judged, not the stylesheet); only the whole package or the entry module itself can be marked. `@arcsig-labs/editor/styles.css` exists for hosts that strip side-effect imports anyway.
 
 ## Using the library from code
 

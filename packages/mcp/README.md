@@ -1,13 +1,13 @@
-# @arcflow/mcp
+# @arcsig-labs/mcp
 
 An [MCP](https://modelcontextprotocol.io) server for [arcflow](https://github.com/arcsig-labs/arcflow): agents like Claude Code and Cursor can look up the steps you registered, write a flow, check it, try it, save it and run it.
 
 ```sh
 # with a running server, so flows can be saved and run for real
-claude mcp add arcflow -- npx -y @arcflow/mcp --url http://127.0.0.1:8787
+claude mcp add arcflow -- npx -y @arcsig-labs/mcp --url http://127.0.0.1:8787
 
 # without one: the catalog, validation and simulated runs
-claude mcp add arcflow -- npx -y @arcflow/mcp
+claude mcp add arcflow -- npx -y @arcsig-labs/mcp
 ```
 
 Your own steps come along with `--steps ./my-steps.js` (a module exporting a pack or step definitions), exactly as with `arcflow serve`.
@@ -30,9 +30,9 @@ The last four need `--url`. Everything else works on its own, so an agent can dr
 ## In your own process
 
 ```ts
-import { createRegistry } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
-import { createHttpStore, createMcpServer } from '@arcflow/mcp';
+import { createRegistry } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
+import { createHttpStore, createMcpServer } from '@arcsig-labs/mcp';
 
 const server = createMcpServer({
 	registry: createRegistry([standardSteps, myPack]),

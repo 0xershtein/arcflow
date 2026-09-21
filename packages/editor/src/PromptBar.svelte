@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Issue } from '@arcflow/core';
+	import type { Issue } from '@arcsig-labs/core';
 	import Icon from './Icon.svelte';
 	import { getEditor } from './context.svelte.js';
 	import { format } from './options.js';

@@ -1,10 +1,10 @@
-# @arcflow/nodes
+# @arcsig-labs/nodes
 
 Standard steps for arcflow: enough to build real automations without writing a step definition.
 
 ```ts
-import { createEngine, createRegistry } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
+import { createEngine, createRegistry } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
 
 const registry = createRegistry([standardSteps]);
 const flow = registry.flow('Welcome');

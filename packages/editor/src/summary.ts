@@ -2,7 +2,7 @@
  * Plain helpers behind what the toolbar, the problems panel and the run log say.
  * They are framework-free on purpose: the components read them, and the tests read them too.
  */
-import type { AnyNodeDefinition, FlowNode, Issue } from '@arcflow/core';
+import type { AnyNodeDefinition, FlowNode, Issue } from '@arcsig-labs/core';
 import { isDev } from './dev.js';
 import { format, type EditorOptions, type Labels } from './options.js';
 

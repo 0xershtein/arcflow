@@ -7,7 +7,7 @@ import {
 	type RunEvent,
 	type RunMode,
 	type RunState
-} from '@arcflow/core';
+} from '@arcsig-labs/core';
 import { conflict, notFound } from './errors.js';
 import type { FlowRecord, RunRecord, RunTrigger, Storage } from './types.js';
 

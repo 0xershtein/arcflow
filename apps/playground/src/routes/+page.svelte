@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { FlowEditor, type Labels, type ThemeMode } from '@arcflow/editor/svelte';
-	import { createPayrollFlow, paymentsRegistry } from '@arcflow/payments';
+	import { FlowEditor, type Labels, type ThemeMode } from '@arcsig-labs/editor/svelte';
+	import { createPayrollFlow, paymentsRegistry } from '@arcsig-labs/payments';
 
 	const flow = createPayrollFlow();
 

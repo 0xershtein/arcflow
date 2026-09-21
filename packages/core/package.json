@@ -1,5 +1,5 @@
 {
-	"name": "@arcflow/core",
+	"name": "@arcsig-labs/core",
 	"version": "0.1.0",
 	"description": "Typed, headless flow engine: define steps, build flows in code or JSON, validate them, and run them with retries and pause/resume.",
 	"license": "MIT",

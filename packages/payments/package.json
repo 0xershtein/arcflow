@@ -1,5 +1,5 @@
 {
-	"name": "@arcflow/payments",
+	"name": "@arcsig-labs/payments",
 	"version": "0.1.0",
 	"description": "Example arcflow steps for treasury payouts: schedules, runway checks, multisig approvals and stablecoin transfers.",
 	"license": "MIT",
@@ -29,8 +29,8 @@
 		"check": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
-		"@arcflow/core": "workspace:*",
-		"@arcflow/nodes": "workspace:*"
+		"@arcsig-labs/core": "workspace:*",
+		"@arcsig-labs/nodes": "workspace:*"
 	},
 	"repository": {
 		"type": "git",

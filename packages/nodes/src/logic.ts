@@ -1,4 +1,4 @@
-import { defineNode, f } from '@arcflow/core';
+import { defineNode, f } from '@arcsig-labs/core';
 import { DURATION_MS, compare, hasExpression, isEmpty, isRecord, looseEquals, sleep } from './util.js';
 
 export const OPERATORS = [

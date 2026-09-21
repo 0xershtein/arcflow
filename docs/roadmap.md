@@ -4,7 +4,7 @@ Goal: a workflow product developers can embed and agents can drive — build flo
 
 Each milestone ends with tests, a working example, and updated docs.
 
-## M1 — Runtime semantics (`@arcflow/core`)
+## M1 — Runtime semantics (`@arcsig-labs/core`)
 
 The engine today runs branches once, on first arrival, and passes a single `output` along. Real flows need more.
 
@@ -19,7 +19,7 @@ Done when: joins, loops and sub-flows are covered by engine tests, including pau
 
 **Status: done.** Joins with dead-branch elimination, loops with concurrency slots and per-iteration resume (`each[2]/step`), sub-flows through a `flows` source with resume through the calling step (`call>step`) and a depth limit, credentials resolved into `ctx.secrets`, `$item` / `$index` / `$now` and whitelisted filters, JSON-serializable outputs with an optional `maxOutputBytes` limit.
 
-## M2 — Standard steps (`@arcflow/nodes`)
+## M2 — Standard steps (`@arcsig-labs/nodes`)
 
 A pack that makes the product useful without writing code:
 
@@ -27,9 +27,9 @@ Manual, Webhook, Schedule (cron), HTTP Request, Code (JavaScript in a QuickJS sa
 
 Done when: an example flow fetches JSON from a public API, filters it in a Code step, branches, and posts the result — in tests and in the editor.
 
-**Status: steps done.** `@arcflow/nodes` ships all thirteen steps. Code runs in a fresh QuickJS sandbox per step with time and memory limits; HTTP requests skip non-GET calls in test runs; short waits happen in place and long ones pause the run. The digest example (`createTodoDigestFlow`) runs end to end in tests with a mocked network. The payments pack now builds on these steps.
+**Status: steps done.** `@arcsig-labs/nodes` ships all thirteen steps. Code runs in a fresh QuickJS sandbox per step with time and memory limits; HTTP requests skip non-GET calls in test runs; short waits happen in place and long ones pause the run. The digest example (`createTodoDigestFlow`) runs end to end in tests with a mocked network. The payments pack now builds on these steps.
 
-## M3 — Server runtime (`@arcflow/server`)
+## M3 — Server runtime (`@arcsig-labs/server`)
 
 Runs flows for real, on Node, Bun, or edge runtimes.
 
@@ -42,9 +42,9 @@ Runs flows for real, on Node, Bun, or edge runtimes.
 
 Done when: a flow saved in the editor fires from a real webhook and a cron schedule, survives a restart while waiting, and its run history is browsable.
 
-**Status: runtime done; editor connection moves to M4.** `@arcflow/server` has the API, webhooks (immediate, when-finished and respond-step answers), a tick-based scheduler for cron and timers, memory and SQLite storage, encrypted credentials, SSE events, crash recovery that fails interrupted runs instead of replaying them, and `arcflow serve`. Saving from the editor and `npx arcflow dev` with the editor bundled come with the M4 server mode.
+**Status: runtime done; editor connection moves to M4.** `@arcsig-labs/server` has the API, webhooks (immediate, when-finished and respond-step answers), a tick-based scheduler for cron and timers, memory and SQLite storage, encrypted credentials, SSE events, crash recovery that fails interrupted runs instead of replaying them, and `arcflow serve`. Saving from the editor and `npx arcflow dev` with the editor bundled come with the M4 server mode.
 
-## M4 — Editor, n8n level (`@arcflow/editor`)
+## M4 — Editor, n8n level (`@arcsig-labs/editor`)
 
 - Run inspector: each step's input and output as a collapsible JSON tree, for test runs and past executions.
 - Data mapping: drag a field from a previous step's output onto an input to insert the expression.
@@ -55,9 +55,9 @@ Done when: a flow saved in the editor fires from a real webhook and a cron sched
 
 Done when: a new user can build the M2 example flow end to end without typing an expression by hand.
 
-**Status: done.** The inspector has Settings / Input / Output tabs with JSON trees per step and loop iteration, drag-to-map values, `{{` autocomplete from run data and live previews. Editing has undo/redo, copy/cut/paste as flow JSON (including fragments from an LLM), duplicate, select all, a selection bar, `+` on connections, drop-a-connection-to-add, and sticky notes stored as `annotations`. A step whose type declares `subflow` carries a button that opens the flow it calls, with a band above the canvas leading back out; unsaved work stops the move rather than being lost to it. Server mode adds a `backend` option (`createHttpBackend` for `@arcflow/server`, or your own API): flow list, Save, Activate, credential picker, execution history, and a Run button that runs on the server and streams events onto the canvas. `registryFromManifest` rebuilds the step catalog in the browser from `GET /api/steps`, so `arcflow dev` serves the whole editor next to the API with no build step.
+**Status: done.** The inspector has Settings / Input / Output tabs with JSON trees per step and loop iteration, drag-to-map values, `{{` autocomplete from run data and live previews. Editing has undo/redo, copy/cut/paste as flow JSON (including fragments from an LLM), duplicate, select all, a selection bar, `+` on connections, drop-a-connection-to-add, and sticky notes stored as `annotations`. A step whose type declares `subflow` carries a button that opens the flow it calls, with a band above the canvas leading back out; unsaved work stops the move rather than being lost to it. Server mode adds a `backend` option (`createHttpBackend` for `@arcsig-labs/server`, or your own API): flow list, Save, Activate, credential picker, execution history, and a Run button that runs on the server and streams events onto the canvas. `registryFromManifest` rebuilds the step catalog in the browser from `GET /api/steps`, so `arcflow dev` serves the whole editor next to the API with no build step.
 
-## M5 — AI (`@arcflow/ai`, `@arcflow/mcp`)
+## M5 — AI (`@arcsig-labs/ai`, `@arcsig-labs/mcp`)
 
 - `generateFlow(prompt)` and `editFlow(flow, instruction)` returning validated flows or JSON patch operations, with an automatic repair loop on issues.
 - Model-agnostic adapter interface, with an adapter for common SDKs.
@@ -66,7 +66,7 @@ Done when: a new user can build the M2 example flow end to end without typing an
 
 Done when: from an empty canvas, a prompt produces a runnable version of the M2 example flow, and the same works through MCP.
 
-**Status: done.** `@arcflow/ai` has `generateFlow` / `editFlow` with the repair loop (the model gets `registry.describe()`, its JSON is validated, and the issues go back with their paths), `diffFlows` for accept/reject, and a `ModelAdapter` interface with `anthropicModel()` for Claude — the Anthropic SDK stays optional. `@arcflow/mcp` is a dependency-free MCP server over stdio with `list_steps`, `validate_flow`, `test_flow`, `patch_flow`, `list_flows`, `get_flow`, `save_flow`, `run_flow` and `get_run`; the last five need a running server, the rest work alone. `patch_flow` closes the repair loop from the other side: `applyPatch` in core acts on the same path an issue reports, so a model fixes one field instead of emitting the flow again. The server exposes `/api/ai/generate` and `/api/ai/edit` when a key is set, so the browser never holds one, and the editor's prompt bar builds or changes the flow on the canvas with Keep / Discard on top of the normal undo history. The bar also offers **Fix problems** — the errors and their JSON paths go back to the model — and **Explain**, a plain-language description of the open flow from `explainFlow`.
+**Status: done.** `@arcsig-labs/ai` has `generateFlow` / `editFlow` with the repair loop (the model gets `registry.describe()`, its JSON is validated, and the issues go back with their paths), `diffFlows` for accept/reject, and a `ModelAdapter` interface with `anthropicModel()` for Claude — the Anthropic SDK stays optional. `@arcsig-labs/mcp` is a dependency-free MCP server over stdio with `list_steps`, `validate_flow`, `test_flow`, `patch_flow`, `list_flows`, `get_flow`, `save_flow`, `run_flow` and `get_run`; the last five need a running server, the rest work alone. `patch_flow` closes the repair loop from the other side: `applyPatch` in core acts on the same path an issue reports, so a model fixes one field instead of emitting the flow again. The server exposes `/api/ai/generate` and `/api/ai/edit` when a key is set, so the browser never holds one, and the editor's prompt bar builds or changes the flow on the canvas with Keep / Discard on top of the normal undo history. The bar also offers **Fix problems** — the errors and their JSON paths go back to the model — and **Explain**, a plain-language description of the open flow from `explainFlow`.
 
 ## M6 — Launch
 
@@ -75,7 +75,7 @@ Done when: from an empty canvas, a prompt produces a runnable version of the M2 
 - npm publish with provenance, changelog, semver.
 - Short video and launch thread.
 
-**Status: the parts that do not need an account are done.** `apps/docs` is a prerendered SvelteKit site — overview, quick start, flows and steps, editor, server, AI and agents — with a real editor embedded in the page, and a Pages workflow that builds and deploys it on every push to `main`. `CHANGELOG.md` covers 0.1.0, and the release workflow packs each package with pnpm (which rewrites `workspace:*`) and publishes the tarballs with `npm --provenance` on a `v*` tag. The home page is a landing rather than a docs index: one real step definition and the four artifacts it produces, the editor running in the page, the recorded agent session, and an honest status panel saying 0.1.0 is unreleased. `DESIGN.md` records the system it ships. On 2026-09-20 the packed tarballs were installed into a fresh project and tried end to end (engine, the MCP server over stdio, `arcflow dev` serving the editor), the release and Pages workflows were limited to the canonical repository so the personal mirror does not try to publish, and `docs/release.md` records the release procedure step by step. `docs/launch.md` holds the video shot list and the announcement thread. What is left needs an account: the `@arcflow` organisation and a publish token on npm (then `NPM_TOKEN` in the repository), GitHub Pages turned on by hand (the workflow's default token is not allowed to enable it), and recording the video.
+**Status: the parts that do not need an account are done.** `apps/docs` is a prerendered SvelteKit site — overview, quick start, flows and steps, editor, server, AI and agents — with a real editor embedded in the page, and a Pages workflow that builds and deploys it on every push to `main`. `CHANGELOG.md` covers 0.1.0, and the release workflow packs each package with pnpm (which rewrites `workspace:*`) and publishes the tarballs with `npm --provenance` on a `v*` tag. The home page is a landing rather than a docs index: one real step definition and the four artifacts it produces, the editor running in the page, the recorded agent session, and an honest status panel saying 0.1.0 is unreleased. `DESIGN.md` records the system it ships. On 2026-09-20 the packed tarballs were installed into a fresh project and tried end to end (engine, the MCP server over stdio, `arcflow dev` serving the editor), the release and Pages workflows were limited to the canonical repository so the personal mirror does not try to publish, and `docs/release.md` records the release procedure step by step. `docs/launch.md` holds the video shot list and the announcement thread. What is left needs an account: the `arcsig-labs` organisation on npm exists since 2026-09-21 (the `@arcflow` scope belongs to someone else, so the packages live under `@arcsig-labs`); still needed are a publish token (then `NPM_TOKEN` in the repository), GitHub Pages turned on by hand (the workflow's default token is not allowed to enable it), and recording the video.
 
 ## Order
 

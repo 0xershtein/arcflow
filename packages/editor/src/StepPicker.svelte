@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { AnyNodeDefinition } from '@arcflow/core';
+	import type { AnyNodeDefinition } from '@arcsig-labs/core';
 	import Icon from './Icon.svelte';
 	import { DEFAULT_ICON } from './icons.js';
 	import { getEditor } from './context.svelte.js';

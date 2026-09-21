@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRegistry, defineNode, f, type Flow, type RunState } from '@arcflow/core';
+import { createRegistry, defineNode, f, type Flow, type RunState } from '@arcsig-labs/core';
 import { createMcpServer, type FlowStore, type JsonRpcResponse } from '../src/index.js';
 
 const start = defineNode({

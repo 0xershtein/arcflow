@@ -1,5 +1,5 @@
 import { mount, unmount } from 'svelte';
-import type { Flow, Issue } from '@arcflow/core';
+import type { Flow, Issue } from '@arcsig-labs/core';
 import FlowEditor from './FlowEditor.svelte';
 import type { EditorOptions } from './options.js';
 import styles from './styles.js';

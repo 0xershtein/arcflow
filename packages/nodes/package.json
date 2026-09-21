@@ -1,5 +1,5 @@
 {
-	"name": "@arcflow/nodes",
+	"name": "@arcsig-labs/nodes",
 	"version": "0.1.0",
 	"description": "Standard arcflow steps: manual, webhook and schedule triggers, HTTP requests, sandboxed JavaScript, data, branching, loops, waits and sub-flows.",
 	"license": "MIT",
@@ -29,7 +29,7 @@
 		"check": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
-		"@arcflow/core": "workspace:*",
+		"@arcsig-labs/core": "workspace:*",
 		"@jitl/quickjs-wasmfile-release-sync": "^0.32.0",
 		"croner": "^10.0.1",
 		"quickjs-emscripten-core": "^0.32.0"

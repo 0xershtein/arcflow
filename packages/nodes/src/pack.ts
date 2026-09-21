@@ -1,4 +1,4 @@
-import { definePack } from '@arcflow/core';
+import { definePack } from '@arcsig-labs/core';
 import { codeStep } from './code.js';
 import { setFields } from './data.js';
 import { callFlow } from './flows.js';

@@ -15,8 +15,8 @@ export interface FrameworkSnippet {
 const html = `<div id="editor" style="height: 100dvh"></div>
 
 <script type="module">
-	import { createEditor } from '@arcflow/editor';
-	import { standardSteps } from '@arcflow/nodes';
+	import { createEditor } from '@arcsig-labs/editor';
+	import { standardSteps } from '@arcsig-labs/nodes';
 
 	const editor = createEditor('#editor', {
 		steps: [standardSteps],
@@ -26,8 +26,8 @@ const html = `<div id="editor" style="height: 100dvh"></div>
 <\/script>`;
 
 const svelte = `<script lang="ts">
-	import { FlowEditor } from '@arcflow/editor/svelte';
-	import { standardRegistry } from '@arcflow/nodes';
+	import { FlowEditor } from '@arcsig-labs/editor/svelte';
+	import { standardRegistry } from '@arcsig-labs/nodes';
 
 	let { flow, save }: { flow?: unknown; save: (next: unknown) => void } = $props();
 <\/script>
@@ -37,7 +37,7 @@ const svelte = `<script lang="ts">
 </div>`;
 
 const react = `import { useEffect, useRef } from 'react';
-import { createEditor, type EditorInstance, type EditorOptions } from '@arcflow/editor';
+import { createEditor, type EditorInstance, type EditorOptions } from '@arcsig-labs/editor';
 
 export function FlowEditor({ steps, className, ...options }: EditorOptions & { className?: string }) {
 	const host = useRef<HTMLDivElement>(null);
@@ -68,7 +68,7 @@ export function FlowEditor({ steps, className, ...options }: EditorOptions & { c
 
 const vue = `<script setup lang="ts">
 import { onBeforeUnmount, onMounted, useTemplateRef, watchEffect } from 'vue';
-import { createEditor, type EditorInstance, type EditorOptions } from '@arcflow/editor';
+import { createEditor, type EditorInstance, type EditorOptions } from '@arcsig-labs/editor';
 
 const props = defineProps<{ steps: EditorOptions['steps']; flow?: EditorOptions['flow']; readonly?: boolean }>();
 const emit = defineEmits<{ change: [unknown] }>();

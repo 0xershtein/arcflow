@@ -11,9 +11,9 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
 	},
 	"dependencies": {
-		"@arcflow/core": "workspace:*",
-		"@arcflow/payments": "workspace:*",
-		"@arcflow/editor": "workspace:*"
+		"@arcsig-labs/core": "workspace:*",
+		"@arcsig-labs/payments": "workspace:*",
+		"@arcsig-labs/editor": "workspace:*"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.1",

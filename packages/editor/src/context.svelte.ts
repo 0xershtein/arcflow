@@ -1,5 +1,5 @@
 import { getContext, setContext } from 'svelte';
-import type { Issue, Registry, RunState } from '@arcflow/core';
+import type { Issue, Registry, RunState } from '@arcsig-labs/core';
 import type { Backend, ServerCredential } from './backend.js';
 import type { EditorOptions, Labels, ResolvedUi } from './options.js';
 

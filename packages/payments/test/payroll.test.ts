@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createEngine, waitingSteps } from '@arcflow/core';
+import { createEngine, waitingSteps } from '@arcsig-labs/core';
 import { createPayrollFlow, paymentsRegistry, type PaymentServices } from '../src/index.js';
 
 function fakeServices(balance = 684_250, burn = 61_000) {

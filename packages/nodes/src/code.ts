@@ -1,4 +1,4 @@
-import { defineNode, f } from '@arcflow/core';
+import { defineNode, f } from '@arcsig-labs/core';
 import type { QuickJSWASMModule } from 'quickjs-emscripten-core';
 import { isRecord } from './util.js';
 

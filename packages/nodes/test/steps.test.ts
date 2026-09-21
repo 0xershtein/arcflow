@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createEngine, waitingSteps } from '@arcflow/core';
+import { createEngine, waitingSteps } from '@arcsig-labs/core';
 import { createTodoDigestFlow, evaluateCondition, nextRuns, runSandboxed, standardRegistry } from '../src/index.js';
 
 type Builder = ReturnType<typeof standardRegistry.flow>;

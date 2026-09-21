@@ -1,4 +1,4 @@
-import { applyPatch, createEngine, hasErrors, toManifest, type Flow, type PatchOp, type Registry, type RunState, type Services } from '@arcflow/core';
+import { applyPatch, createEngine, hasErrors, toManifest, type Flow, type PatchOp, type Registry, type RunState, type Services } from '@arcsig-labs/core';
 import type { ToolDefinition, ToolOutcome } from './protocol.js';
 
 /** Where flows are stored and run. Without one, only the catalog and validation tools work. */

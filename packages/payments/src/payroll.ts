@@ -1,5 +1,5 @@
-import { createRegistry, type Flow } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
+import { createRegistry, type Flow } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
 import { paymentsPack } from './pack.js';
 
 /** Standard steps plus the payments pack. */

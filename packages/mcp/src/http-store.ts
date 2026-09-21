@@ -1,4 +1,4 @@
-import type { Flow, RunState } from '@arcflow/core';
+import type { Flow, RunState } from '@arcsig-labs/core';
 import type { FlowStore } from './tools.js';
 
 export interface HttpStoreOptions {
@@ -7,7 +7,7 @@ export interface HttpStoreOptions {
 	fetch?: typeof globalThis.fetch;
 }
 
-/** Talks to a running `@arcflow/server` over HTTP. */
+/** Talks to a running `@arcsig-labs/server` over HTTP. */
 export function createHttpStore(url: string, options: HttpStoreOptions = {}): FlowStore {
 	const base = `${url.replace(/\/+$/, '')}/api`;
 	const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);

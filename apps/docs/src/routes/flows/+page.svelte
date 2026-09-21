@@ -12,7 +12,7 @@
 	"edges": [{ "from": "start", "to": "pay" }]
 }`;
 
-	const step = `import { defineNode, f } from '@arcflow/core';
+	const step = `import { defineNode, f } from '@arcsig-labs/core';
 
 export const transfer = defineNode({
 	kind: 'action.transfer',

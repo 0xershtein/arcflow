@@ -1,5 +1,5 @@
-import { createEditor } from '@arcflow/editor';
-import { createPayrollFlow, paymentsRegistry } from '@arcflow/payments';
+import { createEditor } from '@arcsig-labs/editor';
+import { createPayrollFlow, paymentsRegistry } from '@arcsig-labs/payments';
 
 const output = document.querySelector<HTMLPreElement>('#output')!;
 const show = (label: string, value: unknown) => (output.textContent = `${label}\n\n${JSON.stringify(value, null, 2)}`);

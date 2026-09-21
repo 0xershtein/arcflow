@@ -1,16 +1,16 @@
-# @arcflow/payments
+# @arcsig-labs/payments
 
 An example domain pack for [arcflow](https://github.com/arcsig-labs/arcflow): treasury payouts that only move money after a multisig approval. It exists to show what a pack built on the standard steps looks like — four steps, one flow, and the `services` contract a host app fills in.
 
 ```ts
-import { createEngine } from '@arcflow/core';
-import { createPayrollFlow, paymentsRegistry } from '@arcflow/payments';
+import { createEngine } from '@arcsig-labs/core';
+import { createPayrollFlow, paymentsRegistry } from '@arcsig-labs/payments';
 
 const flow = createPayrollFlow(); // plain flow JSON, built with the builder API
 const run = await createEngine(paymentsRegistry, { services: { payments } }).start(flow, { mode: 'simulate' });
 ```
 
-`paymentsRegistry` is `@arcflow/nodes` plus this pack, so the payroll flow can use a cron trigger and an `if` step alongside the treasury steps.
+`paymentsRegistry` is `@arcsig-labs/nodes` plus this pack, so the payroll flow can use a cron trigger and an `if` step alongside the treasury steps.
 
 ## Steps
 

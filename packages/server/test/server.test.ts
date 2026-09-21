@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createRegistry, registryFromManifest, type Flow } from '@arcflow/core';
-import { standardSteps } from '@arcflow/nodes';
+import { createRegistry, registryFromManifest, type Flow } from '@arcsig-labs/core';
+import { standardSteps } from '@arcsig-labs/nodes';
 import { createServer, type ServerOptions } from '../src/index.js';
 import { SqliteStorage } from '../src/node.js';
 

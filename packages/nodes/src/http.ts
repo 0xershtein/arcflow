@@ -1,4 +1,4 @@
-import { defineNode, f, type InferShape, type NodeContext } from '@arcflow/core';
+import { defineNode, f, type InferShape, type NodeContext } from '@arcsig-labs/core';
 import { isRecord } from './util.js';
 
 export interface HttpResponseData {
@@ -7,7 +7,7 @@ export interface HttpResponseData {
 	body: unknown;
 }
 
-declare module '@arcflow/core' {
+declare module '@arcsig-labs/core' {
 	interface Services {
 		/** Sends the response for the webhook call that started a run. Provided by the HTTP server. */
 		http?: { respond(response: HttpResponseData & { runId: string }): void | Promise<void> };

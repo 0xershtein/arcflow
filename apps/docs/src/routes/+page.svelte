@@ -4,10 +4,10 @@
 	import Demo from '$lib/Demo.svelte';
 	import { createDemoFlow } from '$lib/demo-flow.js';
 
-	const install = `npm install @arcflow/core @arcflow/editor`;
+	const install = `npm install @arcsig-labs/core @arcsig-labs/editor`;
 
 	/** The definition the four panels below are produced from — nothing here is illustrative. */
-	const definition = `import { defineNode, f } from '@arcflow/core';
+	const definition = `import { defineNode, f } from '@arcsig-labs/core';
 import { postMessage } from './slack.js';
 
 export const slackPost = defineNode({
@@ -52,7 +52,7 @@ Posts a message to a channel and outputs its timestamp.
   - \`text\`: text (multi-line) — Message
   - \`urgent\`: true | false, default false — Ping the channel`;
 
-	const mcp = `claude mcp add arcflow -- npx -y @arcflow/mcp`;
+	const mcp = `claude mcp add arcflow -- npx -y @arcsig-labs/mcp`;
 
 	const session = `list_steps            → 39 entries, 7 042 characters
 validate_flow         → error required @ nodes[1].config.url
@@ -154,12 +154,12 @@ test_flow             → failed · GET example.com/status returned 404 Not Foun
 	<table>
 		<thead><tr><th>Package</th><th>What it is</th></tr></thead>
 		<tbody>
-			<tr><td><code>@arcflow/core</code></td><td>The engine: steps, flows, validation, expressions, branching, loops, waits, sub-flows. No dependencies.</td></tr>
-			<tr><td><code>@arcflow/nodes</code></td><td>Thirteen standard steps: triggers, HTTP, sandboxed JavaScript, set fields, if, switch, merge, loop, wait, run flow.</td></tr>
-			<tr><td><code>@arcflow/editor</code></td><td>The canvas. One ES module with styles included, framework-free, 17 colour tokens, 129 replaceable strings.</td></tr>
-			<tr><td><code>@arcflow/server</code></td><td>Webhooks, schedules, restart-safe timers, run history, encrypted credentials, live events.</td></tr>
-			<tr><td><code>@arcflow/ai</code></td><td>Build and change flows with a model: every attempt is validated, and the issues go back for repair for a set number of tries.</td></tr>
-			<tr><td><code>@arcflow/mcp</code></td><td>An MCP server, so agents list steps, write flows, check them and run them.</td></tr>
+			<tr><td><code>@arcsig-labs/core</code></td><td>The engine: steps, flows, validation, expressions, branching, loops, waits, sub-flows. No dependencies.</td></tr>
+			<tr><td><code>@arcsig-labs/nodes</code></td><td>Thirteen standard steps: triggers, HTTP, sandboxed JavaScript, set fields, if, switch, merge, loop, wait, run flow.</td></tr>
+			<tr><td><code>@arcsig-labs/editor</code></td><td>The canvas. One ES module with styles included, framework-free, 17 colour tokens, 129 replaceable strings.</td></tr>
+			<tr><td><code>@arcsig-labs/server</code></td><td>Webhooks, schedules, restart-safe timers, run history, encrypted credentials, live events.</td></tr>
+			<tr><td><code>@arcsig-labs/ai</code></td><td>Build and change flows with a model: every attempt is validated, and the issues go back for repair for a set number of tries.</td></tr>
+			<tr><td><code>@arcsig-labs/mcp</code></td><td>An MCP server, so agents list steps, write flows, check them and run them.</td></tr>
 		</tbody>
 	</table>
 </section>

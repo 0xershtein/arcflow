@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Code from '$lib/Code.svelte';
 
-	const generate = `import { anthropicModel, generateFlow } from '@arcflow/ai';
+	const generate = `import { anthropicModel, generateFlow } from '@arcsig-labs/ai';
 
 const { ok, flow, issues, attempts } = await generateFlow({
 	registry,
@@ -9,7 +9,7 @@ const { ok, flow, issues, attempts } = await generateFlow({
 	prompt: 'Every Monday at 9, fetch open invoices and post a summary to our webhook'
 });`;
 
-	const edit = `import { editFlow, summarizeChanges } from '@arcflow/ai';
+	const edit = `import { editFlow, summarizeChanges } from '@arcsig-labs/ai';
 
 const result = await editFlow({ registry, model, flow, instruction: 'Also tell me when the request fails' });
 console.log(summarizeChanges(result.changes)); // "2 added, 1 changed"`;
@@ -25,7 +25,7 @@ console.log(summarizeChanges(result.changes)); // "2 added, 1 changed"`;
 	}
 };`;
 
-	const mcp = `claude mcp add arcflow -- npx -y @arcflow/mcp --url http://127.0.0.1:8787`;
+	const mcp = `claude mcp add arcflow -- npx -y @arcsig-labs/mcp --url http://127.0.0.1:8787`;
 
 	const serverAi = `ANTHROPIC_API_KEY=sk-... npx arcflow dev`;
 </script>

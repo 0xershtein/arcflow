@@ -1,5 +1,5 @@
 {
-	"name": "@arcflow/server",
+	"name": "@arcsig-labs/server",
 	"version": "0.1.0",
 	"description": "Runs arcflow flows for real: HTTP API, webhook and cron triggers, timers, run history, encrypted credentials and live events.",
 	"license": "MIT",
@@ -41,20 +41,20 @@
 		"serve": "tsx src/cli.ts serve"
 	},
 	"dependencies": {
-		"@arcflow/core": "workspace:*",
-		"@arcflow/nodes": "workspace:*",
+		"@arcsig-labs/core": "workspace:*",
+		"@arcsig-labs/nodes": "workspace:*",
 		"@hono/node-server": "^2.1.1",
 		"hono": "^4.13.8"
 	},
 	"peerDependencies": {
-		"@arcflow/ai": "^0.1.0",
-		"@arcflow/editor": "^0.1.0"
+		"@arcsig-labs/ai": "^0.1.0",
+		"@arcsig-labs/editor": "^0.1.0"
 	},
 	"peerDependenciesMeta": {
-		"@arcflow/ai": {
+		"@arcsig-labs/ai": {
 			"optional": true
 		},
-		"@arcflow/editor": {
+		"@arcsig-labs/editor": {
 			"optional": true
 		}
 	},
@@ -72,8 +72,8 @@
 		"sqlite"
 	],
 	"devDependencies": {
-		"@arcflow/ai": "workspace:*",
-		"@arcflow/editor": "workspace:*",
+		"@arcsig-labs/ai": "workspace:*",
+		"@arcsig-labs/editor": "workspace:*",
 		"@types/node": "^26.6.0",
 		"tsx": "^4.23.13"
 	}
