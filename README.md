@@ -2,6 +2,17 @@
 
 **An embeddable, n8n-style flow editor and engine. Flow JSON in, flow JSON out.**
 
+[![npm](https://img.shields.io/npm/v/@arcsig-labs/core?label=npm&color=555)](https://www.npmjs.com/org/arcsig-labs)
+[![license](https://img.shields.io/badge/license-MIT-555)](./LICENSE)
+[![CI](https://github.com/arcsig-labs/arcflow/actions/workflows/ci.yml/badge.svg)](https://github.com/arcsig-labs/arcflow/actions/workflows/ci.yml)
+
+**[Docs and live demo](https://arcsig-labs.github.io/arcflow/)** · [Quick start](https://arcsig-labs.github.io/arcflow/quick-start) · [Packages on npm](https://www.npmjs.com/org/arcsig-labs) · [Changelog](./CHANGELOG.md)
+
+```sh
+npm install @arcsig-labs/core @arcsig-labs/editor
+claude mcp add arcflow -- npx -y @arcsig-labs/mcp
+```
+
 Drop a visual workflow builder into your own product — an automation panel, an internal tool, an agent console — and keep full control of the data. You define the step types; arcflow gives you the canvas, validation, test runs, a runtime that can pause for humans, and the JSON Schema an LLM needs to write flows for you.
 
 - **No branding, fully themeable** — light / dark / auto, every color, font, radius and label is an option.
